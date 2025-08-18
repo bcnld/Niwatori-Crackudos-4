@@ -23,7 +23,7 @@ scene.add(ground);
 const playerGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
 const playerMat = new THREE.MeshPhongMaterial({color:0xff0000});
 const player = new THREE.Mesh(playerGeo, playerMat);
-player.position.set(0,1,0); // 地面に立つ高さ
+player.position.set(0,1,0);
 scene.add(player);
 
 // カメラTPS追従
@@ -43,7 +43,7 @@ const moveSpeed = 0.1;
 function animate(){
     requestAnimationFrame(animate);
 
-    // キーボード移動
+    // 移動
     if(keys['w']){
         player.position.x -= Math.sin(camera.rotation.y)*moveSpeed;
         player.position.z -= Math.cos(camera.rotation.y)*moveSpeed;
