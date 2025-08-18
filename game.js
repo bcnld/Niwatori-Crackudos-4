@@ -18,15 +18,12 @@ const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// ----- キャラクターモデル読み込み -----
-let playerModel;
-const loader = new THREE.GLTFLoader();
-loader.load('models/character.glb', (gltf)=>{
-    playerModel = gltf.scene;
-    playerModel.scale.set(1,1,1);
-    playerModel.position.set(0,0,0);
-    scene.add(playerModel);
-});
+// ----- キャラクター（円柱） -----
+const playerGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
+const playerMat = new THREE.MeshPhongMaterial({color:0xff0000});
+const player = new THREE.Mesh(playerGeo, playerMat);
+player.position.y = 1; // 地面に立つ高さ
+scene.add(player);
 
 // ----- カメラTPS追従 -----
 camera.position.set(0,2,-5);
@@ -43,34 +40,32 @@ const moveSpeed = 0.1;
 function animate(){
     requestAnimationFrame(animate);
 
-    if(playerModel){
-        // キーボード移動
-        if(keys['w']){
-            playerModel.position.x -= Math.sin(camera.rotation.y)*moveSpeed;
-            playerModel.position.z -= Math.cos(camera.rotation.y)*moveSpeed;
-        }
-        if(keys['s']){
-            playerModel.position.x += Math.sin(camera.rotation.y)*moveSpeed;
-            playerModel.position.z += Math.cos(camera.rotation.y)*moveSpeed;
-        }
-        if(keys['a']){
-            playerModel.position.x -= Math.cos(camera.rotation.y)*moveSpeed;
-            playerModel.position.z += Math.sin(camera.rotation.y)*moveSpeed;
-        }
-        if(keys['d']){
-            playerModel.position.x += Math.cos(camera.rotation.y)*moveSpeed;
-            playerModel.position.z -= Math.sin(camera.rotation.y)*moveSpeed;
-        }
-
-        // キャラの向きはカメラに合わせる
-        playerModel.rotation.y = camera.rotation.y;
-
-        // カメラ追従
-        const offset = new THREE.Vector3(0,2,-5);
-        offset.applyAxisAngle(new THREE.Vector3(0,1,0), camera.rotation.y);
-        camera.position.copy(playerModel.position).add(offset);
-        camera.lookAt(playerModel.position);
+    // キーボード移動
+    if(keys['w']){
+        player.position.x -= Math.sin(camera.rotation.y)*moveSpeed;
+        player.position.z -= Math.cos(camera.rotation.y)*moveSpeed;
     }
+    if(keys['s']){
+        player.position.x += Math.sin(camera.rotation.y)*moveSpeed;
+        player.position.z += Math.cos(camera.rotation.y)*moveSpeed;
+    }
+    if(keys['a']){
+        player.position.x -= Math.cos(camera.rotation.y)*moveSpeed;
+        player.position.z += Math.sin(camera.rotation.y)*moveSpeed;
+    }
+    if(keys['d']){
+        player.position.x += Math.cos(camera.rotation.y)*moveSpeed;
+        player.position.z -= Math.sin(camera.rotation.y)*moveSpeed;
+    }
+
+    // キャラの向きはカメラに合わせる
+    player.rotation.y = camera.rotation.y;
+
+    // カメラ追従
+    const offset = new THREE.Vector3(0,2,-5);
+    offset.applyAxisAngle(new THREE.Vector3(0,1,0), camera.rotation.y);
+    camera.position.copy(player.position).add(offset);
+    camera.lookAt(player.position);
 
     renderer.render(scene, camera);
 }
