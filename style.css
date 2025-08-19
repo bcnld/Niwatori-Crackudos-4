@@ -1,0 +1,41 @@
+body { 
+  margin: 0; 
+  overflow: hidden; 
+  background: black;
+}
+
+canvas { 
+  display: block; 
+}
+
+/* ジョイスティック用 */
+#joystickBase, #joystickKnob {
+  position: absolute;
+  touch-action: none;
+  border-radius: 50%;
+  display: none; /* デフォルト非表示 */
+}
+
+#joystickBase {
+  width: 80px;
+  height: 80px;
+  background: rgba(200,200,200,0.3);
+  left: 20px;
+  bottom: 20px;
+}
+
+#joystickKnob {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.6);
+  transform: translate(-50%, -50%);
+  left: 20px;
+  bottom: 20px;
+}
+
+/* タッチ端末だけ表示 */
+@media (pointer: coarse) {
+  #joystickBase, #joystickKnob { 
+    display: block; 
+  }
+}
