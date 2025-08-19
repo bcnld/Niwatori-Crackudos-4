@@ -1,99 +1,71 @@
-// ==========================
-// 基本設定
-// ==========================
-const canvas = document.getElementById("game-canvas");
-const renderer = new THREE.WebGLRenderer({ canvas });
-renderer.setSize(window.innerWidth, window.innerHeight);
-
+// シーン
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // 空色
 
+// カメラ (TPS風)
 const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
+  75, window.innerWidth / window.innerHeight, 0.1, 1000
 );
+camera.position.set(0, 5, 10);
 
-// ==========================
-// ライト
-// ==========================
+// レンダラー
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// 光源
 const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5, 10, 7);
+light.position.set(5, 10, 5);
 scene.add(light);
 
-const ambient = new THREE.AmbientLight(0x404040);
-scene.add(ambient);
+// 床
+const floorGeometry = new THREE.PlaneGeometry(50, 50);
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
 
-// ==========================
-// 地面
-// ==========================
-const groundGeo = new THREE.PlaneGeometry(100, 100);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+// 壁（テスト用）
+const wallGeometry = new THREE.BoxGeometry(50, 5, 1);
+const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
 
-// ==========================
-// プレイヤー
-// ==========================
-const player = new THREE.Object3D();
-player.position.set(0, 2, 5);
+// 奥の壁
+const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+backWall.position.set(0, 2.5, -25);
+scene.add(backWall);
+
+// プレイヤー (円柱)
+const playerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
+const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+player.position.set(0, 1, 0);
 scene.add(player);
 
-const controls = new THREE.PointerLockControls(camera, document.body);
-player.add(camera);
-camera.position.set(0, 1.6, 0);
-
-// ==========================
-// 入力管理
-// ==========================
+// キー入力
 const keys = {};
-document.addEventListener("keydown", (e) => (keys[e.code] = true));
-document.addEventListener("keyup", (e) => (keys[e.code] = false));
+document.addEventListener("keydown", (e) => { keys[e.key] = true; });
+document.addEventListener("keyup", (e) => { keys[e.key] = false; });
 
-// ==========================
-// 常時PointerLock開始
-// ==========================
-document.body.addEventListener("click", () => {
-  controls.lock();
-});
-controls.addEventListener("lock", () => {
-  console.log("PointerLock開始");
-});
-
-// ==========================
-// 移動処理
-// ==========================
-const speed = 0.1;
-function updatePlayer() {
-  let forward = new THREE.Vector3();
-  camera.getWorldDirection(forward);
-  forward.y = 0;
-  forward.normalize();
-
-  let right = new THREE.Vector3();
-  right.crossVectors(camera.up, forward).normalize();
-
-  if (keys["KeyW"]) player.position.add(forward.clone().multiplyScalar(speed));
-  if (keys["KeyS"]) player.position.add(forward.clone().multiplyScalar(-speed));
-  if (keys["KeyA"]) player.position.add(right.clone().multiplyScalar(speed));
-  if (keys["KeyD"]) player.position.add(right.clone().multiplyScalar(-speed));
-}
-
-// ==========================
-// ループ
-// ==========================
+// アニメーションループ
 function animate() {
   requestAnimationFrame(animate);
-  updatePlayer();
+
+  // プレイヤー移動
+  const speed = 0.1;
+  if (keys["w"]) player.position.z -= speed;
+  if (keys["s"]) player.position.z += speed;
+  if (keys["a"]) player.position.x -= speed;
+  if (keys["d"]) player.position.x += speed;
+
+  // カメラはプレイヤーを追従
+  camera.position.x = player.position.x;
+  camera.position.z = player.position.z + 10;
+  camera.lookAt(player.position);
+
   renderer.render(scene, camera);
 }
 animate();
 
-// ==========================
-// ウィンドウリサイズ対応
-// ==========================
+// 画面リサイズ対応
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
