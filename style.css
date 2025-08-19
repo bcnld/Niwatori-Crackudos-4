@@ -1,50 +1,25 @@
-body {
+html, body {
   margin: 0;
+  height: 100%;
+  background: #0b0f14;
   overflow: hidden;
-  background: black;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", Arial, sans-serif;
 }
-
-canvas {
+#app {
+  width: 100vw;
+  height: 100vh;
   display: block;
 }
-
-/* ジョイスティック共通 */
-#joystickBase, #joystickKnob {
-  position: absolute;
-  touch-action: none;
-  border-radius: 50%;
-}
-
-/* 左下に固定（スマホ用） */
-#joystickBase {
-  width: 80px;
-  height: 80px;
-  background: rgba(200,200,200,0.3);
-  left: 20px;
-  bottom: 20px;
-  position: absolute;
-}
-
-#joystickKnob {
-  width: 40px;
-  height: 40px;
-  background: rgba(255,255,255,0.6);
-  position: absolute;
-  left: 50%;  /* ベース内の中央 */
-  top: 50%;   /* ベース内の中央 */
-  transform: translate(-50%, -50%);
-}
-
-/* タッチ端末でのみ表示 */
-@media (pointer: coarse) {
-  #joystickBase, #joystickKnob {
-    display: block;
-  }
-}
-
-/* PCでも確認用に一時的に表示 */
-@media (pointer: fine) {
-  #joystickBase, #joystickKnob {
-    display: block; /* 本番は none に変更するとPCでは非表示になります */
-  }
+#hud {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.45);
+  color: #e9f1ff;
+  font-size: 12px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  user-select: none;
 }
