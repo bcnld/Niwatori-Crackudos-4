@@ -22,15 +22,16 @@ canvas {
   background: rgba(200,200,200,0.3);
   left: 20px;
   bottom: 20px;
+  position: absolute;
 }
 
-/* 中心に置く */
 #joystickKnob {
   width: 40px;
   height: 40px;
   background: rgba(255,255,255,0.6);
-  left: 50%;
-  top: 50%;
+  position: absolute;
+  left: 50%;  /* ベース内の中央 */
+  top: 50%;   /* ベース内の中央 */
   transform: translate(-50%, -50%);
 }
 
