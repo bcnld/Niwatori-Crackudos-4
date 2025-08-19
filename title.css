@@ -10,7 +10,7 @@ body, html {
   overflow: hidden;
 }
 
-/* 中央の質問テキスト */
+/* ===== センターテキスト ===== */
 #center-text {
   position: fixed;
   top: 50%;
@@ -26,7 +26,7 @@ body, html {
   z-index: 20;
 }
 
-/* 背景オーバーレイ */
+/* ===== 背景オーバーレイ ===== */
 #background-overlay {
   position: fixed;
   top: 0;
@@ -34,38 +34,22 @@ body, html {
   width: 100%;
   height: 100%;
   background-color: transparent;
-  transition: background-color 1s ease;
+  transition: background-color 1s ease, opacity 1s ease;
   z-index: 5;
 }
 
-/* 企業ロゴ群コンテナ */
-#company-logos {
+/* ===== 企業ロゴ ===== */
+.company-logo {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  pointer-events: none;
-}
-
-.company-logo {
-  position: absolute;
   opacity: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transition: opacity 1s ease;
-}
-
-.company-logo img {
   max-width: 40vw;
   max-height: 40vh;
-  object-fit: contain;
+  transition: opacity 1s ease;
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* ===== タイトル画像 ===== */
@@ -79,7 +63,6 @@ body, html {
   pointer-events: none;
 }
 
-/* タイトル1（光って出る） */
 #title-img1 {
   position: absolute;
   top: 50%;
@@ -92,7 +75,6 @@ body, html {
   transition: opacity 1s ease;
 }
 
-/* タイトル2（少し上） */
 #title-img2 {
   position: absolute;
   top: 40%;
@@ -104,8 +86,8 @@ body, html {
   transition: opacity 1s ease;
 }
 
-/* Press any key テキスト */
-#press-key-text {
+/* ===== Press Any Key ===== */
+#press-any-key {
   position: fixed;
   top: 85%;
   left: 50%;
@@ -121,7 +103,7 @@ body, html {
 
   /* 黒縁取り */
   -webkit-text-stroke: 1px black; /* Safari用 */
-  text-stroke: 1px black; /* 標準用 */
+  text-stroke: 1px black;
   text-shadow:
     -1px -1px 0 black,
     1px -1px 0 black,
@@ -129,7 +111,7 @@ body, html {
     1px 1px 0 black;
 }
 
-/* スクロール背景用 */
+/* ===== 背景スクロール用 ===== */
 #scrolling-background {
   position: fixed;
   top: 0;
@@ -145,7 +127,7 @@ body, html {
   will-change: background-position;
 }
 
-/* 全画面切替ボタン */
+/* ===== 全画面切替ボタン ===== */
 #fullscreen-toggle {
   position: fixed;
   top: 10px;
@@ -166,14 +148,47 @@ body, html {
   background: rgba(80, 80, 80, 1);
 }
 
-/* スマホ対応 */
+/* ===== メインメニュー（オプション） ===== */
+#main-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  user-select: none;
+  pointer-events: auto;
+  z-index: 10000;
+  font-family: Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+#main-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#main-menu li {
+  margin: 16px 0;
+  cursor: pointer;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+#main-menu li:hover {
+  color: #f0a500;
+}
+
+/* ===== モバイル対応 ===== */
 @media (max-width: 600px) {
   #center-text {
     font-size: 28px;
     padding: 15px;
   }
 
-  .company-logo img {
+  .company-logo {
     max-width: 90vw;
     max-height: 50vh;
   }
@@ -188,39 +203,12 @@ body, html {
     max-height: 75vh;
   }
 
-  #press-key-text {
+  #press-any-key {
     font-size: 18px;
     top: 90%;
   }
+
   #main-menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 32px;
-    font-weight: bold;
-    text-align: center;
-    user-select: none;
-    pointer-events: auto;
-    z-index: 10000;
-    font-family: Arial, sans-serif;
-    text-transform: uppercase;
-  }
-
-  #main-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  #main-menu li {
-    margin: 16px 0;
-    cursor: pointer;
-    transition: color 0.3s ease;
-  }
-
-  #main-menu li:hover {
-    color: #f0a500; /* ホバー時の色 */
+    font-size: 24px;
   }
 }
