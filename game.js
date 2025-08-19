@@ -19,27 +19,6 @@ scene.add(light);
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
 // ==========================
-// テストマップ（床＋壁）
-// ==========================
-const floorMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(50,50), floorMat);
-floor.rotation.x = -Math.PI/2;
-scene.add(floor);
-
-const wallMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
-const walls = [
-  new THREE.Mesh(new THREE.BoxGeometry(50,5,1), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(50,5,1), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(1,5,50), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(1,5,50), wallMat)
-];
-walls[0].position.set(0,2.5,-25);
-walls[1].position.set(0,2.5,25);
-walls[2].position.set(-25,2.5,0);
-walls[3].position.set(25,2.5,0);
-walls.forEach(w=>scene.add(w));
-
-// ==========================
 // 主人公ニワトリ
 // ==========================
 const player = new THREE.Object3D();
@@ -68,15 +47,56 @@ document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 // ==========================
+// マップ読み込み
+// ==========================
+let floor, walls = [];
+fetch('map.json')
+  .then(res => res.json())
+  .then(maps => {
+    const startMap = maps.find(m => m.name === "VillageStart");
+    if (!startMap) throw new Error("開始マップが見つかりません");
+
+    // 床
+    const floorMat = new THREE.MeshStandardMaterial({ color: startMap.floor.color });
+    floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(startMap.floor.width, startMap.floor.height || startMap.floor.depth),
+      floorMat
+    );
+    floor.rotation.x = -Math.PI/2;
+    scene.add(floor);
+
+    // 壁
+    startMap.walls.forEach(w => {
+      const wallMat = new THREE.MeshStandardMaterial({ color: w.color });
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w.width, w.height, w.depth), wallMat);
+      wall.position.set(w.x, w.y, w.z);
+      scene.add(wall);
+      walls.push(wall);
+    });
+
+    // プロップ（車など）
+    if (startMap.props) {
+      startMap.props.forEach(p => {
+        const propMat = new THREE.MeshStandardMaterial({ color: p.color });
+        const prop = new THREE.Mesh(new THREE.BoxGeometry(p.width, p.height, p.depth), propMat);
+        prop.position.set(p.x, p.y, p.z);
+        scene.add(prop);
+      });
+    }
+  });
+
+// ==========================
 // カメラTPS追従
 // ==========================
-camera.position.set(player.position.x, player.position.y+2, player.position.z+5);
-camera.lookAt(player.position);
+function updateCamera() {
+  camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
+  camera.lookAt(player.position);
+}
 
 // ==========================
 // アニメーションループ
 // ==========================
-function animate(){
+function animate() {
   requestAnimationFrame(animate);
   const speed = 0.1;
 
@@ -86,16 +106,13 @@ function animate(){
   if(keys["a"]) player.position.x -= speed;
   if(keys["d"]) player.position.x += speed;
 
-  // カメラ追従
-  camera.position.set(player.position.x, player.position.y+2, player.position.z+5);
-  camera.lookAt(player.position);
-
+  updateCamera();
   renderer.render(scene, camera);
 }
 animate();
 
 // ==========================
-// ウィンドウリサイズ対応
+// リサイズ対応
 // ==========================
 window.addEventListener("resize", ()=>{
   camera.aspect = window.innerWidth/window.innerHeight;
