@@ -1,4 +1,4 @@
-// --- Three.js を使ったバイオ4風 村マップJS完全版（map.json読み込み版） ---
+// --- Three.js を使ったバイオ4風 村マップJS完全版（VillagePathのみ読み込み） ---
 import * as THREE from "three";
 
 // 基本セットアップ
@@ -40,12 +40,16 @@ const cameraOffset = new THREE.Vector3(0, 5, 10);
 let wallMeshes = [];
 
 // --- map.json 読み込み ---
-let mapData = null;
 fetch("map.json")
   .then(res => res.json())
-  .then(data => {
-    mapData = data;
-    createMap(mapData);
+  .then(dataArray => {
+    // nameがVillagePathのマップだけ取得
+    const villageMap = dataArray.find(m => m.name === "VillagePath");
+    if (villageMap) {
+      createMap(villageMap);
+    } else {
+      console.error("VillagePathが見つかりません");
+    }
   })
   .catch(err => console.error("map.json読み込みエラー", err));
 
@@ -98,13 +102,17 @@ function animate() {
 
   if (dir.length() > 0) {
     dir.normalize();
-    const move = new THREE.Vector3(dir.x, 0, dir.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation.y).multiplyScalar(moveSpeed);
+    const move = new THREE.Vector3(dir.x, 0, dir.z)
+      .applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation.y)
+      .multiplyScalar(moveSpeed);
     const newPos = player.position.clone().add(move);
     if (!checkCollision(newPos)) player.position.copy(newPos);
   }
 
   // カメラ追従
-  const camPos = player.position.clone().add(cameraOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation.y));
+  const camPos = player.position.clone().add(
+    cameraOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation.y)
+  );
   camera.position.lerp(camPos, 0.1);
   camera.lookAt(player.position);
 
