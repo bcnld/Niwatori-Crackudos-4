@@ -2,7 +2,7 @@
 // 基本設定
 // ==========================
 const canvas = document.getElementById("game-canvas");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const scene = new THREE.Scene();
@@ -13,42 +13,17 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHei
 // ==========================
 // ライト
 // ==========================
-const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-dirLight.position.set(10,20,10);
-scene.add(dirLight);
-
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10,20,10);
+scene.add(light);
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-// ==========================
-// テストマップ（床＋壁）
-// ==========================
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(50,50),
-  new THREE.MeshStandardMaterial({ color: 0x228B22 })
-);
-floor.rotation.x = -Math.PI/2;
-scene.add(floor);
-
-const wallMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
-const walls = [
-  new THREE.Mesh(new THREE.BoxGeometry(50,5,1), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(50,5,1), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(1,5,50), wallMat),
-  new THREE.Mesh(new THREE.BoxGeometry(1,5,50), wallMat)
-];
-walls[0].position.set(0,2.5,-25);
-walls[1].position.set(0,2.5,25);
-walls[2].position.set(-25,2.5,0);
-walls[3].position.set(25,2.5,0);
-walls.forEach(w => scene.add(w));
 
 // ==========================
 // プレイヤー
 // ==========================
-const player = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.5,0.5,2,16),
-  new THREE.MeshStandardMaterial({ color: 0x00ff00 })
-);
+const playerGeo = new THREE.CylinderGeometry(0.5,0.5,2,16);
+const playerMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+const player = new THREE.Mesh(playerGeo, playerMat);
 player.position.set(0,1,0);
 scene.add(player);
 
@@ -56,8 +31,8 @@ scene.add(player);
 // キーボード入力
 // ==========================
 const keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+document.addEventListener("keydown", e=>{ keys[e.key.toLowerCase()] = true; });
+document.addEventListener("keyup", e=>{ keys[e.key.toLowerCase()] = false; });
 
 // ==========================
 // 左手ジョイスティック
@@ -65,22 +40,16 @@ document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 const joystickBase = document.getElementById("joystickBase");
 const joystickKnob = document.getElementById("joystickKnob");
 let joystick = { active:false, deltaX:0, deltaY:0 };
-let baseCenterX, baseCenterY;
-
-function updateJoystickCenter() {
-  const rect = joystickBase.getBoundingClientRect();
-  baseCenterX = rect.left + rect.width/2;
-  baseCenterY = rect.top + rect.height/2;
-}
-updateJoystickCenter();
-window.addEventListener("resize", updateJoystickCenter);
 
 joystickBase.addEventListener("touchstart", ()=>{ joystick.active=true; });
 joystickBase.addEventListener("touchmove", e=>{
   if(!joystick.active) return;
   const touch = e.touches[0];
-  joystick.deltaX = touch.clientX - baseCenterX;
-  joystick.deltaY = touch.clientY - baseCenterY;
+  const rect = joystickBase.getBoundingClientRect();
+  const baseX = rect.left + rect.width/2;
+  const baseY = rect.top + rect.height/2;
+  joystick.deltaX = touch.clientX - baseX;
+  joystick.deltaY = touch.clientY - baseY;
   joystickKnob.style.transform = `translate(${joystick.deltaX}px, ${joystick.deltaY}px) translate(-50%, -50%)`;
 });
 joystickBase.addEventListener("touchend", ()=>{
@@ -89,8 +58,7 @@ joystickBase.addEventListener("touchend", ()=>{
 });
 
 // ==========================
-// 右手視点（スマホ＋PC右クリック）
-// ==========================
+// 右手視点（スマホ・PC右クリック）
 let rightTouch={active:false,startX:0,startY:0};
 document.addEventListener("touchstart", e=>{
   for(let t of e.touches){
@@ -103,10 +71,10 @@ document.addEventListener("touchmove", e=>{
     if(t.clientX>window.innerWidth/2){
       let deltaX=t.clientX-rightTouch.startX;
       let deltaY=t.clientY-rightTouch.startY;
-      camera.rotation.y -= deltaX*0.002;
-      camera.rotation.x -= deltaY*0.002;
-      camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
-      rightTouch.startX = t.clientX; rightTouch.startY = t.clientY;
+      camera.rotation.y-=deltaX*0.002;
+      camera.rotation.x-=deltaY*0.002;
+      camera.rotation.x=Math.max(-Math.PI/2,Math.min(Math.PI/2,camera.rotation.x));
+      rightTouch.startX=t.clientX; rightTouch.startY=t.clientY;
     }
   }
 });
@@ -119,13 +87,34 @@ document.addEventListener("mousedown", e=>{
 document.addEventListener("mouseup", e=>{ if(e.button===2) mouseDown=false; });
 document.addEventListener("mousemove", e=>{
   if(!mouseDown) return;
-  let deltaX = e.clientX-lastX;
-  let deltaY = e.clientY-lastY;
-  camera.rotation.y -= deltaX*0.002;
-  camera.rotation.x -= deltaY*0.002;
-  camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+  let deltaX=e.clientX-lastX;
+  let deltaY=e.clientY-lastY;
+  camera.rotation.y-=deltaX*0.002;
+  camera.rotation.x-=deltaY*0.002;
+  camera.rotation.x=Math.max(-Math.PI/2,Math.min(Math.PI/2,camera.rotation.x));
   lastX=e.clientX; lastY=e.clientY;
 });
+
+// ==========================
+// JSONマップ読み込み
+// ==========================
+fetch('map.json')
+  .then(res => res.json())
+  .then(map => {
+    // 床
+    const floorMat = new THREE.MeshStandardMaterial({ color: map.floor.color });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(map.floor.width, map.floor.depth), floorMat);
+    floor.rotation.x = -Math.PI/2;
+    scene.add(floor);
+
+    // 壁
+    map.walls.forEach(w => {
+      const wallMat = new THREE.MeshStandardMaterial({ color: w.color });
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w.width, w.height, w.depth), wallMat);
+      wall.position.set(w.x, w.y, w.z);
+      scene.add(wall);
+    });
+  });
 
 // ==========================
 // アニメーションループ
@@ -142,15 +131,17 @@ function animate(){
 
   // 左手ジョイスティック移動
   if(joystick.active){
-    const maxDist = 40;
-    let moveX = Math.max(-1, Math.min(1, joystick.deltaX/maxDist));
-    let moveZ = Math.max(-1, Math.min(1, joystick.deltaY/maxDist));
+    const maxDist=40;
+    let moveX = joystick.deltaX/maxDist;
+    let moveZ = joystick.deltaY/maxDist;
+    moveX = Math.max(-1,Math.min(1,moveX));
+    moveZ = Math.max(-1,Math.min(1,moveZ));
     player.position.x += moveX*speed;
     player.position.z -= moveZ*speed;
   }
 
-  // カメラTPS追従
-  camera.position.set(player.position.x, player.position.y+3, player.position.z+10);
+  // カメラ追従（TPS）
+  camera.position.set(player.position.x, player.position.y+2, player.position.z+5);
   camera.lookAt(player.position);
 
   renderer.render(scene, camera);
@@ -158,10 +149,10 @@ function animate(){
 animate();
 
 // ==========================
-// リサイズ対応
+// ウィンドウリサイズ
 // ==========================
 window.addEventListener("resize", ()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
