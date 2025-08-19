@@ -10,17 +10,17 @@
     ]
   },
   {
-    "name": "VillageStart",
-    "floor": { "width": 60, "height": 60, "color": 6710886 },
-    "walls": [
-      { "x": 0, "y": 2.5, "z": -30, "width": 60, "height": 5, "depth": 1, "color": 8947848 },
-      { "x": 0, "y": 2.5, "z": 30, "width": 60, "height": 5, "depth": 1, "color": 8947848 },
-      { "x": -30, "y": 2.5, "z": 0, "width": 1, "height": 5, "depth": 60, "color": 8947848 },
-      { "x": 30, "y": 2.5, "z": 0, "width": 1, "height": 5, "depth": 60, "color": 8947848 },
-      { "x": 5, "y": 1, "z": -10, "width": 4, "height": 2, "depth": 2, "color": 12632256 }
-    ],
-    "props": [
-      { "type": "car", "x": -5, "y": 0, "z": 8, "width": 3, "height": 1.5, "depth": 5, "color": 16711680 }
-    ]
+  "name": "VillagePath",
+  "floor": { "width": 60, "depth": 60, "color": 12632256 },
+  "walls": [
+    { "x": -30, "y": 2.5, "z": 0, "width": 1, "height": 5, "depth": 60, "color": 8947848 },
+    { "x": 30, "y": 2.5, "z": 0, "width": 1, "height": 5, "depth": 60, "color": 8947848 }
+  ],
+  "props": [
+    { "type": "house", "x": -10, "y": 0, "z": 15, "width": 10, "height": 8, "depth": 8, "color": 11184810 },
+    { "type": "house", "x": 12, "y": 0, "z": -10, "width": 12, "height": 9, "depth": 10, "color": 10066329 },
+    { "type": "tree", "x": 20, "y": 0, "z": 20, "width": 2, "height": 7, "depth": 2, "color": 32768 },
+    { "type": "fence", "x": 0, "y": 0, "z": -25, "width": 20, "height": 2, "depth": 1, "color": 5526612 }
+  ]
   }
 ]
