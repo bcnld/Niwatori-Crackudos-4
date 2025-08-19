@@ -1,31 +1,72 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>JSON 3D マップ（斜面歩行）</title>
-  <link rel="stylesheet" href="./style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Niwatori Crackudos</title>
+  <link rel="stylesheet" href="title.css" />
+  <style>
+    /* フルスクリーンボタンのみ内部CSS */
+    #fullscreen-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(50,50,50,0.8);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 5px;
+      z-index: 10000;
+      user-select: none;
+      transition: background 0.3s ease;
+    }
+    #fullscreen-toggle:hover { background: rgba(80,80,80,1); }
+  </style>
 </head>
 <body>
-  <div id="hud">
-    <div>WASD: 移動 / マウス: 視点 / Space: ジャンプ / Shift: ダッシュ / R: リセット</div>
+
+  <!-- センターテキスト -->
+  <div id="center-text">あなたは日本人ですか？</div>
+
+  <!-- 背景オーバーレイ -->
+  <div id="background-overlay"></div>
+
+  <!-- 企業ロゴ -->
+  <img class="company-logo" src="images/mdm_logo.png" alt="Logo 1" />
+  <img class="company-logo" src="images/Sus_logo.png" alt="Logo 2" />
+  <img class="company-logo" src="images/homo_logo.png" alt="Logo 3" />
+
+  <!-- 全画面演出 -->
+  <img id="fullscreen-effect" src="images/fullscreen_effect.png" alt="Effect" style="display:none; position:fixed; top:50%; left:50%; transform: translate(-50%, -50%) scale(1.2); opacity:0; z-index:9999; pointer-events:none;" />
+
+  <!-- タイトル画像 -->
+  <div id="title-images">
+    <img id="title-img1" src="images/title1.png" alt="Title 1" />
+    <img id="title-img2" src="images/title2.png" alt="Title 2" />
   </div>
 
-  <canvas id="app"></canvas>
+  <!-- Press Any Key -->
+  <div id="press-any-key">PRESS ANY KEY</div>
 
-  <!-- Three.js (ESM) -->
-  <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-    window.THREE = THREE; // main.js から参照できるように
-  </script>
+  <!-- フルスクリーン切替ボタン -->
+  <button id="fullscreen-toggle">全画面切替</button>
 
-  <!-- OrbitControls（デバッグ用：Cキーで切替） -->
-  <script type="module" src="https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+  <!-- ゲーム本編 -->
+  <div id="game-screen">
+    <div id="water-area"></div>
+    <!-- 他のUIはscript.jsで追加 -->
+  </div>
 
-  <!-- キャラクター定義 -->
-  <script type="module" src="./character.js"></script>
+  <!-- BGM・効果音 -->
+  <audio id="bgm" src="Sounds/title.mp3" preload="auto"></audio>
+  <audio id="effect-sfx" src="Sounds/effect.mp3"></audio>
+  <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
 
-  <!-- メイン -->
-  <script type="module" src="./main.js"></script>
+  <!-- JS読み込み -->
+  <script src="title.js"></script>
+  <script src="script.js"></script>
+
 </body>
 </html>
