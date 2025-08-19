@@ -8,12 +8,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
 // ==========================
 // ライト
@@ -24,7 +19,7 @@ scene.add(light);
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
 // ==========================
-// マップ（床＋壁）
+// テストマップ（床＋壁）
 // ==========================
 const floorMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(50,50), floorMat);
@@ -42,69 +37,41 @@ walls[0].position.set(0,2.5,-25);
 walls[1].position.set(0,2.5,25);
 walls[2].position.set(-25,2.5,0);
 walls[3].position.set(25,2.5,0);
-walls.forEach(w => scene.add(w));
+walls.forEach(w=>scene.add(w));
 
 // ==========================
-// プレイヤー
+// 主人公ニワトリ
 // ==========================
-const playerGeo = new THREE.CylinderGeometry(0.5,0.5,2,16);
-const playerMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-const player = new THREE.Mesh(playerGeo, playerMat);
+const player = new THREE.Object3D();
 player.position.set(0,1,0);
 scene.add(player);
 
+// 体
+const bodyGeo = new THREE.CylinderGeometry(0.5,0.5,1,16);
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+bodyMesh.position.y = 0.5;
+player.add(bodyMesh);
+
+// 頭
+const headGeo = new THREE.SphereGeometry(0.3,16,16);
+const headMat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+const headMesh = new THREE.Mesh(headGeo, headMat);
+headMesh.position.y = 1.1;
+player.add(headMesh);
+
 // ==========================
-// 入力管理
+// キーボード入力
 // ==========================
 const keys = {};
-document.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
-document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// 左手ジョイスティック
-const joystickBase = document.getElementById("joystickBase");
-const joystickKnob = document.getElementById("joystickKnob");
-let joystick = { active:false, deltaX:0, deltaY:0 };
-
-const baseRect = joystickBase.getBoundingClientRect();
-const baseCenterX = baseRect.left + baseRect.width/2;
-const baseCenterY = baseRect.top + baseRect.height/2;
-
-joystickBase.addEventListener("touchstart", ()=>{ joystick.active=true; });
-joystickBase.addEventListener("touchmove", e=>{
-  if(!joystick.active) return;
-  const touch = e.touches[0];
-  joystick.deltaX = touch.clientX - baseCenterX;
-  joystick.deltaY = touch.clientY - baseCenterY;
-  joystickKnob.style.transform = `translate(${joystick.deltaX}px, ${joystick.deltaY}px) translate(-50%, -50%)`;
-});
-joystickBase.addEventListener("touchend", ()=>{
-  joystick.active=false; joystick.deltaX=0; joystick.deltaY=0;
-  joystickKnob.style.transform = `translate(0px,0px) translate(-50%, -50%)`;
-});
-
-// 右手視点（スマホ）
-let rightTouch={active:false,startX:0,startY:0};
-document.addEventListener("touchstart", e=>{
-  for(let t of e.touches){
-    if(t.clientX>window.innerWidth/2){
-      rightTouch.active=true; rightTouch.startX=t.clientX; rightTouch.startY=t.clientY;
-    }
-  }
-});
-document.addEventListener("touchmove", e=>{
-  if(!rightTouch.active) return;
-  for(let t of e.touches){
-    if(t.clientX>window.innerWidth/2){
-      let deltaX=t.clientX-rightTouch.startX;
-      let deltaY=t.clientY-rightTouch.startY;
-      camera.rotation.y -= deltaX*0.002;
-      camera.rotation.x -= deltaY*0.002;
-      camera.rotation.x = Math.max(-0.3, Math.min(0.3, camera.rotation.x));
-      rightTouch.startX=t.clientX; rightTouch.startY=t.clientY;
-    }
-  }
-});
-document.addEventListener("touchend", ()=>{ rightTouch.active=false; });
+// ==========================
+// カメラTPS追従
+// ==========================
+camera.position.set(player.position.x, player.position.y+2, player.position.z+5);
+camera.lookAt(player.position);
 
 // ==========================
 // アニメーションループ
@@ -119,23 +86,8 @@ function animate(){
   if(keys["a"]) player.position.x -= speed;
   if(keys["d"]) player.position.x += speed;
 
-  // 左手ジョイスティック移動
-  if(joystick.active){
-    const maxDist=40;
-    let moveX = joystick.deltaX/maxDist;
-    let moveZ = joystick.deltaY/maxDist;
-    moveX = Math.max(-1, Math.min(1, moveX));
-    moveZ = Math.max(-1, Math.min(1, moveZ));
-    player.position.x += moveX*speed;
-    player.position.z -= moveZ*speed;
-  }
-
-  // ==========================
-  // バイオ4風カメラ
-  // ==========================
-  const camOffset = new THREE.Vector3(0,3, -6);
-  const camPos = player.position.clone().add(camOffset);
-  camera.position.lerp(camPos, 0.1);
+  // カメラ追従
+  camera.position.set(player.position.x, player.position.y+2, player.position.z+5);
   camera.lookAt(player.position);
 
   renderer.render(scene, camera);
@@ -143,10 +95,10 @@ function animate(){
 animate();
 
 // ==========================
-// リサイズ対応
+// ウィンドウリサイズ対応
 // ==========================
 window.addEventListener("resize", ()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
