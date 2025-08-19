@@ -1,19 +1,18 @@
-body { 
-  margin: 0; 
-  overflow: hidden; 
+body {
+  margin: 0;
+  overflow: hidden;
   background: black;
 }
 
-canvas { 
-  display: block; 
+canvas {
+  display: block;
 }
 
-/* ジョイスティック用 */
+/* ジョイスティック */
 #joystickBase, #joystickKnob {
   position: absolute;
   touch-action: none;
   border-radius: 50%;
-  display: none; /* デフォルト非表示 */
 }
 
 #joystickBase {
@@ -28,14 +27,21 @@ canvas {
   width: 40px;
   height: 40px;
   background: rgba(255,255,255,0.6);
+  left: 60px; /* 中心に合わせる */
+  bottom: 60px; /* 中心に合わせる */
   transform: translate(-50%, -50%);
-  left: 20px;
-  bottom: 20px;
 }
 
-/* タッチ端末だけ表示 */
+/* タッチ端末でのみ表示 */
 @media (pointer: coarse) {
-  #joystickBase, #joystickKnob { 
-    display: block; 
+  #joystickBase, #joystickKnob {
+    display: block;
+  }
+}
+
+/* PCでも確認用に一時的に表示 */
+@media (pointer: fine) {
+  #joystickBase, #joystickKnob {
+    display: block;
   }
 }
