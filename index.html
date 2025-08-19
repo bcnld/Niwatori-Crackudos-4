@@ -2,20 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>TPSテストマップ</title>
+  <title>サバイバルホラー風テスト</title>
   <style>
-    body { margin:0; overflow:hidden; }
-    canvas { display:block; }
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <canvas id="game-canvas"></canvas>
-
-  <!-- Three.js本体 -->
+  <!-- three.js をCDNから読み込み -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-  <!-- PointerLockControls -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/PointerLockControls.js"></script>
-  <!-- 自作スクリプト -->
+  <!-- ゲーム用JS -->
   <script src="game.js"></script>
 </body>
 </html>
