@@ -75,14 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // タイトル表示（3つめのロゴ終了後にBGM再生）
   async function showTitleSequence(){
-    if(bgm){
-      bgm.src = "Sounds/title.mp3"; // BGM設定
-      bgm.loop = true;
-      bgm.volume = 1;
-      try { await bgm.play(); } 
-      catch(e){ console.warn("BGM再生失敗:", e); }
-    }
-
     if(titleImg1){
       titleImg1.style.display="block";
       await fadeIn(titleImg1,1000);
@@ -104,6 +96,15 @@ document.addEventListener("DOMContentLoaded", () => {
     async function onInput(){
       window.removeEventListener("keydown",onInput,true);
       window.removeEventListener("touchstart",onInput,true);
+
+      // BGM再生（クリック／キー入力直後なら確実）
+      if(bgm){
+        bgm.src = "Sounds/title.mp3";
+        bgm.loop = true;
+        bgm.volume = 1;
+        bgm.play().catch(e => console.warn("BGM再生失敗:", e));
+      }
+
       if(pressKeyText) await fadeOut(pressKeyText,800);
       startBackgroundScroll();
       createMenu();
@@ -139,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
       left:`${x}px`,
       width:`${bgImageWidth}px`,
       height:`${bgImageHeight}px`,
-      backgroundImage:"url('images/menu.png')",
+      backgroundImage:"url('images/title_bg.png')", // ← 修正済み
       backgroundSize:"cover",
       backgroundRepeat:"no-repeat",
       backgroundPosition:"center center"
