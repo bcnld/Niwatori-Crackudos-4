@@ -14,13 +14,12 @@ const scene = new THREE_NS.Scene();
 scene.background = new THREE_NS.Color(0x87ceeb);
 
 const camera = new THREE_NS.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 6, 10);
 
 // Lights
 const sun = new THREE_NS.DirectionalLight(0xffffff, 1.0);
 sun.position.set(40, 80, 20);
 scene.add(sun);
-scene.add(new THREE_NS.AmbientLight(0xffffff, 0.7));
+scene.add(new THREE_NS.AmbientLight(0xffffff, 0.6)); // 明るめ
 
 // Grid helper
 const grid = new THREE_NS.GridHelper(200, 20, 0x444444, 0x666666);
@@ -79,7 +78,7 @@ const player = {
   onGround: false
 };
 
-// ===== Player Mesh =====
+// ===== Player Mesh (Third-Person) =====
 const playerMesh = createCharacterMesh();
 scene.add(playerMesh);
 
@@ -91,16 +90,13 @@ let width = 0, depth = 0;
 let cellX = 0, cellZ = 0;
 let heights = null;
 
-// ===== Fetch Map =====
 fetch("./map.json").then(r => r.json()).then(data => {
-  // JSON 配列の先頭を使用
-  map = data[0];
+  map = data[0]; // JSON が配列で渡されている場合
   buildTerrain(map.terrain);
   buildObjects(map.objects ?? []);
   initSpawn(map.spawn);
 }).catch(err => console.error(err));
 
-// ===== Terrain =====
 function buildTerrain(terrain) {
   heights = terrain.heights;
   rows = heights.length;
@@ -116,7 +112,7 @@ function buildTerrain(terrain) {
   let i = 0;
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++, i++){
-      pos.setY(i, heights[r][c]);
+      pos.setY(i, heights[r][c]*1); // 高さスケール調整
     }
   }
   pos.needsUpdate = true;
@@ -124,14 +120,14 @@ function buildTerrain(terrain) {
 
   const mat = new THREE_NS.MeshStandardMaterial({
     color: 0x4caf50,
-    roughness: 0.95,
-    metalness: 0.0
+    roughness: 0.7,
+    metalness: 0.0,
+    side: THREE_NS.DoubleSide
   });
   terrainMesh = new THREE_NS.Mesh(geo, mat);
   scene.add(terrainMesh);
 }
 
-// ===== Objects =====
 function buildObjects(objects){
   for(const o of objects){
     let mesh = null;
@@ -143,14 +139,15 @@ function buildObjects(objects){
       );
     } else if(o.type === "cylinder"){
       mesh = new THREE_NS.Mesh(
-        new THREE_NS.CylinderGeometry(0.0, 0.8,1,10),
+        new THREE_NS.CylinderGeometry(0.5,0.5,o.scale.y ?? 1,16),
         new THREE_NS.MeshStandardMaterial({ color })
       );
     } else continue;
 
-    if(o.scale) mesh.scale.set(o.scale.x ?? 1, o.scale.y ?? 1, o.scale.z ?? 1);
+    if(o.scale && o.type !== "cylinder") mesh.scale.set(o.scale.x ?? 1, o.scale.y ?? 1, o.scale.z ?? 1);
+
     const baseY = getHeightAt(o.position.x, o.position.z);
-    mesh.position.set(o.position.x, baseY, o.position.z);
+    mesh.position.set(o.position.x, baseY + ((o.type==="cylinder")? (o.scale.y/2 ?? 0.5):0), o.position.z);
 
     if(o.rotation){
       mesh.rotation.set(
@@ -172,9 +169,7 @@ function initSpawn(spawn){
   player.pos.set(sx,5,sz);
   const y = getHeightAt(sx, sz);
   player.pos.y = y + player.eye;
-  // カメラ初期位置を少し後ろにオフセット
-  const offset = new THREE_NS.Vector3(0, 2, 6);
-  camera.position.copy(player.pos.clone().add(offset));
+  camera.position.set(player.pos.x, player.pos.y + 2, player.pos.z + 6);
   camera.lookAt(player.pos);
   yaw = 0; pitch = 0;
 }
