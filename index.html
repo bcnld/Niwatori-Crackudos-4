@@ -10,16 +10,20 @@
   <div id="hud">
     <div>WASD: 移動 / マウス: 視点 / Space: ジャンプ / Shift: ダッシュ / R: リセット</div>
   </div>
+
   <canvas id="app"></canvas>
 
   <!-- Three.js (ESM) -->
-  <script type="module" src="https://unpkg.com/three@0.160.0/build/three.module.js"></script>
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     window.THREE = THREE; // main.js から参照できるように
   </script>
+
   <!-- OrbitControls（デバッグ用：Cキーで切替） -->
   <script type="module" src="https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+
+  <!-- キャラクター定義 -->
+  <script type="module" src="./character.js"></script>
 
   <!-- メイン -->
   <script type="module" src="./main.js"></script>
