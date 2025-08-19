@@ -8,13 +8,14 @@ canvas {
   display: block;
 }
 
-/* ジョイスティック */
+/* ジョイスティック共通 */
 #joystickBase, #joystickKnob {
   position: absolute;
   touch-action: none;
   border-radius: 50%;
 }
 
+/* 左下に固定（スマホ用） */
 #joystickBase {
   width: 80px;
   height: 80px;
@@ -23,12 +24,13 @@ canvas {
   bottom: 20px;
 }
 
+/* 中心に置く */
 #joystickKnob {
   width: 40px;
   height: 40px;
   background: rgba(255,255,255,0.6);
-  left: 60px; /* 中心に合わせる */
-  bottom: 60px; /* 中心に合わせる */
+  left: 50%;
+  top: 50%;
   transform: translate(-50%, -50%);
 }
 
@@ -42,6 +44,6 @@ canvas {
 /* PCでも確認用に一時的に表示 */
 @media (pointer: fine) {
   #joystickBase, #joystickKnob {
-    display: block;
+    display: block; /* 本番は none に変更するとPCでは非表示になります */
   }
 }
