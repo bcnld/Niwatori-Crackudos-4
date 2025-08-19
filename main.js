@@ -20,7 +20,7 @@ camera.position.set(0, 6, 10);
 const sun = new THREE_NS.DirectionalLight(0xffffff, 1.0);
 sun.position.set(40, 80, 20);
 scene.add(sun);
-scene.add(new THREE_NS.AmbientLight(0xffffff, 0.35));
+scene.add(new THREE_NS.AmbientLight(0xffffff, 0.7));
 
 // Grid helper
 const grid = new THREE_NS.GridHelper(200, 20, 0x444444, 0x666666);
@@ -79,7 +79,7 @@ const player = {
   onGround: false
 };
 
-// ===== Player Mesh (Third-Person) =====
+// ===== Player Mesh =====
 const playerMesh = createCharacterMesh();
 scene.add(playerMesh);
 
@@ -91,13 +91,16 @@ let width = 0, depth = 0;
 let cellX = 0, cellZ = 0;
 let heights = null;
 
+// ===== Fetch Map =====
 fetch("./map.json").then(r => r.json()).then(data => {
-  map = data;
-  buildTerrain(data.terrain);
-  buildObjects(data.objects ?? []);
-  initSpawn(data.spawn);
+  // JSON 配列の先頭を使用
+  map = data[0];
+  buildTerrain(map.terrain);
+  buildObjects(map.objects ?? []);
+  initSpawn(map.spawn);
 }).catch(err => console.error(err));
 
+// ===== Terrain =====
 function buildTerrain(terrain) {
   heights = terrain.heights;
   rows = heights.length;
@@ -128,6 +131,7 @@ function buildTerrain(terrain) {
   scene.add(terrainMesh);
 }
 
+// ===== Objects =====
 function buildObjects(objects){
   for(const o of objects){
     let mesh = null;
@@ -145,7 +149,6 @@ function buildObjects(objects){
     } else continue;
 
     if(o.scale) mesh.scale.set(o.scale.x ?? 1, o.scale.y ?? 1, o.scale.z ?? 1);
-
     const baseY = getHeightAt(o.position.x, o.position.z);
     mesh.position.set(o.position.x, baseY, o.position.z);
 
@@ -169,7 +172,10 @@ function initSpawn(spawn){
   player.pos.set(sx,5,sz);
   const y = getHeightAt(sx, sz);
   player.pos.y = y + player.eye;
-  camera.position.copy(player.pos);
+  // カメラ初期位置を少し後ろにオフセット
+  const offset = new THREE_NS.Vector3(0, 2, 6);
+  camera.position.copy(player.pos.clone().add(offset));
+  camera.lookAt(player.pos);
   yaw = 0; pitch = 0;
 }
 
