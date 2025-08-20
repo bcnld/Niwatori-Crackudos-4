@@ -170,32 +170,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- メニュー作成 ---
   const menuItems=["New Game","Load","Settings"];
+  const menuItems=["New Game","Load","Settings"];
   function createMenu(){
     menuWrapper=document.createElement("div");
     const rect=titleImg2.getBoundingClientRect();
-    Object.assign(menuWrapper.style,{
-      position:"fixed", top:`${rect.bottom+20}px`, left:"50%", transform:"translateX(-50%)",
-      zIndex:10000, display:"flex", flexDirection:"column", gap:"12px",
-      fontSize:"24px", fontWeight:"bold", color:"#fff", textShadow:"0 0 5px black"
-    });
+    Object.assign(menuWrapper.style,{position:"fixed",top:`${rect.bottom+20}px`,left:"50%",transform:"translateX(-50%)",zIndex:"10000",display:"flex",flexDirection:"column",gap:"12px",fontSize:"24px",fontWeight:"bold",color:"#fff",textShadow:"0 0 5px black"});
     menuItems.forEach((text,i)=>{
       const item=document.createElement("div");
       item.textContent=text;
-      Object.assign(item.style,{cursor:"pointer",padding:"10px 20px",borderRadius:"8px",userSelect:"none",transition:"background-color 0.3s ease,color 0.3s ease"});
+      Object.assign(item.style,{cursor:"pointer",padding:"10px 20px",borderRadius:"8px",userSelect:"none",transition:"background-color 0.3s ease, color 0.3s ease"});
       item.dataset.index=i;
       item.addEventListener("click",()=>{ 
         if(selectedIndex===i && isInputMode){
-          if(menuItems[i]==="New Game") startCharacterSelection();
-          else alert(`"${menuItems[i]}" はまだ未実装です`);
+          if(menuItems[i]==="New Game") startNewGameWithVideo();
+          else alert(`"${menuItems[i]}" が選択されました！`);
         } else {
-          selectedIndex=i; updateMenuSelection();
-          if(selectSfx){ try{ selectSfx.currentTime=0; selectSfx.play(); }catch{} }
+          selectedIndex=i; isInputMode=true; updateMenuSelection();
+        }
+      });
+      item.addEventListener("mouseenter",()=>{
+        if(selectedIndex!==i){
+          selectedIndex=i; isInputMode=false; updateMenuSelection();
         }
       });
       menuWrapper.appendChild(item);
     });
     document.body.appendChild(menuWrapper);
-    isInputMode = true; selectedIndex = 0;
     updateMenuSelection();
   }
 
