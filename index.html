@@ -4,9 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Niwatori Crackudos</title>
-  <link rel="stylesheet" href="title.css" />
+  <link rel="stylesheet" href="style.css" />
   <style>
     /* --- タイトル画面用スタイル --- */
+    #center-text {
+      position: fixed;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:32px;
+      color:white;
+      text-align:center;
+      cursor:pointer;
+      z-index:10000;
+    }
+
     #fullscreen-toggle {
       position: fixed;
       top: 10px;
@@ -31,8 +43,6 @@
       transform: translate(-50%, -50%);
       z-index: 30;
       pointer-events: none;
-      width: 100vw;
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -47,46 +57,24 @@
       pointer-events: none;
     }
 
-    #game-screen { display: none; width:100vw; height:100vh; background:#a0d8f7; position:relative; overflow:hidden; }
-    #water-area { width:100%; height:100%; background:linear-gradient(to bottom,#4ec6ff,#0059b3); }
-
-    /* イントロ */
-    #intro {
-      position: fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      display:none;
-      justify-content:center;
-      align-items:center;
-      background:black;
-      color:white;
-      font-size:32px;
-      z-index:9999;
-      cursor:pointer;
-    }
-
-    /* フェード用オーバーレイ */
-    #fade-overlay {
-      position: fixed;
-      top:0; left:0; width:100%; height:100%;
-      background:black; opacity:0;
-      pointer-events:none;
-      z-index:5000;
-      transition: opacity 1s ease;
-    }
-
-    /* Press Any Key */
     #press-any-key {
       position: fixed;
       bottom:50px; width:100%; text-align:center;
       color:white; font-size:24px; user-select:none; cursor:default;
       z-index:50; display:none;
     }
+
+    #fade-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background:black; opacity:0;
+      pointer-events:none; z-index:5000;
+      transition: opacity 1s ease;
+    }
   </style>
 </head>
 <body>
 
-  <!-- センターテキスト -->
+  <!-- 最初の質問 -->
   <div id="center-text">あなたは日本人ですか？</div>
 
   <!-- 背景オーバーレイ -->
@@ -98,7 +86,7 @@
   <img class="company-logo" src="images/homo_logo.png" alt="Logo 3" />
 
   <!-- 全画面演出 -->
-  <img id="fullscreen-effect" src="images/fullscreen_effect.png" alt="Effect" style="display:none; position:fixed; top:50%; left:50%; transform: translate(-50%, -50%) scale(1.2); opacity:0; z-index:9999; pointer-events:none;" />
+  <img id="fullscreen-effect" src="images/fullscreen_effect.png" alt="Effect" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) scale(1.2); opacity:0; z-index:9999; pointer-events:none;" />
 
   <!-- タイトル画像 -->
   <div id="title-images">
@@ -109,26 +97,15 @@
   <!-- Press Any Key -->
   <div id="press-any-key">PRESS ANY KEY</div>
 
-  <!-- イントロ -->
-  <div id="intro">INTRO SCENE (Click to Skip)</div>
-
-  <!-- 全画面切替ボタン -->
+  <!-- フルスクリーン切替ボタン -->
   <button id="fullscreen-toggle">全画面切替</button>
-
-  <!-- ゲーム本編 -->
-  <div id="game-screen">
-    <div id="water-area"></div>
-    <!-- 他のUIはScript.jsで追加 -->
-  </div>
-
-  <!-- 動画 -->
-  <video id="intro-movie" src="movie/intro.mp4" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:100vw;height:100vh;object-fit:cover;z-index:6000;display:none;"></video>
 
   <!-- BGM・効果音 -->
   <audio id="bgm" src="Sounds/title.mp3" preload="auto"></audio>
   <audio id="effect-sfx" src="Sounds/effect.mp3"></audio>
   <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
 
+  <!-- JS読み込み -->
   <script src="title.js"></script>
   <script src="script.js"></script>
 
