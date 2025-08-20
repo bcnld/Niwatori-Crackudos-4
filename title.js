@@ -1,75 +1,25 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", ()=>{
   const centerText = document.getElementById("center-text");
   const logos = document.querySelectorAll(".company-logo");
   const backgroundOverlay = document.getElementById("background-overlay");
-  const bgm = document.getElementById("bgm");
+  const fadeOverlay = document.getElementById("fade-overlay");
   const titleImg1 = document.getElementById("title-img1");
   const titleImg2 = document.getElementById("title-img2");
   const pressKeyText = document.getElementById("press-any-key");
   const fullscreenEffect = document.getElementById("fullscreen-effect");
   const effectSfx = document.getElementById("effect-sfx");
   const selectSfx = document.getElementById("select-sfx");
-  const fadeOverlay = document.getElementById("fade-overlay");
   const gameScreen = document.getElementById("game-screen");
+  const bgm = document.getElementById("bgm");
 
-  let currentIndex = 0;
-  let started = false;
-  let menuWrapper, selectedIndex = 0, isInputMode = false;
+  let currentIndex=0, started=false;
 
-  // 初期状態
-  logos.forEach(logo => {
-    Object.assign(logo.style, { position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:"9998", display:"none", opacity:0 });
-  });
-  [titleImg1, titleImg2, pressKeyText, fullscreenEffect, backgroundOverlay, fadeOverlay].forEach(el=>{
-    if(el){ el.style.display="none"; el.style.opacity=0; }
-  });
+  // fade関数
+  function fadeIn(el,d=1000){ el.style.display="block"; el.style.opacity=0; return new Promise(res=>{ let start=null; function step(ts){ if(!start) start=ts; let p=Math.min((ts-start)/d,1); el.style.opacity=p; if(p<1) requestAnimationFrame(step); else res(); } requestAnimationFrame(step); }); }
+  function fadeOut(el,d=1000){ el.style.opacity=1; return new Promise(res=>{ let start=null; function step(ts){ if(!start) start=ts; let p=Math.min((ts-start)/d,1); el.style.opacity=1-p; if(p<1) requestAnimationFrame(step); else { el.style.display="none"; res(); } } requestAnimationFrame(step); }); }
 
-  // フェード関数
-  function fadeIn(el, duration=1000){
-    el.style.display="block"; el.style.opacity=0;
-    return new Promise(resolve=>{
-      let start=null;
-      function step(ts){
-        if(!start) start=ts;
-        let p=Math.min((ts-start)/duration,1);
-        el.style.opacity=p;
-        if(p<1) requestAnimationFrame(step); else resolve();
-      }
-      requestAnimationFrame(step);
-    });
-  }
-
-  function fadeOut(el, duration=1000){
-    el.style.opacity=1;
-    return new Promise(resolve=>{
-      let start=null;
-      function step(ts){
-        if(!start) start=ts;
-        let p=Math.min((ts-start)/duration,1);
-        el.style.opacity=1-p;
-        if(p<1) requestAnimationFrame(step);
-        else { el.style.display="none"; resolve(); }
-      }
-      requestAnimationFrame(step);
-    });
-  }
-
-  // ロゴ表示
   async function showNextLogo(){
-    if(currentIndex>=logos.length){
-      await showTitleSequence();
-      return;
-    }
-    if(currentIndex > 0 && backgroundOverlay){
-      backgroundOverlay.style.transition="none";
-      backgroundOverlay.style.backgroundImage="";
-      backgroundOverlay.style.backgroundColor="rgba(255,255,255,0.8)";
-      backgroundOverlay.style.opacity=1;
-      setTimeout(()=>backgroundOverlay.style.transition="opacity 1s ease",10);
-    } else if(backgroundOverlay){
-      backgroundOverlay.style.backgroundColor="transparent";
-      backgroundOverlay.style.opacity=1;
-    }
+    if(currentIndex>=logos.length){ await showTitleSequence(); return; }
     const logo=logos[currentIndex];
     await fadeIn(logo,1000);
     await new Promise(r=>setTimeout(r,2000));
@@ -78,27 +28,65 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
-  // タイトル表示
   async function showTitleSequence(){
-    const effectPromise = showFullscreenEffect();
+    if(backgroundOverlay){ backgroundOverlay.style.display="block"; backgroundOverlay.style.opacity=0; backgroundOverlay.style.backgroundImage="url('images/press_bg.png')"; backgroundOverlay.style.backgroundSize="cover"; requestAnimationFrame(()=>backgroundOverlay.style.opacity=1); }
+    if(bgm){ bgm.loop=true; bgm.play(); }
+    if(titleImg1){ await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,3000)); await fadeOut(titleImg1,1000); }
+    if(titleImg2){ await fadeIn(titleImg2,1000); }
+    if(pressKeyText){ pressKeyText.style.display="block"; requestAnimationFrame(()=>pressKeyText.style.opacity=1); }
+    waitForPressKey();
+  }
 
-    if(backgroundOverlay){
-      backgroundOverlay.style.display="block";
-      backgroundOverlay.style.opacity=0;
-      backgroundOverlay.style.backgroundImage="url('images/press_bg.png')"; // Press用背景を先に設定
-      backgroundOverlay.style.backgroundSize="cover";
-      backgroundOverlay.style.backgroundPosition="center";
-      backgroundOverlay.style.filter="blur(5px)";
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      backgroundOverlay.style.transition="opacity 2s ease, filter 2s ease";
-      backgroundOverlay.style.opacity=1;
-      backgroundOverlay.style.filter="blur(0)";
-    }
+  function waitForPressKey(){
+    function onInput(){ window.removeEventListener("keydown",onInput); window.removeEventListener("touchstart",onInput); fadeOut(pressKeyText,800); fadeOut(backgroundOverlay,1500); startBackgroundScroll(); createMenu(); }
+    window.addEventListener("keydown",onInput); window.addEventListener("touchstart",onInput);
+  }
 
-    if(bgm){ bgm.loop=true; bgm.volume=1; bgm.play(); }
+  centerText.addEventListener("click",()=>{ if(started) return; started=true; fadeOut(centerText,500).then(showNextLogo); });
 
-    if(titleImg1){ 
-      titleImg1.style.display="block"; 
+  // 背景スクロール
+  const scrollSpeed=1, bgWidth=3600;
+  const containerW=window.innerWidth, containerH=window.innerHeight;
+  const scrollWrapper=document.createElement("div"); Object.assign(scrollWrapper.style,{position:"fixed",top:"0",left:"0",width:`${containerW}px`,height:`${containerH}px`,overflow:"hidden",zIndex:1,pointerEvents:"none"});
+  let bgElements=[];
+  function createBgDiv(x){ const div=document.createElement("div"); Object.assign(div.style,{position:"absolute",top:"0",left:`${x}px`,width:`${bgWidth}px`,height:`${containerH}px`,backgroundImage:"url('images/menu.png')",backgroundSize:"cover",backgroundRepeat:"no-repeat"}); return div; }
+  function animateScrollingBackground(){ for(let div of bgElements){ div.style.left=`${parseFloat(div.style.left)-scrollSpeed}px`; } if(parseFloat(bgElements[0].style.left)+bgWidth<=0){ bgElements.shift().remove(); } const lastDiv=bgElements[bgElements.length-1]; if(parseFloat(lastDiv.style.left)+bgWidth<=containerW){ bgElements.push(createBgDiv(parseFloat(lastDiv.style.left)+bgWidth)); scrollWrapper.appendChild(bgElements[bgElements.length-1]); } requestAnimationFrame(animateScrollingBackground); }
+  function startBackgroundScroll(){ document.body.appendChild(scrollWrapper); bgElements=[createBgDiv(0),createBgDiv(bgWidth)]; bgElements.forEach(d=>scrollWrapper.appendChild(d)); animateScrollingBackground(); }
+
+  // メニュー
+  const menuItems=["New Game","Load","Settings"];
+  let menuWrapper, selectedIndex=0;
+  function createMenu(){
+    menuWrapper=document.createElement("div");
+    Object.assign(menuWrapper.style,{position:"fixed",top:"60%",left:"50%",transform:"translateX(-50%)",zIndex:10000,display:"flex",flexDirection:"column",gap:"12px",fontSize:"24px",fontWeight:"bold",color:"#fff"});
+    menuItems.forEach((text,i)=>{
+      const item=document.createElement("div"); item.textContent=text; item.dataset.index=i;
+      Object.assign(item.style,{cursor:"pointer",padding:"10px 20px",borderRadius:"8px"});
+      item.addEventListener("click",()=>{ if(selectedIndex===i){ if(menuItems[i]==="New Game"){ startGame(); } else alert(`${menuItems[i]} は未実装`); } else{ selectedIndex=i; updateMenuSelection(); } });
+      menuWrapper.appendChild(item);
+    });
+    document.body.appendChild(menuWrapper);
+    updateMenuSelection();
+    window.addEventListener("keydown",e=>{
+      if(e.key==="ArrowUp"){ selectedIndex=(selectedIndex-1+menuItems.length)%menuItems.length; updateMenuSelection(); }
+      if(e.key==="ArrowDown"){ selectedIndex=(selectedIndex+1)%menuItems.length; updateMenuSelection(); }
+      if(e.key==="Enter"||e.key===" "){ if(menuItems[selectedIndex]==="New Game") startGame(); else alert(`${menuItems[selectedIndex]} は未実装`); }
+    });
+  }
+  function updateMenuSelection(){ menuWrapper.querySelectorAll("div").forEach((item,idx)=>{ if(idx===selectedIndex){ item.style.backgroundColor="rgba(255,255,255,0.2)"; item.style.color="#ff0"; } else{ item.style.backgroundColor="transparent"; item.style.color="#fff"; } }); }
+
+  async function startGame(){
+    if(fadeOverlay){ fadeOverlay.style.display="block"; fadeOverlay.style.opacity=0; await new Promise(r=>requestAnimationFrame(r)); fadeOverlay.style.transition="opacity 1.5s ease"; fadeOverlay.style.opacity=1; await new Promise(r=>setTimeout(r,1600)); }
+    if(menuWrapper) menuWrapper.remove();
+    if(titleImg1) titleImg1.remove(); if(titleImg2) titleImg2.remove();
+    if(pressKeyText) pressKeyText.remove();
+    if(backgroundOverlay) backgroundOverlay.remove();
+    if(scrollWrapper) scrollWrapper.remove();
+    if(fadeOverlay){ fadeOverlay.style.transition="none"; fadeOverlay.style.opacity=1; }
+    if(gameScreen) gameScreen.style.display="block";
+    if(fadeOverlay){ await new Promise(r=>requestAnimationFrame(r)); fadeOverlay.style.transition="opacity 1.5s ease"; fadeOverlay.style.opacity=0; await new Promise(r=>setTimeout(r,1600)); fadeOverlay.style.display="none"; }
+  }
+});
       await fadeIn(titleImg1,1000); 
       await new Promise(r=>setTimeout(r,3000)); 
       await fadeOut(titleImg1,1000); 
