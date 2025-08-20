@@ -82,21 +82,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- タイトル表示 ---
   async function showTitleSequence(){
+    const effectPromise = showFullscreenEffect();
     if(backgroundOverlay){
       backgroundOverlay.style.display="block";
       backgroundOverlay.style.opacity=0;
-      backgroundOverlay.style.backgroundColor="rgba(0,0,0,0.5)";
-      await new Promise(r=>requestAnimationFrame(r));
-      backgroundOverlay.style.transition="opacity 1s ease";
+      backgroundOverlay.style.backgroundImage="url('images/press_bg.png')";
+      backgroundOverlay.style.backgroundSize="cover";
+      backgroundOverlay.style.backgroundPosition="center";
+      backgroundOverlay.style.filter="blur(5px)";
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      backgroundOverlay.style.transition="opacity 2s ease, filter 2s ease";
       backgroundOverlay.style.opacity=1;
+      backgroundOverlay.style.filter="blur(0)";
     }
     if(bgm){ bgm.loop=true; bgm.volume=1; bgm.play(); }
-
-    if(titleImg1){ await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,2000)); await fadeOut(titleImg1,1000); }
-    if(titleImg2){ await fadeIn(titleImg2,1000); }
-
+    if(titleImg1){ titleImg1.style.display="block"; await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,3000)); await fadeOut(titleImg1,1000); }
+    if(titleImg2){ titleImg2.style.display="block"; await fadeIn(titleImg2,1000); }
     if(pressKeyText){ pressKeyText.style.display="block"; requestAnimationFrame(()=>pressKeyText.style.opacity=1); }
-
+    effectPromise.catch(()=>{});
     waitForPressKey();
   }
 
