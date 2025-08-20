@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const bgm = document.getElementById("bgm");
   const selectSfx = document.getElementById("select-sfx");
   const effectSfx = document.getElementById("effect-sfx");
-  const gameScreen = document.getElementById("game-screen");
 
   // fade-overlay 作成
   let fadeOverlay = document.getElementById("fade-overlay");
@@ -115,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.body.appendChild(pressBg);
 
-    // フェードイン + BGM再生
     requestAnimationFrame(() => pressBg.style.opacity = 1);
     if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.play(); }
 
@@ -125,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pressBg.style.transform = "translate(0,0)";
     }, 50);
 
-    // タイトル1表示
     if (titleImg1) await fadeIn(titleImg1, 1000);
 
     // transition.png 全画面表示 + 効果音
@@ -148,13 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
       await fadeOut(fullscreenEffect, 500);
     }
 
-    // タイトル1フェードアウト
     if (titleImg1) await fadeOut(titleImg1, 1000);
-
-    // title2は残す
     if (titleImg2) await fadeIn(titleImg2, 1000);
 
-    // Press Any Key 表示
     if (pressKeyText) {
       pressKeyText.style.display = "block";
       requestAnimationFrame(() => pressKeyText.style.opacity = 1);
@@ -163,14 +156,27 @@ document.addEventListener("DOMContentLoaded", () => {
     waitForPressKey(pressBg);
   }
 
+  // --- Press Any Key 待機 ---
   function waitForPressKey(pressBg) {
     function onInput() {
+      if (!pressKeyText || pressKeyText.style.display === "none") return;
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
+
+      // Press Any Key フェードアウト
       if (pressKeyText) fadeOut(pressKeyText, 500);
-      fadeOut(pressBg, 1000).then(() => startBackgroundScroll());
-      createMenu();
-      attachMenuKeyboardListeners();
+
+      // effect.mp3 再生
+      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play(); }
+
+      // 背景スクロール開始
+      fadeOut(pressBg, 500).then(() => {
+        startBackgroundScroll();
+
+        // New Game メニューは背景スクロール開始と同時に表示
+        createMenu();
+        attachMenuKeyboardListeners();
+      });
     }
     window.addEventListener("keydown", onInput, { capture: true });
     window.addEventListener("touchstart", onInput, { capture: true });
@@ -314,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
       } else if (e.key === "Enter" || e.key === " ") {
         if (menuItems[selectedIndex] === "New Game") startCharacterSelection();
-        else alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
+       else alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
       }
     });
   }
