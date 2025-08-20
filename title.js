@@ -76,30 +76,42 @@ document.addEventListener("DOMContentLoaded", () => {
     await fadeIn(logo,1000);
     await new Promise(r=>setTimeout(r,2000));
     await fadeOut(logo,1000);
+
     currentLogoIndex++;
+
+    // 3つ目のロゴ終了後の演出
+    if(currentLogoIndex === logos.length){
+      if(fullscreenEffect){
+        fullscreenEffect.style.display="block";
+        fullscreenEffect.style.opacity=1;
+      }
+      if(effectSfx){
+        try{ effectSfx.currentTime=0; effectSfx.play(); } catch{}
+      }
+      if(backgroundOverlay){
+        backgroundOverlay.style.display="block";
+        backgroundOverlay.style.opacity=0;
+        backgroundOverlay.style.backgroundImage="url('images/press_bg.png')";
+        backgroundOverlay.style.backgroundSize="cover";
+        backgroundOverlay.style.backgroundPosition="center";
+        backgroundOverlay.style.filter="blur(5px)";
+        await new Promise(r=>requestAnimationFrame(r));
+        backgroundOverlay.style.transition="opacity 2s ease, filter 2s ease";
+        backgroundOverlay.style.opacity=1;
+        backgroundOverlay.style.filter="blur(0)";
+      }
+    }
+
     showNextLogo();
   }
 
   // --- タイトル表示 ---
   async function showTitleSequence(){
-    const effectPromise = showFullscreenEffect();
-    if(backgroundOverlay){
-      backgroundOverlay.style.display="block";
-      backgroundOverlay.style.opacity=0;
-      backgroundOverlay.style.backgroundImage="url('images/press_bg.png')";
-      backgroundOverlay.style.backgroundSize="cover";
-      backgroundOverlay.style.backgroundPosition="center";
-      backgroundOverlay.style.filter="blur(5px)";
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      backgroundOverlay.style.transition="opacity 2s ease, filter 2s ease";
-      backgroundOverlay.style.opacity=1;
-      backgroundOverlay.style.filter="blur(0)";
-    }
     if(bgm){ bgm.loop=true; bgm.volume=1; bgm.play(); }
-    if(titleImg1){ titleImg1.style.display="block"; await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,3000)); await fadeOut(titleImg1,1000); }
-    if(titleImg2){ titleImg2.style.display="block"; await fadeIn(titleImg2,1000); }
+    if(titleImg1){ await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,3000)); await fadeOut(titleImg1,1000); }
+    if(titleImg2){ await fadeIn(titleImg2,1000); }
     if(pressKeyText){ pressKeyText.style.display="block"; requestAnimationFrame(()=>pressKeyText.style.opacity=1); }
-    effectPromise.catch(()=>{});
+
     waitForPressKey();
   }
 
@@ -170,7 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- メニュー作成 ---
   const menuItems=["New Game","Load","Settings"];
-  const menuItems=["New Game","Load","Settings"];
   function createMenu(){
     menuWrapper=document.createElement("div");
     const rect=titleImg2.getBoundingClientRect();
@@ -182,8 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
       item.dataset.index=i;
       item.addEventListener("click",()=>{ 
         if(selectedIndex===i && isInputMode){
-          if(menuItems[i]==="New Game") startNewGameWithVideo();
-          else alert(`"${menuItems[i]}" が選択されました！`);
+          if(menuItems[i]==="New Game") startCharacterSelection();
+          else alert(`"${menuItems[i]}" はまだ未実装です`);
         } else {
           selectedIndex=i; isInputMode=true; updateMenuSelection();
         }
@@ -275,6 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(pressKeyText) pressKeyText.remove();
     if(backgroundOverlay) backgroundOverlay.remove();
     if(scrollWrapper) scrollWrapper.remove();
+    if(fullscreenEffect) fullscreenEffect.remove();
 
     fadeOverlay.style.transition="opacity 1.5s ease"; fadeOverlay.style.opacity=0;
     await new Promise(r=>setTimeout(r,1600));
