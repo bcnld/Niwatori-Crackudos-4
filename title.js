@@ -101,29 +101,90 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- タイトル表示 ---
-  async function showTitle(){
-    if(bgm){ bgm.loop=true; bgm.volume=1; bgm.play(); }
-    pressKeyText.style.display="block"; pressKeyText.style.opacity=0;
-    pressKeyText.style.transition="opacity 1s";
-    pressKeyText.style.pointerEvents = "auto"; // ★クリックを有効化
-    pressKeyText.style.cursor = "pointer";
-    requestAnimationFrame(()=>pressKeyText.style.opacity=1);
-    waitForPressKey();
+  // --- タイトル表示 ---
+async function showTitleSequence(){
+  // 背景オーバーレイを表示
+  if(backgroundOverlay){
+    backgroundOverlay.style.display="block";
+    backgroundOverlay.style.opacity=0;
+    backgroundOverlay.style.backgroundColor="rgba(0,0,0,0.5)";
+    await new Promise(r=>requestAnimationFrame(r));
+    backgroundOverlay.style.transition="opacity 1s ease";
+    backgroundOverlay.style.opacity=1;
   }
 
-  function waitForPressKey(){
-    function onInput(){
-      window.removeEventListener("keydown",onInput,true);
-      window.removeEventListener("touchstart",onInput,true);
-      fadeOut(pressKeyText,500);
-      fadeOut(backgroundOverlay,500);
-      startBackgroundScroll();
-      createMenu();
-      attachMenuKeyboardListeners();
-    }
-    window.addEventListener("keydown",onInput,{capture:true});
-    window.addEventListener("touchstart",onInput,{capture:true});
+  // BGM開始
+  if(bgm){ 
+    bgm.loop = true; 
+    bgm.volume = 1; 
+    bgm.play(); 
   }
+
+  // --- Title1 表示 ---
+  if(titleImg1){
+    await fadeIn(titleImg1,1000);
+
+    // 🔹全画面エフェクト（transition.png + effect.mp3）
+    if(fullscreenEffect){
+      fullscreenEffect.src = "images/transition.png";
+      fullscreenEffect.style.display = "block";
+      fullscreenEffect.style.opacity = 0;
+      fullscreenEffect.style.position = "fixed";
+      fullscreenEffect.style.top = 0;
+      fullscreenEffect.style.left = 0;
+      fullscreenEffect.style.width = "100%";
+      fullscreenEffect.style.height = "100%";
+      fullscreenEffect.style.zIndex = 9998;
+
+      await fadeIn(fullscreenEffect,500);
+      if(effectSfx){ 
+        effectSfx.currentTime = 0; 
+        effectSfx.play(); 
+      }
+
+      // 2秒後にフェードアウト
+      await new Promise(r=>setTimeout(r,2000));
+      await fadeOut(fullscreenEffect,1000);
+    }
+
+    await new Promise(r=>setTimeout(r,2000));
+    await fadeOut(titleImg1,1000);
+  }
+
+  // --- Title2 表示 ---
+  if(titleImg2){ 
+    await fadeIn(titleImg2,1000); 
+  }
+
+  // 🔹Press_BG 表示（ズームアップ演出）
+  const pressBg = document.createElement("img");
+  pressBg.src = "images/press_bg.png";
+  Object.assign(pressBg.style, {
+    position: "fixed",
+    bottom: "10%",
+    left: "50%",
+    transform: "translateX(-50%) scale(0.8)",
+    opacity: 0,
+    transition: "transform 1s ease, opacity 1s ease",
+    zIndex: 10001,
+    pointerEvents: "none"
+  });
+  document.body.appendChild(pressBg);
+
+  requestAnimationFrame(()=>{
+    pressBg.style.opacity = 1;
+    pressBg.style.transform = "translateX(-50%) scale(1)";
+  });
+
+  // 🔹「Press Any Key」表示
+  if(pressKeyText){ 
+    pressKeyText.style.display = "block"; 
+    pressKeyText.style.opacity = 0;
+    requestAnimationFrame(()=>pressKeyText.style.opacity = 1); 
+  }
+
+  waitForPressKey();
+}
 
   // --- 背景スクロール ---
   const scrollSpeed = 1;
