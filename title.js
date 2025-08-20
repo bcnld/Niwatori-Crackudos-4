@@ -91,55 +91,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- ロゴ終了後 press_bg とタイトル表示 ---
   async function showPressBgAndTitle() {
-    // press_bg.png 全画面背景
-    const pressBg = document.createElement("img");
-    pressBg.src = "images/press_bg.png";
-    Object.assign(pressBg.style, {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",
-      zIndex: 0
-    });
-    document.body.appendChild(pressBg);
+  // press_bg.png 全画面背景
+  const pressBg = document.createElement("img");
+  pressBg.src = "images/press_bg.png";
+  Object.assign(pressBg.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "120%",   // 最初は少し拡大
+    height: "120%",
+    objectFit: "cover",
+    zIndex: 0,
+    transform: "translate(-10%,-10%)",
+    transition: "all 2s ease"
+  });
+  document.body.appendChild(pressBg);
 
-    // タイトルBGM再生
-    if (bgm) {
-      bgm.loop = true;
-      bgm.volume = 1;
-      bgm.play();
+  // 徐々に戻す
+  requestAnimationFrame(() => {
+    pressBg.style.width = "100%";
+    pressBg.style.height = "100%";
+    pressBg.style.transform = "translate(0,0)";
+  });
+
+  // BGM 再生
+  if (bgm) {
+    bgm.loop = true;
+    bgm.volume = 1;
+    bgm.play();
+  }
+
+  // ここで effectSfx 再生（企業ロゴが終わった直後）
+  if (effectSfx) {
+    effectSfx.currentTime = 0;
+    effectSfx.play();
+  }
+
+  // タイトル画像1表示
+  if (titleImg1) {
+    await fadeIn(titleImg1, 1000);
+
+    // transition.png 表示
+    if (fullscreenEffect) {
+      fullscreenEffect.src = "images/transition.png";
+      fullscreenEffect.style.display = "block";
+      fullscreenEffect.style.opacity = 0;
+      fullscreenEffect.style.position = "fixed";
+      fullscreenEffect.style.top = 0;
+      fullscreenEffect.style.left = 0;
+      fullscreenEffect.style.width = "100%";
+      fullscreenEffect.style.height = "100%";
+      fullscreenEffect.style.zIndex = 9998;
+      await fadeIn(fullscreenEffect, 200);
+
+      // 表示時間を長めに
+      await new Promise(r => setTimeout(r, 1200));
+      await fadeOut(fullscreenEffect, 500);
     }
 
-    // タイトル画像1表示
-    if (titleImg1) {
-      await fadeIn(titleImg1, 1000);
-
-      // transition.png & effect.mp3 を即表示・再生
-      if (fullscreenEffect) {
-        fullscreenEffect.src = "images/transition.png";
-        fullscreenEffect.style.display = "block";
-        fullscreenEffect.style.opacity = 0;
-        fullscreenEffect.style.position = "fixed";
-        fullscreenEffect.style.top = 0;
-        fullscreenEffect.style.left = 0;
-        fullscreenEffect.style.width = "100%";
-        fullscreenEffect.style.height = "100%";
-        fullscreenEffect.style.zIndex = 9998;
-        await fadeIn(fullscreenEffect, 200); // ちょっと短め
-        if (effectSfx) {
-          effectSfx.currentTime = 0;
-          effectSfx.play();
-        }
-        await new Promise(r => setTimeout(r, 500));
-        await fadeOut(fullscreenEffect, 500);
-      }
-
-      await new Promise(r => setTimeout(r, 2000));
-      await fadeOut(titleImg1, 1000);
-    }
-
+    await new Promise(r => setTimeout(r, 1500));
+    await fadeOut(titleImg1, 1000);
+  }
+}
     // タイトル画像2表示
     if (titleImg2) await fadeIn(titleImg2, 1000);
 
