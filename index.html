@@ -4,26 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Niwatori Crackudos</title>
-  <link rel="stylesheet" href="title.css" />
-  <style>
-    /* フルスクリーンボタンのみ内部CSS */
-    #fullscreen-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(50,50,50,0.8);
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 5px;
-      z-index: 10000;
-      user-select: none;
-      transition: background 0.3s ease;
-    }
-    #fullscreen-toggle:hover { background: rgba(80,80,80,1); }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -39,19 +20,13 @@
   <img class="company-logo" src="images/homo_logo.png" alt="Logo 3" />
 
   <!-- 全画面演出 -->
-  <img id="fullscreen-effect" src="images/transition.png" alt="Effect"
-       style="display:none; position:fixed; top:50%; left:50%; transform: translate(-50%, -50%) scale(1.2); opacity:0; z-index:9999; pointer-events:none;" />
+  <img id="fullscreen-effect" src="images/transition.png" alt="Effect" />
 
   <!-- タイトル画像 -->
   <div id="title-images">
     <img id="title-img1" src="images/title1.png" alt="Title 1" />
     <img id="title-img2" src="images/title2.png" alt="Title 2" />
   </div>
-
-  <!-- Press 背景 -->
-  <img id="press-bg" src="images/press_bg.png" alt="Press Background"
-       style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-              object-fit:cover; z-index:4;" />
 
   <!-- Press Any Key -->
   <div id="press-any-key">PRESS ANY KEY</div>
@@ -67,6 +42,7 @@
 
   <!-- BGM・効果音 -->
   <audio id="bgm" src="Sounds/title.mp3" preload="auto"></audio>
+  <audio id="bgm-game" src="Sounds/game.mp3" preload="auto"></audio>
   <audio id="effect-sfx" src="Sounds/effect.mp3"></audio>
   <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
 
