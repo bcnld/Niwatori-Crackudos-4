@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const centerText = document.getElementById("center-text");
   const logos = document.querySelectorAll(".company-logo");
-  const backgroundOverlay = document.getElementById("background-overlay");
   const titleImg1 = document.getElementById("title-img1");
   const titleImg2 = document.getElementById("title-img2");
   const pressKeyText = document.getElementById("press-any-key");
@@ -36,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 最初は全て非表示
   logos.forEach(logo => logo.style.display = "none");
-  [titleImg1, titleImg2, pressKeyText, fullscreenEffect, backgroundOverlay, fadeOverlay].forEach(el => {
+  [titleImg1, titleImg2, pressKeyText, fullscreenEffect, fadeOverlay].forEach(el => {
     if (el) el.style.display = "none";
   });
   centerText.style.display = "block";
@@ -75,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- ロゴ順番表示 ---
+  // --- 企業ロゴ順番表示 ---
   async function showNextLogo() {
     if (currentLogoIndex >= logos.length) {
       await showPressBgAndTitle();
@@ -89,70 +88,66 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
-  // --- ロゴ終了後 press_bg とタイトル表示 ---
+  // --- press_bg とタイトル表示 ---
   async function showPressBgAndTitle() {
-  // press_bg.png 全画面背景
-  const pressBg = document.createElement("img");
-  pressBg.src = "images/press_bg.png";
-  Object.assign(pressBg.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "120%",   // 最初は少し拡大
-    height: "120%",
-    objectFit: "cover",
-    zIndex: 0,
-    transform: "translate(-10%,-10%)",
-    transition: "all 2s ease"
-  });
-  document.body.appendChild(pressBg);
+    // press_bg.png 全画面背景（最初ズーム）
+    const pressBg = document.createElement("img");
+    pressBg.src = "images/press_bg.png";
+    Object.assign(pressBg.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "120%",
+      height: "120%",
+      objectFit: "cover",
+      zIndex: 0,
+      transform: "translate(-10%,-10%)",
+      transition: "all 2s ease"
+    });
+    document.body.appendChild(pressBg);
+    requestAnimationFrame(() => {
+      pressBg.style.width = "100%";
+      pressBg.style.height = "100%";
+      pressBg.style.transform = "translate(0,0)";
+    });
 
-  // 徐々に戻す
-  requestAnimationFrame(() => {
-    pressBg.style.width = "100%";
-    pressBg.style.height = "100%";
-    pressBg.style.transform = "translate(0,0)";
-  });
-
-  // BGM 再生
-  if (bgm) {
-    bgm.loop = true;
-    bgm.volume = 1;
-    bgm.play();
-  }
-
-  // ここで effectSfx 再生（企業ロゴが終わった直後）
-  if (effectSfx) {
-    effectSfx.currentTime = 0;
-    effectSfx.play();
-  }
-
-  // タイトル画像1表示
-  if (titleImg1) {
-    await fadeIn(titleImg1, 1000);
-
-    // transition.png 表示
-    if (fullscreenEffect) {
-      fullscreenEffect.src = "images/transition.png";
-      fullscreenEffect.style.display = "block";
-      fullscreenEffect.style.opacity = 0;
-      fullscreenEffect.style.position = "fixed";
-      fullscreenEffect.style.top = 0;
-      fullscreenEffect.style.left = 0;
-      fullscreenEffect.style.width = "100%";
-      fullscreenEffect.style.height = "100%";
-      fullscreenEffect.style.zIndex = 9998;
-      await fadeIn(fullscreenEffect, 200);
-
-      // 表示時間を長めに
-      await new Promise(r => setTimeout(r, 1200));
-      await fadeOut(fullscreenEffect, 500);
+    // BGM再生
+    if (bgm) {
+      bgm.loop = true;
+      bgm.volume = 1;
+      bgm.play();
     }
 
-    await new Promise(r => setTimeout(r, 1500));
-    await fadeOut(titleImg1, 1000);
-  }
-}
+    // effectSfx再生（企業ロゴ直後）
+    if (effectSfx) {
+      effectSfx.currentTime = 0;
+      effectSfx.play();
+    }
+
+    // タイトル画像1表示
+    if (titleImg1) {
+      await fadeIn(titleImg1, 1000);
+
+      // transition.png 表示（少し長め）
+      if (fullscreenEffect) {
+        fullscreenEffect.src = "images/transition.png";
+        fullscreenEffect.style.display = "block";
+        fullscreenEffect.style.opacity = 0;
+        fullscreenEffect.style.position = "fixed";
+        fullscreenEffect.style.top = 0;
+        fullscreenEffect.style.left = 0;
+        fullscreenEffect.style.width = "100%";
+        fullscreenEffect.style.height = "100%";
+        fullscreenEffect.style.zIndex = 9998;
+        await fadeIn(fullscreenEffect, 200);
+        await new Promise(r => setTimeout(r, 1500));
+        await fadeOut(fullscreenEffect, 500);
+      }
+
+      await new Promise(r => setTimeout(r, 1500));
+      await fadeOut(titleImg1, 1000);
+    }
+
     // タイトル画像2表示
     if (titleImg2) await fadeIn(titleImg2, 1000);
 
@@ -162,14 +157,17 @@ document.addEventListener("DOMContentLoaded", () => {
       requestAnimationFrame(() => pressKeyText.style.opacity = 1);
     }
 
-    waitForPressKey();
+    waitForPressKey(pressBg);
   }
 
-  function waitForPressKey() {
+  function waitForPressKey(pressBg) {
     function onInput() {
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
+
+      // Press Any Key フェードアウト＆背景スクロール開始
       if (pressKeyText) fadeOut(pressKeyText, 500);
+      fadeOut(titleImg2, 1000);
       startBackgroundScroll();
       createMenu();
       attachMenuKeyboardListeners();
@@ -178,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("touchstart", onInput, { capture: true });
   }
 
-  // --- センターテキストクリック ---
+  // --- センターテキストクリックで開始 ---
   centerText.addEventListener("click", () => {
     if (started) return;
     started = true;
@@ -270,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
         padding: "10px 20px",
         borderRadius: "8px",
         userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease"
+        transition: "background-color 0.3s ease, color 0.3s ease"
       });
       item.dataset.index = i;
       item.addEventListener("click", () => {
@@ -281,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
           selectedIndex = i;
           updateMenuSelection();
           if (selectSfx) {
-            try { selectSfx.currentTime = 0; selectSfx.play(); } catch { }
+            try { selectSfx.currentTime = 0; selectSfx.play(); } catch {}
           }
         }
       });
@@ -313,13 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
         updateMenuSelection();
         if (selectSfx) {
-          try { selectSfx.currentTime = 0; selectSfx.play(); } catch { }
+          try { selectSfx.currentTime = 0; selectSfx.play(); } catch {}
         }
       } else if (e.key === "ArrowDown") {
         selectedIndex = (selectedIndex + 1) % menuItems.length;
         updateMenuSelection();
         if (selectSfx) {
-          try { selectSfx.currentTime = 0; selectSfx.play(); } catch { }
+          try { selectSfx.currentTime = 0; selectSfx.play(); } catch {}
         }
       } else if (e.key === "Enter" || e.key === " ") {
         if (menuItems[selectedIndex] === "New Game") startCharacterSelection();
@@ -399,10 +397,10 @@ document.addEventListener("DOMContentLoaded", () => {
     fadeOverlay.style.opacity = 1;
     await new Promise(r => setTimeout(r, 1600));
 
-    if (titleImg1) titleImg1.remove();
-    if (titleImg2) titleImg2.remove();
-    if (pressKeyText) pressKeyText.remove();
-    if (backgroundOverlay) backgroundOverlay.remove();
+    // タイトルなどを削除
+    [titleImg1, titleImg2, pressKeyText, fadeOverlay].forEach(el => {
+      if (el) el.remove();
+    });
     if (scrollWrapper) scrollWrapper.remove();
 
     fadeOverlay.style.transition = "opacity 1.5s ease";
