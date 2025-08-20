@@ -63,27 +63,26 @@ body, html {
   pointer-events: none;
 }
 
-#title-img1 {
+#title-img1, #title-img2 {
   position: absolute;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   opacity: 0;
-  max-width: 95vw;
-  max-height: 95vh;
-  filter: drop-shadow(0 0 20px rgba(255,255,255,0.8));
   transition: opacity 1s ease;
 }
 
-#title-img2 {
-  position: absolute;
-  top: 40%;
-  left: 50%;
+#title-img1 {
+  top: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0;
+  max-width: 95vw;
+  max-height: 95vh;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.8));
+}
+
+#title-img2 {
+  top: 40%;
   max-width: 90vw;
   max-height: 90vh;
-  transition: opacity 1s ease;
 }
 
 /* ===== Press Any Key ===== */
@@ -143,12 +142,11 @@ body, html {
   user-select: none;
   transition: background 0.3s ease;
 }
-
 #fullscreen-toggle:hover {
   background: rgba(80, 80, 80, 1);
 }
 
-/* ===== メインメニュー（オプション） ===== */
+/* ===== メインメニュー ===== */
 #main-menu {
   position: fixed;
   top: 50%;
@@ -181,34 +179,33 @@ body, html {
   color: #f0a500;
 }
 
+/* ===== 全画面演出 ===== */
+#fullscreen-effect {
+  display:none;
+  position:fixed;
+  top:50%; left:50%;
+  transform: translate(-50%, -50%) scale(1.2);
+  opacity:0;
+  z-index:9999;
+  pointer-events:none;
+}
+
+/* ===== ゲーム画面 ===== */
+#game-screen {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  display:none;
+  z-index:2;
+  background-color:#000;
+}
+
 /* ===== モバイル対応 ===== */
 @media (max-width: 600px) {
-  #center-text {
-    font-size: 28px;
-    padding: 15px;
-  }
-
-  .company-logo {
-    max-width: 90vw;
-    max-height: 50vh;
-  }
-
-  #title-img1 {
-    max-width: 95vw;
-    max-height: 80vh;
-  }
-
-  #title-img2 {
-    max-width: 90vw;
-    max-height: 75vh;
-  }
-
-  #press-any-key {
-    font-size: 18px;
-    top: 90%;
-  }
-
-  #main-menu {
-    font-size: 24px;
-  }
+  #center-text { font-size: 28px; padding: 15px; }
+  .company-logo { max-width: 90vw; max-height: 50vh; }
+  #title-img1 { max-width: 95vw; max-height: 80vh; }
+  #title-img2 { max-width: 90vw; max-height: 75vh; }
+  #press-any-key { font-size: 18px; top: 90%; }
+  #main-menu { font-size: 24px; }
 }
