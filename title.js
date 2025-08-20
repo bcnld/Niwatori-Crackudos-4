@@ -41,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   centerText.style.display = "block";
 
-  // --- fade 関数 ---
   function fadeIn(el, duration = 1000) {
     el.style.display = "block";
     el.style.opacity = 0;
@@ -57,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
       requestAnimationFrame(step);
     });
   }
+
   function fadeOut(el, duration = 1000) {
     el.style.opacity = 1;
     return new Promise(resolve => {
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- ロゴ順番表示 ---
   async function showNextLogo() {
     if (currentLogoIndex >= logos.length) {
-      await showTitleSequence();
+      await showPressBgAndTitle();
       return;
     }
     const logo = logos[currentLogoIndex];
@@ -89,104 +89,74 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
-  // --- タイトル表示 ---
-async function showTitleSequence() {
-  if (backgroundOverlay) {
-    backgroundOverlay.style.display = "block";
-    backgroundOverlay.style.opacity = 0;
-    backgroundOverlay.style.backgroundColor = "rgba(0,0,0,0.5)";
-    await new Promise(r => requestAnimationFrame(r));
-    backgroundOverlay.style.transition = "opacity 1s ease";
-    backgroundOverlay.style.opacity = 1;
-  }
-  if (bgm) {
-    bgm.loop = true;
-    bgm.volume = 1;
-    bgm.play();
-  }
+  // --- ロゴ終了後 press_bg とタイトル表示 ---
+  async function showPressBgAndTitle() {
+    // press_bg.png 全画面背景
+    const pressBg = document.createElement("img");
+    pressBg.src = "images/press_bg.png";
+    Object.assign(pressBg.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      zIndex: 0
+    });
+    document.body.appendChild(pressBg);
 
-  if (titleImg1) {
-    await fadeIn(titleImg1, 1000);
+    // タイトルBGM再生
+    if (bgm) {
+      bgm.loop = true;
+      bgm.volume = 1;
+      bgm.play();
+    }
 
-    if (fullscreenEffect) {
-      fullscreenEffect.src = "images/transition.png";
-      fullscreenEffect.style.display = "block";
-      fullscreenEffect.style.opacity = 0;
-      fullscreenEffect.style.position = "fixed";
-      fullscreenEffect.style.top = 0;
-      fullscreenEffect.style.left = 0;
-      fullscreenEffect.style.width = "100%";
-      fullscreenEffect.style.height = "100%";
-      fullscreenEffect.style.zIndex = 9998;
-      await fadeIn(fullscreenEffect, 500);
-      if (effectSfx) {
-        effectSfx.currentTime = 0;
-        effectSfx.play();
+    // タイトル画像1表示
+    if (titleImg1) {
+      await fadeIn(titleImg1, 1000);
+
+      // transition.png & effect.mp3 を即表示・再生
+      if (fullscreenEffect) {
+        fullscreenEffect.src = "images/transition.png";
+        fullscreenEffect.style.display = "block";
+        fullscreenEffect.style.opacity = 0;
+        fullscreenEffect.style.position = "fixed";
+        fullscreenEffect.style.top = 0;
+        fullscreenEffect.style.left = 0;
+        fullscreenEffect.style.width = "100%";
+        fullscreenEffect.style.height = "100%";
+        fullscreenEffect.style.zIndex = 9998;
+        await fadeIn(fullscreenEffect, 200); // ちょっと短め
+        if (effectSfx) {
+          effectSfx.currentTime = 0;
+          effectSfx.play();
+        }
+        await new Promise(r => setTimeout(r, 500));
+        await fadeOut(fullscreenEffect, 500);
       }
+
       await new Promise(r => setTimeout(r, 2000));
-      await fadeOut(fullscreenEffect, 1000);
+      await fadeOut(titleImg1, 1000);
     }
 
-    await new Promise(r => setTimeout(r, 2000));
-    await fadeOut(titleImg1, 1000);
-  }
+    // タイトル画像2表示
+    if (titleImg2) await fadeIn(titleImg2, 1000);
 
-  if (titleImg2) {
-    await fadeIn(titleImg2, 1000);
-  }
-
-  // --- ここから press_bg.png 表示 ---
-  const pressBg = document.createElement("img");
-  pressBg.src = "images/press_bg.png";
-  Object.assign(pressBg.style, {
-    position: "fixed",
-    bottom: "10%",
-    left: "50%",
-    transform: "translateX(-50%) scale(0.8)",
-    opacity: 0,
-    transition: "transform 1s ease, opacity 1s ease",
-    zIndex: 10001,
-    pointerEvents: "none"
-  });
-  document.body.appendChild(pressBg);
-
-  requestAnimationFrame(() => {
-    pressBg.style.opacity = 1;
-    pressBg.style.transform = "translateX(-50%) scale(1)";
-  });
-
-  if (pressKeyText) {
-    pressKeyText.style.display = "block";
-    requestAnimationFrame(() => pressKeyText.style.opacity = 1);
-  }
-
-  // --- キー押下でゲーム開始 ---
-  function waitForPressKey() {
-    function onInput() {
-      window.removeEventListener("keydown", onInput, true);
-      window.removeEventListener("touchstart", onInput, true);
-
-      // press_bg.png と pressKeyText をフェードアウト
-      fadeOut(pressBg, 500);
-      if (pressKeyText) fadeOut(pressKeyText, 500);
-
-      // ゲーム開始処理
-      startBackgroundScroll();
-      createMenu();
-      attachMenuKeyboardListeners();
+    // Press Any Key 表示
+    if (pressKeyText) {
+      pressKeyText.style.display = "block";
+      requestAnimationFrame(() => pressKeyText.style.opacity = 1);
     }
-    window.addEventListener("keydown", onInput, { capture: true });
-    window.addEventListener("touchstart", onInput, { capture: true });
+
+    waitForPressKey();
   }
-  waitForPressKey();
-}
 
   function waitForPressKey() {
     function onInput() {
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
       if (pressKeyText) fadeOut(pressKeyText, 500);
-      if (backgroundOverlay) fadeOut(backgroundOverlay, 500);
       startBackgroundScroll();
       createMenu();
       attachMenuKeyboardListeners();
