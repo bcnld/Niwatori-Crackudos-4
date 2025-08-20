@@ -122,6 +122,153 @@ document.addEventListener("DOMContentLoaded", () => {
       if(pressKeyText) fadeOut(pressKeyText,500);
       if(backgroundOverlay) fadeOut(backgroundOverlay,500);
       startBackgroundScroll();
+document.addEventListener("DOMContentLoaded", () => {
+  const centerText = document.getElementById("center-text");
+  const logos = document.querySelectorAll(".company-logo");
+  const backgroundOverlay = document.getElementById("background-overlay");
+  const titleImg1 = document.getElementById("title-img1");
+  const titleImg2 = document.getElementById("title-img2");
+  const pressKeyText = document.getElementById("press-any-key");
+  const fullscreenEffect = document.getElementById("fullscreen-effect");
+  const bgm = document.getElementById("bgm");
+  const selectSfx = document.getElementById("select-sfx");
+  const effectSfx = document.getElementById("effect-sfx");
+  const gameScreen = document.getElementById("game-screen");
+
+  // fade-overlay 作成
+  let fadeOverlay = document.getElementById("fade-overlay");
+  if(!fadeOverlay){
+    fadeOverlay = document.createElement("div");
+    fadeOverlay.id = "fade-overlay";
+    Object.assign(fadeOverlay.style,{
+      position:"fixed", top:0, left:0,
+      width:"100%", height:"100%",
+      backgroundColor:"black",
+      opacity:0,
+      zIndex:9999,
+      pointerEvents:"none"
+    });
+    document.body.appendChild(fadeOverlay);
+  }
+
+  let currentLogoIndex = 0;
+  let started = false;
+
+  // 最初は全て非表示（センターテキストのみ表示）
+  logos.forEach(logo => logo.style.display = "none");
+  [titleImg1,titleImg2,pressKeyText,fullscreenEffect,backgroundOverlay,fadeOverlay].forEach(el => { if(el) el.style.display="none"; });
+  centerText.style.display = "block";
+
+  // --- fade 関数 ---
+  function fadeIn(el,duration=1000){
+    el.style.display="block"; el.style.opacity=0;
+    return new Promise(resolve=>{
+      let start=null;
+      function step(ts){
+        if(!start) start=ts;
+        let p=Math.min((ts-start)/duration,1);
+        el.style.opacity=p;
+        if(p<1) requestAnimationFrame(step);
+        else resolve();
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  function fadeOut(el,duration=1000){
+    el.style.opacity=1;
+    return new Promise(resolve=>{
+      let start=null;
+      function step(ts){
+        if(!start) start=ts;
+        let p=Math.min((ts-start)/duration,1);
+        el.style.opacity=1-p;
+        if(p<1) requestAnimationFrame(step);
+        else { el.style.display="none"; resolve(); }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  // --- ロゴ順番表示 ---
+  async function showNextLogo(){
+    if(currentLogoIndex >= logos.length){
+      await showTransitionEffect();
+      return;
+    }
+    const logo = logos[currentLogoIndex];
+    await fadeIn(logo,1000);
+    await new Promise(r=>setTimeout(r,2000));
+    await fadeOut(logo,1000);
+    currentLogoIndex++;
+    showNextLogo();
+  }
+
+  // --- 全画面演出 + press_bg.png ズームアップ ---
+  async function showTransitionEffect(){
+    if(!fullscreenEffect) return;
+
+    // フルスクリーンエフェクト表示
+    fullscreenEffect.style.display="block";
+    fullscreenEffect.style.opacity=0;
+    fullscreenEffect.style.transform="translate(-50%, -50%) scale(1.2)";
+    await new Promise(r=>requestAnimationFrame(r));
+
+    fullscreenEffect.style.transition="opacity 1s ease, transform 1s ease";
+    fullscreenEffect.style.opacity=1;
+    fullscreenEffect.style.transform="translate(-50%, -50%) scale(1)";
+
+    // 効果音再生
+    if(effectSfx){ effectSfx.currentTime=0; effectSfx.play(); }
+
+    // 数秒後フェードアウト
+    await new Promise(r=>setTimeout(r,2000));
+    fullscreenEffect.style.opacity=0;
+    await new Promise(r=>setTimeout(r,1000));
+    fullscreenEffect.style.display="none";
+
+    // press_bg.png ズームアップ表示
+    if(backgroundOverlay){
+      backgroundOverlay.style.display="block";
+      backgroundOverlay.style.backgroundImage="url('images/press_bg.png')";
+      backgroundOverlay.style.backgroundSize="cover";
+      backgroundOverlay.style.backgroundPosition="center";
+      backgroundOverlay.style.opacity=0;
+      backgroundOverlay.style.transform="scale(1.2)";
+      backgroundOverlay.style.transition="opacity 1s ease, transform 1s ease";
+      await new Promise(r=>requestAnimationFrame(r));
+
+      backgroundOverlay.style.opacity=1;
+      backgroundOverlay.style.transform="scale(1)";
+      await new Promise(r=>setTimeout(r,2000));
+    }
+
+    await showTitleSequence();
+  }
+
+  // --- タイトル表示 ---
+  async function showTitleSequence(){
+    if(bgm){ bgm.loop=true; bgm.volume=1; bgm.play(); }
+
+    if(titleImg1){ titleImg1.style.display="block"; await fadeIn(titleImg1,1000); await new Promise(r=>setTimeout(r,3000)); await fadeOut(titleImg1,1000); }
+    if(titleImg2){ titleImg2.style.display="block"; await fadeIn(titleImg2,1000); }
+
+    if(pressKeyText){ 
+      pressKeyText.style.display="block"; 
+      pressKeyText.style.opacity=0;
+      pressKeyText.style.transition="opacity 1s ease";
+      requestAnimationFrame(()=>pressKeyText.style.opacity=1); 
+    }
+
+    waitForPressKey();
+  }
+
+  function waitForPressKey(){
+    function onInput(){
+      window.removeEventListener("keydown",onInput,true);
+      window.removeEventListener("touchstart",onInput,true);
+      if(pressKeyText) fadeOut(pressKeyText,500);
+      if(backgroundOverlay) fadeOut(backgroundOverlay,500);
+      startBackgroundScroll();
       createMenu();
       attachMenuKeyboardListeners();
     }
