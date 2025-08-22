@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("touchstart", onInput, { capture: true });
   }
 
-  // --- 質問クリック開始 ---
+  // --- 中央クリック開始 ---
   centerText.addEventListener("click", () => {
     if (started) return;
     started = true;
@@ -379,28 +379,30 @@ document.addEventListener("DOMContentLoaded", () => {
       transform: "translateX(-50%)",
       zIndex: 10001,
       padding: "10px 20px",
-      fontSize: "20px"
+      fontSize: "20px",
+      cursor: "pointer"
     });
     document.body.appendChild(confirmBtn);
 
     confirmBtn.addEventListener("click", () => {
-      const playerName = prompt(`選択したキャラ: ${characters[selectedCharIndex]}\n名前を入力してください`, "");
+      const playerName = prompt(`選択したキャラクター: ${characters[selectedCharIndex]}\n名前を入力してください`, "");
       if (!playerName) return;
 
       const confirmOK = confirm(`キャラクター: ${characters[selectedCharIndex]}\n名前: ${playerName}\nでよろしいですか？`);
       if (confirmOK) {
+        // キャラ選択UIを削除
         charWrapper.remove();
         confirmBtn.remove();
+
+        // BGM停止
         charBgm.pause();
         charBgm.currentTime = 0;
 
-        fadeOverlay.style.opacity = 0;
+        // フェードアウト
         fadeOverlay.style.transition = "opacity 1s";
-        fadeOverlay.style.display = "block";
-        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+        fadeOverlay.style.opacity = 0;
         setTimeout(() => {
-          fadeOverlay.style.opacity = 0;
-          setTimeout(() => fadeOverlay.style.display = "none", 1000);
+          fadeOverlay.style.display = "none";
           showGameScreen(characters[selectedCharIndex], playerName);
         }, 1000);
       }
