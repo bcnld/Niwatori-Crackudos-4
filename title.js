@@ -12,21 +12,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
-    fadeOverlay = document.createElement("div");
-    fadeOverlay.id = "fade-overlay";
-    Object.assign(fadeOverlay.style, {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "black",
-      opacity: 0,
-      zIndex: 9999,
-      pointerEvents: "none"
-    });
-    document.body.appendChild(fadeOverlay);
-  }
+  fadeOverlay = document.createElement("div");
+  fadeOverlay.id = "fade-overlay";
+  Object.assign(fadeOverlay.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "black",
+    opacity: 0,
+    zIndex: 9999,
+    pointerEvents: "none",
+    display: "none"   // ← これを追加
+  });
+  document.body.appendChild(fadeOverlay);
+}
 
   let currentLogoIndex = 0;
   let started = false;
