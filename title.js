@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const bgm = document.getElementById("bgm");
   const selectSfx = document.getElementById("select-sfx");
   const effectSfx = document.getElementById("effect-sfx");
-  const charBgm = new Audio("sounds/char_select_bgm.mp3"); // キャラ選択BGM
+  const charBgm = new Audio("Sounds/char.mp3"); // キャラ選択BGM
 
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
