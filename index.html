@@ -18,7 +18,6 @@
       cursor:pointer;
       z-index:10000;
     }
-
     #fullscreen-toggle {
       position: fixed;
       top: 10px;
@@ -70,6 +69,45 @@
       pointer-events:none; z-index:5000;
       transition: opacity 1s ease;
     }
+
+    /* キャラクター選択画面 */
+    #character-selection {
+      display:none;
+      position:fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background-color:#111;
+      z-index:10000;
+      color:white;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      display:flex;
+    }
+    #character-list {
+      display:flex;
+      gap:40px;
+      margin-bottom:30px;
+    }
+    .character-option {
+      padding:20px;
+      border:2px solid white;
+      cursor:pointer;
+      user-select:none;
+    }
+    .character-option.selected {
+      border-color: yellow;
+    }
+    #player-name {
+      font-size:16px;
+      padding:5px 10px;
+    }
+    #confirm-character, #cancel-character {
+      padding:10px 20px;
+      font-size:16px;
+      cursor:pointer;
+      margin-top:10px;
+    }
   </style>
 </head>
 <body>
@@ -86,7 +124,7 @@
   <img class="company-logo" src="images/homo_logo.png" alt="Logo 3" />
 
   <!-- 全画面演出 -->
-  <img id="fullscreen-effect" src="images/transition.png" alt="Effect" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) scale(1.2); opacity:0; z-index:9999; pointer-events:none;" />
+  <img id="fullscreen-effect" src="images/transition.png" alt="Effect" />
 
   <!-- タイトル画像 -->
   <div id="title-images">
@@ -100,14 +138,28 @@
   <!-- フルスクリーン切替ボタン -->
   <button id="fullscreen-toggle">全画面切替</button>
 
+  <!-- キャラクター選択画面 -->
+  <div id="character-selection">
+    <div id="character-list">
+      <div class="character-option" data-index="0">主人公1</div>
+      <div class="character-option" data-index="1">主人公2</div>
+    </div>
+    <div>
+      <label for="player-name">名前:</label>
+      <input type="text" id="player-name" />
+    </div>
+    <button id="confirm-character">決定</button>
+    <button id="cancel-character">戻る</button>
+  </div>
+
   <!-- BGM・効果音 -->
   <audio id="bgm" src="Sounds/title.mp3" preload="auto"></audio>
   <audio id="effect-sfx" src="Sounds/effect.mp3"></audio>
   <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
+  <audio id="character-bgm" src="Sounds/character_select.mp3" preload="auto"></audio>
 
   <!-- JS読み込み -->
   <script src="title.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
