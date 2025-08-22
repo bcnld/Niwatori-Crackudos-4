@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const bgm = document.getElementById("bgm");
   const selectSfx = document.getElementById("select-sfx");
   const effectSfx = document.getElementById("effect-sfx");
+  const charBgm = new Audio("sounds/char_select_bgm.mp3"); // キャラ選択BGM
 
-  // fade-overlay 作成
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
     fadeOverlay = document.createElement("div");
@@ -48,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   centerText.style.display = "block";
 
-  // フェード関数
   function fadeIn(el, duration = 1000) {
     el.style.display = "block";
     el.style.opacity = 0;
@@ -82,13 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- ロゴ順番表示 ---
   async function showNextLogo() {
     if (currentLogoIndex >= logos.length) {
       await showPressBgAndTitle();
       return;
     }
     const logo = logos[currentLogoIndex];
+    if (effectSfx && currentLogoIndex === logos.length - 1) effectSfx.play();
     await fadeIn(logo, 1000);
     await new Promise(r => setTimeout(r, 2000));
     await fadeOut(logo, 1000);
@@ -96,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
-  // --- press_bg とタイトル表示 ---
   async function showPressBgAndTitle() {
     const pressBg = document.createElement("img");
     pressBg.src = "images/press_bg.png";
@@ -125,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (titleImg1) await fadeIn(titleImg1, 1000);
 
-    // transition.png 全画面表示 + 効果音
     if (fullscreenEffect) {
       fullscreenEffect.src = "images/transition.png";
       Object.assign(fullscreenEffect.style, {
@@ -139,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
         zIndex: 9999,
         objectFit: "cover"
       });
-      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play(); }
       await fadeIn(fullscreenEffect, 500);
       await new Promise(r => setTimeout(r, 1500));
       await fadeOut(fullscreenEffect, 500);
@@ -156,24 +152,16 @@ document.addEventListener("DOMContentLoaded", () => {
     waitForPressKey(pressBg);
   }
 
-  // --- Press Any Key 待機 ---
   function waitForPressKey(pressBg) {
     function onInput() {
       if (!pressKeyText || pressKeyText.style.display === "none") return;
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
 
-      // Press Any Key フェードアウト
-      if (pressKeyText) fadeOut(pressKeyText, 500);
+      fadeOut(pressKeyText, 500);
 
-      // effect.mp3 再生
-      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play(); }
-
-      // 背景スクロール開始
       fadeOut(pressBg, 500).then(() => {
         startBackgroundScroll();
-
-        // New Game メニューは背景スクロール開始と同時に表示
         createMenu();
         attachMenuKeyboardListeners();
       });
@@ -188,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fadeOut(centerText, 500).then(showNextLogo);
   });
 
-  // --- 背景スクロール ---
+  // 背景スクロール
   const scrollSpeed = 1;
   const containerHeight = window.innerHeight;
   const containerWidth = window.innerWidth;
@@ -246,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
     animateScrollingBackground();
   }
 
-  // --- メニュー ---
+  // メニュー
   const menuItems = ["New Game", "Load", "Settings"];
   function createMenu() {
     menuWrapper = document.createElement("div");
@@ -278,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.dataset.index = i;
       item.addEventListener("click", () => {
         if (selectedIndex === i && isInputMode) {
-          if (menuItems[i] === "New Game") startCharacterSelection();
+          if (menuItems[i] === "New Game") startCharacterSelectionFade();
           else alert(`"${menuItems[i]}" はまだ未実装です`);
         } else {
           selectedIndex = i;
@@ -319,15 +307,34 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
       } else if (e.key === "Enter" || e.key === " ") {
-        if (menuItems[selectedIndex] === "New Game") startCharacterSelection();
+        if (menuItems[selectedIndex] === "New Game") startCharacterSelectionFade();
        else alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
       }
     });
   }
 
+  // New Game → キャラ選択画面へフェード
+  function startCharacterSelectionFade() {
+    if (fadeOverlay) {
+      fadeOverlay.style.pointerEvents = "auto";
+      fadeOverlay.style.opacity = 0;
+      fadeOverlay.style.transition = "opacity 0.5s";
+      fadeOverlay.style.display = "block";
+      requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+      setTimeout(() => {
+        if (menuWrapper) menuWrapper.remove();
+        startCharacterSelection();
+      }, 500);
+    } else startCharacterSelection();
+  }
+
   // --- キャラクター選択 ---
   function startCharacterSelection() {
-    if (menuWrapper) menuWrapper.remove();
+    // キャラ選択BGM再生
+    charBgm.loop = true;
+    charBgm.volume = 0.8;
+    charBgm.play();
+
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
       position: "fixed",
@@ -339,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gap: "20px"
     });
 
-    const characters = ["Character1", "Character2", "Character3"];
+    const characters = ["犬", "うんこ"];
     let selectedCharIndex = 0;
 
     characters.forEach((name, i) => {
@@ -349,9 +356,13 @@ document.addEventListener("DOMContentLoaded", () => {
         padding: "20px",
         border: "2px solid white",
         cursor: "pointer",
-        userSelect: "none"
+        userSelect: "none",
+        fontSize: "24px"
       });
-      div.addEventListener("click", () => { selectedCharIndex = i; updateCharSelection(); });
+      div.addEventListener("click", () => {
+        selectedCharIndex = i;
+        updateCharSelection();
+      });
       charWrapper.appendChild(div);
     });
     document.body.appendChild(charWrapper);
@@ -363,6 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateCharSelection();
 
+    // 名前入力と確認ボタン
     const confirmBtn = document.createElement("button");
     confirmBtn.textContent = "決定";
     Object.assign(confirmBtn.style, {
@@ -371,37 +383,38 @@ document.addEventListener("DOMContentLoaded", () => {
       left: "50%",
       transform: "translateX(-50%)",
       zIndex: 10001,
-      padding: "10px 20px"
-    });
-    confirmBtn.addEventListener("click", () => {
-      const playerName = prompt("名前を入力してください", "");
-      if (!playerName) return;
-      const confirmOK = confirm(`キャラ: ${characters[selectedCharIndex]}\n名前: ${playerName}\nでよろしいですか？`);
-      if (confirmOK) {
-        charWrapper.remove();
-        confirmBtn.remove();
-        startGameWithFadeIn();
-      }
+      padding: "10px 20px",
+      fontSize: "20px"
     });
     document.body.appendChild(confirmBtn);
+
+    confirmBtn.addEventListener("click", () => {
+      const playerName = prompt(`選択したキャラ: ${characters[selectedCharIndex]}\n名前を入力してください`, "");
+      if (!playerName) return;
+
+      const confirmOK = confirm(`キャラクター: ${characters[selectedCharIndex]}\n名前: ${playerName}\nでよろしいですか？`);
+      if (confirmOK) {
+        // キャラ選択画面削除
+        charWrapper.remove();
+        confirmBtn.remove();
+        charBgm.pause();
+        charBgm.currentTime = 0;
+
+        // ゲーム画面フェードイン
+        fadeOverlay.style.opacity = 0;
+        fadeOverlay.style.transition = "opacity 1s";
+        fadeOverlay.style.display = "block";
+        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+        setTimeout(() => {
+          fadeOverlay.style.opacity = 0;
+          setTimeout(() => fadeOverlay.style.display = "none", 1000);
+          showGameScreen(characters[selectedCharIndex], playerName);
+        }, 1000);
+      }
+    });
   }
 
-  // --- ゲーム画面開始 ---
-  function startGameWithFadeIn() {
-    fadeOverlay.style.pointerEvents = "auto";
-    fadeOverlay.style.opacity = 0;
-    fadeOverlay.style.transition = "opacity 1s";
-    fadeOverlay.style.display = "block";
-    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
-
-    setTimeout(() => {
-      fadeOverlay.style.opacity = 0;
-      setTimeout(() => fadeOverlay.style.display = "none", 1000);
-      showGameScreen();
-    }, 1000);
-  }
-
-  function showGameScreen() {
+  function showGameScreen(character, name) {
     const gameScreen = document.createElement("div");
     Object.assign(gameScreen.style, {
       position: "fixed",
@@ -413,11 +426,13 @@ document.addEventListener("DOMContentLoaded", () => {
       zIndex: 5000,
       color: "white",
       display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      fontSize: "36px"
+      fontSize: "36px",
+      textAlign: "center"
     });
-    gameScreen.textContent = "ゲーム画面";
+    gameScreen.innerHTML = `ゲーム画面<br>キャラクター: ${character}<br>名前: ${name}`;
     document.body.appendChild(gameScreen);
   }
 });
