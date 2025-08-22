@@ -12,28 +12,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
-  fadeOverlay = document.createElement("div");
-  fadeOverlay.id = "fade-overlay";
-  Object.assign(fadeOverlay.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "black",
-    opacity: 0,
-    zIndex: 9999,
-    pointerEvents: "none",
-    display: "none"   // ← これを追加
-  });
-  document.body.appendChild(fadeOverlay);
-}
+    fadeOverlay = document.createElement("div");
+    fadeOverlay.id = "fade-overlay";
+    Object.assign(fadeOverlay.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "black",
+      opacity: 0,
+      zIndex: 9999,
+      pointerEvents: "none",
+      display: "none"
+    });
+    document.body.appendChild(fadeOverlay);
+  }
 
   let currentLogoIndex = 0;
   let started = false;
   let menuWrapper, selectedIndex = 0, isInputMode = false;
 
-  // 初期状態
+  // --- 初期非表示 ---
   logos.forEach(logo => {
     Object.assign(logo.style, {
       display: "none",
@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   centerText.style.display = "block";
 
+  // --- フェード関数 ---
   function fadeIn(el, duration = 1000) {
     el.style.display = "block";
     el.style.opacity = 0;
@@ -66,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       requestAnimationFrame(step);
     });
   }
-
   function fadeOut(el, duration = 1000) {
     el.style.opacity = 1;
     return new Promise(resolve => {
@@ -85,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- ロゴ表示 ---
   async function showNextLogo() {
     if (currentLogoIndex >= logos.length) {
       await showPressBgAndTitle();
@@ -99,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
+  // --- タイトル演出 ---
   async function showPressBgAndTitle() {
     const pressBg = document.createElement("img");
     pressBg.src = "images/press_bg.png";
@@ -173,13 +175,14 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("touchstart", onInput, { capture: true });
   }
 
+  // --- 質問クリック開始 ---
   centerText.addEventListener("click", () => {
     if (started) return;
     started = true;
     fadeOut(centerText, 500).then(showNextLogo);
   });
 
-  // 背景スクロール
+  // --- 背景スクロール ---
   const scrollSpeed = 1;
   const containerHeight = window.innerHeight;
   const containerWidth = window.innerWidth;
@@ -237,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     animateScrollingBackground();
   }
 
-  // メニュー
+  // --- メニュー ---
   const menuItems = ["New Game", "Load", "Settings"];
   function createMenu() {
     menuWrapper = document.createElement("div");
@@ -268,14 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       item.dataset.index = i;
       item.addEventListener("click", () => {
-        if (selectedIndex === i && isInputMode) {
-          if (menuItems[i] === "New Game") startCharacterSelectionFade();
-          else alert(`"${menuItems[i]}" はまだ未実装です`);
-        } else {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-        }
+        if (menuItems[i] === "New Game") startCharacterSelectionFade();
+        else alert(`"${menuItems[i]}" はまだ未実装です`);
       });
       menuWrapper.appendChild(item);
     });
@@ -316,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // New Game → キャラ選択画面
+  // --- キャラ選択遷移 ---
   function startCharacterSelectionFade() {
     fadeOverlay.style.pointerEvents = "auto";
     fadeOverlay.style.opacity = 0;
@@ -436,11 +433,4 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     document.body.appendChild(gameScreen);
   }
-
-  // --- 初期起動 ---
-  centerText.addEventListener("click", () => {
-    if (started) return;
-    started = true;
-    fadeOut(centerText, 500).then(showNextLogo);
-  });
 });
