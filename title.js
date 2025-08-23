@@ -100,6 +100,7 @@ async function showNextLogo() {
 }
 
 // --- タイトル演出 ---
+// --- タイトル演出 ---
 async function showPressBgAndTitle() {
   const pressBg = document.createElement("img");
   pressBg.src = "images/press_bg.png";
@@ -117,37 +118,48 @@ async function showPressBgAndTitle() {
   });
   document.body.appendChild(pressBg);
 
+  // 背景フェードイン
   requestAnimationFrame(() => pressBg.style.opacity = 1);
-  if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.play(); }
 
+  // 🎵 BGM 再生開始と同時に effect.mp3 & transition.png 表示
+  if (bgm) {
+    bgm.loop = true;
+    bgm.volume = 1;
+    bgm.currentTime = 0;
+    bgm.play();
+
+    if (fullscreenEffect) {
+      fullscreenEffect.src = "images/transition.png";
+      Object.assign(fullscreenEffect.style, {
+        display: "block",
+        opacity: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 9999,
+        objectFit: "cover"
+      });
+
+      if (effectSfx) {
+        effectSfx.currentTime = 0;
+        effectSfx.play(); // ← BGMと完全同時
+      }
+    }
+  }
+
+  // 背景ズーム演出
   setTimeout(() => {
     pressBg.style.width = "100%";
     pressBg.style.height = "100%";
     pressBg.style.transform = "translate(0,0)";
   }, 50);
 
+  // タイトル演出シーケンス
   if (titleImg1) await fadeIn(titleImg1, 1000);
 
   if (fullscreenEffect) {
-    fullscreenEffect.src = "images/transition.png";
-    Object.assign(fullscreenEffect.style, {
-      display: "block",
-      opacity: 0,
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      zIndex: 9999,
-      objectFit: "cover"
-    });
-
-    // 🎵 ここで再生すると transition.png と同時に音が鳴る
-    if (effectSfx) {
-      effectSfx.currentTime = 0;
-      effectSfx.play();
-    }
-
     await fadeIn(fullscreenEffect, 500);
     await new Promise(r => setTimeout(r, 1500));
     await fadeOut(fullscreenEffect, 500);
@@ -156,6 +168,7 @@ async function showPressBgAndTitle() {
   if (titleImg1) await fadeOut(titleImg1, 1000);
   if (titleImg2) await fadeIn(titleImg2, 1000);
 
+  // 「Press Any Key」表示
   if (pressKeyText) {
     pressKeyText.style.display = "block";
     requestAnimationFrame(() => pressKeyText.style.opacity = 1);
@@ -163,7 +176,7 @@ async function showPressBgAndTitle() {
 
   waitForPressKey(pressBg);
 }
-
+  
   function waitForPressKey(pressBg) {
     function onInput() {
       if (!pressKeyText || pressKeyText.style.display === "none") return;
