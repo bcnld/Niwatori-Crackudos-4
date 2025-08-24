@@ -213,89 +213,111 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- メニュー ---
   function createMenu() {
-    if (menuWrapper) menuWrapper.remove();
-    menuWrapper = document.createElement("div");
-    let topPosition = 100;
-    if (titleImg2) {
-      const rect = titleImg2.getBoundingClientRect();
-      topPosition = rect.bottom + 20;
-    }
-    Object.assign(menuWrapper.style, {
-      position: "fixed", top: `${topPosition}px`,
-      left: "50%", transform: "translateX(-50%)",
-      zIndex: 10000, display: "flex",
-      flexDirection: "column", gap: "12px",
-      fontSize: "24px", fontWeight: "bold",
-      color: "#fff", textShadow: "0 0 5px black"
+  if (menuWrapper) menuWrapper.remove();
+  menuWrapper = document.createElement("div");
+
+  // タイトル下に配置
+  let topPosition = 100;
+  if (titleImg2) {
+    const rect = titleImg2.getBoundingClientRect();
+    topPosition = rect.bottom + 20;
+  }
+  Object.assign(menuWrapper.style, {
+    position: "fixed",
+    top: `${topPosition}px`,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 10000,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "0 0 5px black",
+  });
+
+  const isTouch = "ontouchstart" in window;
+
+  menuItems.forEach((text, i) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    Object.assign(item.style, {
+      cursor: "pointer",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      userSelect: "none",
+      transition: "background-color 0.3s ease,color 0.3s ease",
     });
+    item.dataset.index = i;
 
-    const isTouch = "ontouchstart" in window;
-    menuItems.forEach((text, i) => {
-      const item = document.createElement("div");
-      item.textContent = text;
-      Object.assign(item.style, {
-        cursor: "pointer", padding: "10px 20px",
-        borderRadius: "8px", userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease"
+    // PC: ホバーで選択
+    if (!isTouch) {
+      item.addEventListener("mouseover", () => {
+        selectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       });
-      item.dataset.index = i;
+    }
 
-      if (!isTouch) {
-        item.addEventListener("mouseover", () => {
-          selectedIndex = i; updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        });
-      }
-      item.addEventListener("click", () => {
-        selectedIndex = i; updateMenuSelection();
+    // クリック・タップ対応（2段階）
+    item.addEventListener("click", () => {
+      if (selectedIndex === i) {
+        // 選択済みなら実行
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
         alert(`"${menuItems[i]}" を実行`);
-      });
-
-      menuWrapper.appendChild(item);
-    });
-
-    document.body.appendChild(menuWrapper);
-    isInputMode = true;
-    selectedIndex = 0;
-    updateMenuSelection();
-    attachMenuKeyboardListeners();
-  }
-
-  function updateMenuSelection() {
-    if (!menuWrapper) return;
-    const items = menuWrapper.querySelectorAll("div");
-    items.forEach((item, idx) => {
-      if (idx === selectedIndex) {
-        item.style.backgroundColor = "rgba(255,255,255,0.2)";
-        item.style.color = "#ff0";
       } else {
-        item.style.backgroundColor = "transparent";
-        item.style.color = "#fff";
-      }
-    });
-  }
-
-  // --- キーボードイベント ---
-  let keyboardAttached = false;
-  function attachMenuKeyboardListeners() {
-    if (keyboardAttached) return;
-    keyboardAttached = true;
-
-    window.addEventListener("keydown", (e) => {
-      if (!isInputMode) return;
-
-      if (e.key === "ArrowUp") {
-        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+        // 選択されていなければ選択状態にするだけ
+        selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      } else if (e.key === "ArrowDown") {
-        selectedIndex = (selectedIndex + 1) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      } else if (e.key === "Enter" || e.key === " ") {
-        alert(`"${menuItems[selectedIndex]}" を実行`);
       }
     });
-  }
+
+    menuWrapper.appendChild(item);
+  });
+
+  document.body.appendChild(menuWrapper);
+  isInputMode = true;
+  selectedIndex = 0;
+  updateMenuSelection();
+  attachMenuKeyboardListeners();
+}
+
+function updateMenuSelection() {
+  if (!menuWrapper) return;
+  const items = menuWrapper.querySelectorAll("div");
+  items.forEach((item, idx) => {
+    if (idx === selectedIndex) {
+      item.style.backgroundColor = "rgba(255,255,255,0.2)";
+      item.style.color = "#ff0";
+    } else {
+      item.style.backgroundColor = "transparent";
+      item.style.color = "#fff";
+    }
+  });
+}
+
+// --- キーボードイベント ---
+let keyboardAttached = false;
+function attachMenuKeyboardListeners() {
+  if (keyboardAttached) return;
+  keyboardAttached = true;
+
+  window.addEventListener("keydown", (e) => {
+    if (!isInputMode) return;
+
+    if (e.key === "ArrowUp") {
+      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+    } else if (e.key === "ArrowDown") {
+      selectedIndex = (selectedIndex + 1) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+    } else if (e.key === "Enter" || e.key === " ") {
+      alert(`"${menuItems[selectedIndex]}" を実行`);
+    }
+  });
+}
 });
