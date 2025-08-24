@@ -360,64 +360,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- New Game 開始処理 ---
   function startNewGame() {
-    if (!fadeOverlay) return;
+  // --- New Game 開始処理 ---
+function startNewGame() {
+  if (!fadeOverlay) return;
 
-    // メニュー・バージョン・会社名を非表示
-    if (menuWrapper) menuWrapper.style.display = "none";
-    if (versionDiv) versionDiv.style.display = "none";
-    if (companyDiv) companyDiv.style.display = "none";
+  // メニュー・バージョン・会社名を非表示
+  if (menuWrapper) menuWrapper.style.display = "none";
+  if (versionDiv) versionDiv.style.display = "none";
+  if (companyDiv) companyDiv.style.display = "none";
 
-    // フェードイン（黒くする）
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.opacity = 0;
+  // フェードオーバーレイ表示（透明→黒）
+  fadeOverlay.style.display = "block";
+  fadeOverlay.style.opacity = 0;
 
-    const fadeDuration = 1000; // 1秒
-    let start = null;
+  const fadeDuration = 1500; // 1.5秒
 
-    function fadeStep(ts) {
-      if (!start) start = ts;
-      let progress = (ts - start) / fadeDuration;
-      if (progress > 1) progress = 1;
-      fadeOverlay.style.opacity = progress;
-
-      if (progress < 1) {
-        requestAnimationFrame(fadeStep);
+  // --- BGMフェードアウト ---
+  if (bgm && !bgm.paused) {
+    let fadeOutAudio = setInterval(() => {
+      if (bgm.volume > 0.05) {
+        bgm.volume = Math.max(0, bgm.volume - 0.05);
       } else {
-        clearScreen();
-        changeBGM();
-        // ここで次のゲーム画面処理へ移行可能
+        bgm.pause();
+        bgm.currentTime = 0;
+        clearInterval(fadeOutAudio);
       }
-    }
-    requestAnimationFrame(fadeStep);
+    }, 100);
   }
 
-  // --- 画面リセット ---
-  function clearScreen() {
-    if (titleImg1) titleImg1.style.display = "none";
-    if (titleImg2) titleImg2.style.display = "none";
-    if (pressKeyText) pressKeyText.style.display = "none";
-    if (centerText) centerText.style.display = "none";
+  // --- 画面フェードアウト（黒くなる） ---
+  fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+  requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-    if (scrollWrapper) {
-      scrollWrapper.remove();
-      scrollWrapper = null;
-      bgElements = [];
-    }
+  // --- 真っ黒になってから処理 ---
+  setTimeout(() => {
+    clearScreen();      // タイトルや背景を消す
+    changeBGM();        // 新しいBGMをフェードイン再生
 
-    fadeOverlay.style.opacity = 1;
+    // --- 画面フェードイン（黒→透明） ---
+    fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+    fadeOverlay.style.opacity = 0;
+    setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+  }, fadeDuration);
+}
+
+// --- BGM切替（フェードイン再生） ---
+function changeBGM() {
+  if (bgm) {
+    bgm.src = "Sounds/newgame_bgm.mp3";
+    bgm.loop = true;
+    bgm.volume = 0;
+    bgm.play().catch(()=>{});
+
+    let fadeInAudio = setInterval(() => {
+      if (bgm.volume < 0.95) {
+        bgm.volume = Math.min(1, bgm.volume + 0.05);
+      } else {
+        clearInterval(fadeInAudio);
+      }
+    }, 100);
   }
-
-  // --- BGM切替 ---
-  function changeBGM() {
-    if (bgm) {
-      bgm.pause();
-      bgm.currentTime = 0;
-      bgm.src = "audio/newgame_bgm.mp3";
-      bgm.loop = true;
-      bgm.volume = 1;
-      bgm.play().catch(()=>{});
-    }
-  }
+}
 
   // --- レイアウト自動調整 ---
   function adjustLayout() {
