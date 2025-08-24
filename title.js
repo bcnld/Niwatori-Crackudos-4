@@ -261,96 +261,96 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- メニュー ---
   function createMenu() {
-    if (menuWrapper) menuWrapper.remove(); // 既存メニュー削除
-    menuWrapper = document.createElement("div");
-    const rect = titleImg2.getBoundingClientRect();
-    Object.assign(menuWrapper.style, {
-      position: "fixed",
-      top: `${rect.bottom + 20}px`,
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 10000,
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      textShadow: "0 0 5px black"
+  if (menuWrapper) menuWrapper.remove(); // 既存メニュー削除
+  menuWrapper = document.createElement("div");
+  const rect = titleImg2.getBoundingClientRect();
+  Object.assign(menuWrapper.style, {
+    position: "fixed",
+    top: `${rect.bottom + 20}px`,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 10000,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "0 0 5px black"
+  });
+
+  const isTouch = "ontouchstart" in window;
+
+  menuItems.forEach((text, i) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    Object.assign(item.style, {
+      cursor: "pointer",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      userSelect: "none",
+      transition: "background-color 0.3s ease,color 0.3s ease"
     });
+    item.dataset.index = i;
 
-    menuItems.forEach((text, i) => {
-      const item = document.createElement("div");
-      item.textContent = text;
-      Object.assign(item.style, {
-        cursor: "pointer",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease"
-      });
-      item.dataset.index = i;
-
+    // PC: ホバーで選択
+    if (!isTouch) {
       item.addEventListener("mouseover", () => {
         selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
       });
+    }
 
-      item.addEventListener("click", () => {
-        const now = Date.now();
-        if (selectedIndex === i && now - lastClickTime < 1000) {
-          alert(`"${menuItems[i]}" を実行`);
-        } else {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-        }
-        lastClickTime = now;
-      });
-
-      menuWrapper.appendChild(item);
+    // クリック/タップで即実行
+    item.addEventListener("click", () => {
+      selectedIndex = i;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+      alert(`"${menuItems[i]}" を実行`);
     });
 
-    document.body.appendChild(menuWrapper);
-    isInputMode = true;
-    selectedIndex = 0;
-    updateMenuSelection();
-    attachMenuKeyboardListeners();
-  }
+    menuWrapper.appendChild(item);
+  });
 
-  function updateMenuSelection() {
-    const items = menuWrapper.querySelectorAll("div");
-    items.forEach((item, idx) => {
-      if (idx === selectedIndex) {
-        item.style.backgroundColor = "rgba(255,255,255,0.2)";
-        item.style.color = "#ff0";
-      } else {
-        item.style.backgroundColor = "transparent";
-        item.style.color = "#fff";
-      }
-    });
-  }
+  document.body.appendChild(menuWrapper);
+  isInputMode = true;
+  selectedIndex = 0;
+  updateMenuSelection();
+  attachMenuKeyboardListeners();
+}
 
-  // キーボードイベントは一度だけ登録
-  let keyboardAttached = false;
-  function attachMenuKeyboardListeners() {
-    if (keyboardAttached) return;
-    keyboardAttached = true;
+function updateMenuSelection() {
+  const items = menuWrapper.querySelectorAll("div");
+  items.forEach((item, idx) => {
+    if (idx === selectedIndex) {
+      item.style.backgroundColor = "rgba(255,255,255,0.2)";
+      item.style.color = "#ff0";
+    } else {
+      item.style.backgroundColor = "transparent";
+      item.style.color = "#fff";
+    }
+  });
+}
 
-    window.addEventListener("keydown", (e) => {
-      if (!isInputMode) return;
-      if (e.key === "ArrowUp") {
-        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-      } else if (e.key === "ArrowDown") {
-        selectedIndex = (selectedIndex + 1) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-      } else if (e.key === "Enter" || e.key === " ") {
-        alert(`"${menuItems[selectedIndex]}" を実行`);
-      }
-    });
-  }
-});
+// キーボードイベントは一度だけ登録
+let keyboardAttached = false;
+function attachMenuKeyboardListeners() {
+  if (keyboardAttached) return;
+  keyboardAttached = true;
+
+  window.addEventListener("keydown", (e) => {
+    if (!isInputMode) return;
+    if (e.key === "ArrowUp") {
+      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+    } else if (e.key === "ArrowDown") {
+      selectedIndex = (selectedIndex + 1) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+    } else if (e.key === "Enter" || e.key === " ") {
+      alert(`"${menuItems[selectedIndex]}" を実行`);
+    }
+  });
+}
