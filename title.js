@@ -165,7 +165,7 @@ async function showPressBgAndTitle() {
   }, 50);
 
   // タイトル演出シーケンス
-  if (titleImg1) await fadeIn(titleImg1, 1000);
+  if (titleImg1) await fadeIn(titleImg1, 2000);
   if (titleImg1) await fadeOut(titleImg1, 1000);
   if (titleImg2) await fadeIn(titleImg2, 1000);
 
