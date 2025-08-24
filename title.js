@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
       width: "100%", height: "100%",
       backgroundColor: "black", opacity: 0,
       zIndex: 9999, pointerEvents: "none",
-      display: "none"
+      display: "none", transition: "opacity 1s ease"
     });
     document.body.appendChild(fadeOverlay);
   }
@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.appendChild(menuWrapper);
 
-    // --- バージョンと会社名 ---
+    // バージョンと会社名
     if (!versionDiv) {
       versionDiv = document.createElement("div");
       versionDiv.textContent = "Version 1.0.0";
@@ -476,3 +476,4 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", adjustLayout);
   window.addEventListener("orientationchange", adjustLayout);
   window.addEventListener("load", adjustLayout);
+});
