@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectSfx = document.getElementById("select-sfx");
   const effectSfx = document.getElementById("effect-sfx");
 
-  // フェード用オーバーレイ
+  // --- フェード用オーバーレイ ---
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
     fadeOverlay = document.createElement("div");
@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 初期非表示 ---
   logos.forEach(logo => {
+    if (!logo) return;
     Object.assign(logo.style, {
       display: "none", position: "fixed", top: "0", left: "0",
       width: "100%", height: "100%", objectFit: "cover", zIndex: 9998
@@ -42,10 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
   [titleImg1, titleImg2, pressKeyText, fullscreenEffect, fadeOverlay].forEach(el => {
     if (el) el.style.display = "none";
   });
-  centerText.style.display = "block";
+  if (centerText) centerText.style.display = "block";
 
   // --- フェード関数 ---
   function fadeIn(el, duration = 1000) {
+    if (!el) return Promise.resolve();
     el.style.display = "block";
     el.style.opacity = 0;
     return new Promise(resolve => {
@@ -62,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function fadeOut(el, duration = 1000) {
+    if (!el) return Promise.resolve();
     el.style.opacity = 1;
     return new Promise(resolve => {
       let start = null;
@@ -104,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(pressBg);
     requestAnimationFrame(() => pressBg.style.opacity = 1);
 
-    if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.currentTime = 0; bgm.play(); }
+    if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.currentTime = 0; bgm.play().catch(()=>{}); }
     if (fullscreenEffect) {
       fullscreenEffect.src = "images/transition.png";
       Object.assign(fullscreenEffect.style, {
@@ -114,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
         zIndex: 9999, objectFit: "cover",
         transition: "opacity 2s ease"
       });
-      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play(); }
+      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play().catch(()=>{}); }
       setTimeout(() => fullscreenEffect.style.opacity = 0, 1500);
       setTimeout(() => fullscreenEffect.style.display = "none", 3500);
     }
@@ -151,11 +154,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- 中央クリック開始 ---
-  centerText.addEventListener("click", () => {
-    if (started) return;
-    started = true;
-    fadeOut(centerText, 500).then(showNextLogo);
-  });
+  if (centerText) {
+    centerText.addEventListener("click", () => {
+      if (started) return;
+      started = true;
+      fadeOut(centerText, 500).then(showNextLogo);
+    });
+  }
 
   // --- 背景スクロール ---
   const scrollSpeed = 1;
@@ -187,13 +192,15 @@ document.addEventListener("DOMContentLoaded", () => {
       left -= scrollSpeed;
       bgElements[i].style.left = left + "px";
     }
-    if (parseFloat(bgElements[0].style.left) + bgImageWidth <= 0) {
+    if (bgElements.length && parseFloat(bgElements[0].style.left) + bgImageWidth <= 0) {
       const removed = bgElements.shift(); removed.remove();
     }
-    const lastDiv = bgElements[bgElements.length - 1];
-    if (parseFloat(lastDiv.style.left) + bgImageWidth <= containerWidth) {
-      const newDiv = createBgDiv(parseFloat(lastDiv.style.left) + bgImageWidth);
-      scrollWrapper.appendChild(newDiv); bgElements.push(newDiv);
+    if (bgElements.length) {
+      const lastDiv = bgElements[bgElements.length - 1];
+      if (parseFloat(lastDiv.style.left) + bgImageWidth <= containerWidth) {
+        const newDiv = createBgDiv(parseFloat(lastDiv.style.left) + bgImageWidth);
+        scrollWrapper.appendChild(newDiv); bgElements.push(newDiv);
+      }
     }
     requestAnimationFrame(animateScrollingBackground);
   }
@@ -208,9 +215,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function createMenu() {
     if (menuWrapper) menuWrapper.remove();
     menuWrapper = document.createElement("div");
-    const rect = titleImg2.getBoundingClientRect();
+    let topPosition = 100;
+    if (titleImg2) {
+      const rect = titleImg2.getBoundingClientRect();
+      topPosition = rect.bottom + 20;
+    }
     Object.assign(menuWrapper.style, {
-      position: "fixed", top: `${rect.bottom + 20}px`,
+      position: "fixed", top: `${topPosition}px`,
       left: "50%", transform: "translateX(-50%)",
       zIndex: 10000, display: "flex",
       flexDirection: "column", gap: "12px",
@@ -232,14 +243,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isTouch) {
         item.addEventListener("mouseover", () => {
           selectedIndex = i; updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
         });
       }
       item.addEventListener("click", () => {
-        selectedIndex = i;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-        // タッチ・クリックで即実行
+        selectedIndex = i; updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
         alert(`"${menuItems[i]}" を実行`);
       });
 
@@ -254,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateMenuSelection() {
+    if (!menuWrapper) return;
     const items = menuWrapper.querySelectorAll("div");
     items.forEach((item, idx) => {
       if (idx === selectedIndex) {
@@ -278,15 +288,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "ArrowUp") {
         selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
         updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       } else if (e.key === "ArrowDown") {
         selectedIndex = (selectedIndex + 1) % menuItems.length;
         updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       } else if (e.key === "Enter" || e.key === " ") {
         alert(`"${menuItems[selectedIndex]}" を実行`);
       }
     });
   }
-
 });
