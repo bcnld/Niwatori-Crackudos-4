@@ -358,7 +358,3 @@ function attachMenuKeyboardListeners() {
       alert(`"${menuItems[selectedIndex]}" を実行`);
     }
   });
-}
-
-// ここでDOMContentLoadedのクロージング
-});
