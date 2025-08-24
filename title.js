@@ -371,12 +371,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // メニュー位置
-    if (menuWrapper) {
-      const topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
-      menuWrapper.style.top = topPosition + "px";
-    }
-
     // Press Any Key テキスト
     if (pressKeyText) {
       pressKeyText.style.left = "50%";
