@@ -360,43 +360,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- New Game 開始処理 ---
   function startNewGame() {
-    if (!fadeOverlay) return;
+  if (!fadeOverlay) return;
 
-    if (menuWrapper) menuWrapper.style.display = "none";
-    if (versionDiv) versionDiv.style.display = "none";
-    if (companyDiv) companyDiv.style.display = "none";
+  if (menuWrapper) menuWrapper.style.display = "none";
+  if (versionDiv) versionDiv.style.display = "none";
+  if (companyDiv) companyDiv.style.display = "none";
 
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.opacity = 0;
+  fadeOverlay.style.display = "block";
+  fadeOverlay.style.opacity = 0;
 
-    const fadeDuration = 1500;
+  const fadeDuration = 3000; // ← ここを 1500 → 3000 に変更
 
-    // BGMフェードアウト
-    if (bgm && !bgm.paused) {
-      let fadeOutAudio = setInterval(() => {
-        if (bgm.volume > 0.05) {
-          bgm.volume = Math.max(0, bgm.volume - 0.05);
-        } else {
-          bgm.pause();
-          bgm.currentTime = 0;
-          clearInterval(fadeOutAudio);
-        }
-      }, 100);
-    }
-
-    // 画面を黒にフェードアウト
-    fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
-
-    setTimeout(() => {
-      clearScreen();
-      changeBGM();
-
-      fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-      fadeOverlay.style.opacity = 0;
-      setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
-    }, fadeDuration);
+  if (bgm && !bgm.paused) {
+    let fadeOutAudio = setInterval(() => {
+      if (bgm.volume > 0.01) { // ← より滑らかに
+        bgm.volume = Math.max(0, bgm.volume - 0.01); // ← 減少量を小さく
+      } else {
+        bgm.pause();
+        bgm.currentTime = 0;
+        clearInterval(fadeOutAudio);
+      }
+    }, 100); // 間隔はそのままでもOK
   }
+
+  fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+  requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+
+  setTimeout(() => {
+    clearScreen();
+    changeBGM();
+
+    fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+    fadeOverlay.style.opacity = 0;
+    setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+  }, fadeDuration);
+}
 
   // --- 画面クリア ---
   function clearScreen() {
