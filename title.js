@@ -358,3 +358,6 @@ function attachMenuKeyboardListeners() {
       alert(`"${menuItems[selectedIndex]}" を実行`);
     }
   });
+} // ← attachMenuKeyboardListeners 関数の閉じ
+
+}); // ← DOMContentLoaded の閉じ
