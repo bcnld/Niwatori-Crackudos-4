@@ -405,12 +405,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // バージョン・会社名
     if (versionDiv) {
       versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
+      versionDiv.style.right = "10px";
+      versionDiv.style.bottom = "10px";
+      versionDiv.style.position = "fixed";
     }
     if (companyDiv) {
       companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
+      companyDiv.style.left = "50%";
+      companyDiv.style.bottom = "10px";
+      companyDiv.style.transform = "translateX(-50%)";
+      companyDiv.style.position = "fixed";
     }
-  }
+}
 
-  // --- リサイズ時に調整 ---
-  window.addEventListener("resize", adjustLayout);
+// --- 初期化とリサイズ・向き変更に対応 ---
+window.addEventListener("resize", adjustLayout);
+window.addEventListener("orientationchange", adjustLayout);
+window.addEventListener("load", adjustLayout);
 });
