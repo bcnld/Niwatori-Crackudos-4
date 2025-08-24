@@ -84,22 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- ロゴ表示 ---
-// --- ロゴ表示 ---
-async function showNextLogo() {
-  if (currentLogoIndex >= logos.length) {
-    await showPressBgAndTitle();
-    return;
-  }
-  const logo = logos[currentLogoIndex];
-  await fadeIn(logo, 1000);
-  await new Promise(r => setTimeout(r, 2000));
-  await fadeOut(logo, 1000);
-  currentLogoIndex++;
-  showNextLogo();
-}
-
-// --- タイトル演出 ---
 // --- タイトル演出 ---
 async function showPressBgAndTitle() {
   const pressBg = document.createElement("img");
@@ -132,20 +116,31 @@ async function showPressBgAndTitle() {
       fullscreenEffect.src = "images/transition.png";
       Object.assign(fullscreenEffect.style, {
         display: "block",
-        opacity: 0,
+        opacity: 1,              // ← フェードインせず即表示
         position: "fixed",
         top: 0,
         left: 0,
         width: "100%",
         height: "100%",
         zIndex: 9999,
-        objectFit: "cover"
+        objectFit: "cover",
+        transition: "opacity 2s ease" // ← フェードアウト用
       });
 
       if (effectSfx) {
         effectSfx.currentTime = 0;
         effectSfx.play(); // ← BGMと完全同時
       }
+
+      // 一定時間後にフェードアウト開始
+      setTimeout(() => {
+        fullscreenEffect.style.opacity = 0;
+      }, 1500); // 1.5秒表示後にフェードアウト開始
+
+      // 完全に消えたら非表示に戻す
+      setTimeout(() => {
+        fullscreenEffect.style.display = "none";
+      }, 3500); // (1500ms表示 + 2000msフェードアウト)
     }
   }
 
@@ -158,13 +153,6 @@ async function showPressBgAndTitle() {
 
   // タイトル演出シーケンス
   if (titleImg1) await fadeIn(titleImg1, 1000);
-
-  if (fullscreenEffect) {
-    await fadeIn(fullscreenEffect, 500);
-    await new Promise(r => setTimeout(r, 1500));
-    await fadeOut(fullscreenEffect, 500);
-  }
-
   if (titleImg1) await fadeOut(titleImg1, 1000);
   if (titleImg2) await fadeIn(titleImg2, 1000);
 
