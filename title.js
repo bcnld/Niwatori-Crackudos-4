@@ -31,6 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedIndex = 0;
   let isInputMode = false;
   const menuItems = ["New Game", "Load", "Settings"];
+  let scrollWrapper = null;
+  let bgElements = [];
+  const bgImageWidth = 3600;
+
+  let versionDiv, companyDiv;
 
   // --- 初期非表示 ---
   logos.forEach(logo => {
@@ -166,20 +171,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const scrollSpeed = 1;
   const containerHeight = window.innerHeight;
   const containerWidth = window.innerWidth;
-  const bgImageWidth = 3600;
-  const bgImageHeight = containerHeight;
-  const scrollWrapper = document.createElement("div");
-  Object.assign(scrollWrapper.style, {
-    position: "fixed", top: 0, left: 0,
-    width: `${containerWidth}px`, height: `${containerHeight}px`,
-    overflow: "hidden", zIndex: 1, pointerEvents: "none"
-  });
-  let bgElements = [];
   function createBgDiv(x) {
     const div = document.createElement("div");
     Object.assign(div.style, {
       position: "absolute", top: 0, left: `${x}px`,
-      width: `${bgImageWidth}px`, height: `${bgImageHeight}px`,
+      width: `${bgImageWidth}px`, height: `${containerHeight}px`,
       backgroundImage: "url('images/menu.png')",
       backgroundSize: "cover", backgroundRepeat: "no-repeat",
       backgroundPosition: "center center"
@@ -205,6 +201,12 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(animateScrollingBackground);
   }
   function startBackgroundScroll() {
+    scrollWrapper = document.createElement("div");
+    Object.assign(scrollWrapper.style, {
+      position: "fixed", top: 0, left: 0,
+      width: `${containerWidth}px`, height: `${containerHeight}px`,
+      overflow: "hidden", zIndex: 1, pointerEvents: "none"
+    });
     document.body.appendChild(scrollWrapper);
     bgElements = [createBgDiv(0), createBgDiv(bgImageWidth)];
     bgElements.forEach(div => scrollWrapper.appendChild(div));
@@ -213,146 +215,202 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- メニュー ---
   function createMenu() {
-  if (menuWrapper) menuWrapper.remove();
-  menuWrapper = document.createElement("div");
+    if (menuWrapper) menuWrapper.remove();
+    menuWrapper = document.createElement("div");
 
-  // タイトル下に配置
-  let topPosition = 100;
-  if (titleImg2) {
-    const rect = titleImg2.getBoundingClientRect();
-    topPosition = rect.bottom + 20;
-  }
-  Object.assign(menuWrapper.style, {
-    position: "fixed",
-    top: `${topPosition}px`,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 10000,
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#fff",
-    textShadow: "0 0 5px black",
-  });
-
-  const isTouch = "ontouchstart" in window;
-
-  menuItems.forEach((text, i) => {
-    const item = document.createElement("div");
-    item.textContent = text;
-    Object.assign(item.style, {
-      cursor: "pointer",
-      padding: "10px 20px",
-      borderRadius: "8px",
-      userSelect: "none",
-      transition: "background-color 0.3s ease,color 0.3s ease",
+    let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
+    Object.assign(menuWrapper.style, {
+      position: "fixed",
+      top: `${topPosition}px`,
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 10000,
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#fff",
+      textShadow: "0 0 5px black",
     });
-    item.dataset.index = i;
 
-    // PC: ホバーで選択
-    if (!isTouch) {
-      item.addEventListener("mouseover", () => {
-        selectedIndex = i;
+    const isTouch = "ontouchstart" in window;
+
+    menuItems.forEach((text, i) => {
+      const item = document.createElement("div");
+      item.textContent = text;
+      Object.assign(item.style, {
+        cursor: "pointer",
+        padding: "10px 20px",
+        borderRadius: "8px",
+        userSelect: "none",
+        transition: "background-color 0.3s ease,color 0.3s ease",
+      });
+      item.dataset.index = i;
+
+      if (!isTouch) {
+        item.addEventListener("mouseover", () => {
+          selectedIndex = i;
+          updateMenuSelection();
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+        });
+      }
+
+      item.addEventListener("click", () => {
+        if (selectedIndex === i) {
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+          alert(`"${menuItems[i]}" を実行`);
+        } else {
+          selectedIndex = i;
+          updateMenuSelection();
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+        }
+      });
+
+      menuWrapper.appendChild(item);
+    });
+
+    document.body.appendChild(menuWrapper);
+
+    // --- バージョンと会社名 ---
+    if (!versionDiv) {
+      versionDiv = document.createElement("div");
+      versionDiv.textContent = "Version 1.0.0";
+      Object.assign(versionDiv.style, {
+        position: "fixed",
+        bottom: "10px",
+        right: "10px",
+        color: "#fff",
+        fontSize: "14px",
+        fontWeight: "bold",
+        textShadow: "0 0 3px black",
+        zIndex: 10000,
+        pointerEvents: "none"
+      });
+      document.body.appendChild(versionDiv);
+    }
+
+    if (!companyDiv) {
+      companyDiv = document.createElement("div");
+      companyDiv.textContent = "@2025 Mdm5.inc";
+      Object.assign(companyDiv.style, {
+        position: "fixed",
+        bottom: "10px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        color: "#fff",
+        fontSize: "14px",
+        fontWeight: "bold",
+        textShadow: "0 0 3px black",
+        zIndex: 10000,
+        pointerEvents: "none"
+      });
+      document.body.appendChild(companyDiv);
+    }
+
+    isInputMode = true;
+    selectedIndex = 0;
+    updateMenuSelection();
+    attachMenuKeyboardListeners();
+    adjustLayout();
+  }
+
+  function updateMenuSelection() {
+    if (!menuWrapper) return;
+    const items = menuWrapper.querySelectorAll("div");
+    items.forEach((item, idx) => {
+      if (idx === selectedIndex) {
+        item.style.backgroundColor = "rgba(255,255,255,0.2)";
+        item.style.color = "#ff0";
+      } else {
+        item.style.backgroundColor = "transparent";
+        item.style.color = "#fff";
+      }
+    });
+  }
+
+  let keyboardAttached = false;
+  function attachMenuKeyboardListeners() {
+    if (keyboardAttached) return;
+    keyboardAttached = true;
+
+    window.addEventListener("keydown", (e) => {
+      if (!isInputMode) return;
+
+      if (e.key === "ArrowUp") {
+        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      } else if (e.key === "ArrowDown") {
+        selectedIndex = (selectedIndex + 1) % menuItems.length;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      } else if (e.key === "Enter" || e.key === " ") {
+        alert(`"${menuItems[selectedIndex]}" を実行`);
+      }
+    });
+  }
+
+  // --- レイアウト自動調整 ---
+  function adjustLayout() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isPortrait = h > w;
+
+    // 背景スクロール
+    if (scrollWrapper) {
+      scrollWrapper.style.width = w + "px";
+      scrollWrapper.style.height = h + "px";
+    }
+    if (bgElements) {
+      bgElements.forEach((div, i) => {
+        div.style.height = h + "px";
+        div.style.width = bgImageWidth + "px";
+        div.style.top = "0px";
+        div.style.left = (i === 0 ? 0 : bgImageWidth) + "px";
       });
     }
 
-    // クリック・タップ対応（2段階）
-    item.addEventListener("click", () => {
-      if (selectedIndex === i) {
-        // 選択済みなら実行
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        alert(`"${menuItems[i]}" を実行`);
-      } else {
-        // 選択されていなければ選択状態にするだけ
-        selectedIndex = i;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      }
+    // メニュー位置
+    if (menuWrapper) {
+      const topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
+      menuWrapper.style.top = topPosition + "px";
+    }
+
+    // タイトル画像
+    [titleImg1, titleImg2].forEach(img => {
+      if (!img) return;
+      img.style.maxWidth = isPortrait ? "90%" : "60%";
+      img.style.height = "auto";
+      img.style.left = "50%";
+      img.style.transform = "translateX(-50%)";
     });
 
-    menuWrapper.appendChild(item);
-  });
-
-  document.body.appendChild(menuWrapper);
-
-  // --- バージョンと会社名追加 ---
-  // 右下：バージョン
-  const versionDiv = document.createElement("div");
-  versionDiv.textContent = "Version 1.0.0";
-  Object.assign(versionDiv.style, {
-    position: "fixed",
-    bottom: "10px",
-    right: "10px",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: "bold",
-    textShadow: "0 0 3px black",
-    zIndex: 10000,
-    pointerEvents: "none"
-  });
-  document.body.appendChild(versionDiv);
-
-  // 下中央：会社名
-  const companyDiv = document.createElement("div");
-  companyDiv.textContent = "@2025 Mdm5.inc";
-  Object.assign(companyDiv.style, {
-    position: "fixed",
-    bottom: "10px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: "bold",
-    textShadow: "0 0 3px black",
-    zIndex: 10000,
-    pointerEvents: "none"
-  });
-  document.body.appendChild(companyDiv);
-
-  isInputMode = true;
-  selectedIndex = 0;
-  updateMenuSelection();
-  attachMenuKeyboardListeners();
-}
-
-function updateMenuSelection() {
-  if (!menuWrapper) return;
-  const items = menuWrapper.querySelectorAll("div");
-  items.forEach((item, idx) => {
-    if (idx === selectedIndex) {
-      item.style.backgroundColor = "rgba(255,255,255,0.2)";
-      item.style.color = "#ff0";
-    } else {
-      item.style.backgroundColor = "transparent";
-      item.style.color = "#fff";
+    // Press Any Key テキスト
+    if (pressKeyText) {
+      pressKeyText.style.left = "50%";
+      pressKeyText.style.transform = "translateX(-50%)";
+      pressKeyText.style.bottom = "20%";
+      pressKeyText.style.fontSize = isPortrait ? "24px" : "18px";
     }
-  });
-}
 
-// --- キーボードイベント ---
-let keyboardAttached = false;
-function attachMenuKeyboardListeners() {
-  if (keyboardAttached) return;
-  keyboardAttached = true;
-
-  window.addEventListener("keydown", (e) => {
-    if (!isInputMode) return;
-
-    if (e.key === "ArrowUp") {
-      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
-      updateMenuSelection();
-      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-    } else if (e.key === "ArrowDown") {
-      selectedIndex = (selectedIndex + 1) % menuItems.length;
-      updateMenuSelection();
-      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-    } else if (e.key === "Enter" || e.key === " ") {
-      alert(`"${menuItems[selectedIndex]}" を実行`);
+    // 中央クリックテキスト
+    if (centerText) {
+      centerText.style.left = "50%";
+      centerText.style.top = "50%";
+      centerText.style.transform = "translate(-50%, -50%)";
+      centerText.style.fontSize = isPortrait ? "28px" : "20px";
     }
-  });
-}
+
+    // バージョン・会社名
+    if (versionDiv) {
+      versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
+    }
+    if (companyDiv) {
+      companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
+    }
+  }
+
+  // --- リサイズ時に調整 ---
+  window.addEventListener("resize", adjustLayout);
 });
