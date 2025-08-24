@@ -262,7 +262,10 @@ async function showPressBgAndTitle() {
 
   // --- メニュー ---
   const menuItems = ["New Game", "Load", "Settings"];
-let menuWrapper, selectedIndex = 0, isInputMode = false;
+let menuWrapper;
+let selectedIndex = 0;
+let isInputMode = false;
+let lastClickTime = 0;
 
 function createMenu() {
   menuWrapper = document.createElement("div");
@@ -294,17 +297,26 @@ function createMenu() {
     });
     item.dataset.index = i;
 
-    // 🟡 クリック処理修正版
+    // ホバーで選択
+    item.addEventListener("mouseover", () => {
+      selectedIndex = i;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+    });
+
+    // クリック・タップで選択→実行
     item.addEventListener("click", () => {
-      if (selectedIndex === i) {
-        // 2回目クリック → 実行
-        alert(`"${menuItems[i]}" はまだ未実装です`);
+      const now = Date.now();
+      if (selectedIndex === i && now - lastClickTime < 1000) {
+        // 2回目クリック（1秒以内） → 実行
+        alert(`"${menuItems[i]}" を実行`);
       } else {
-        // 1回目クリック → 選択のみ
+        // 1回目クリック → 選択
         selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
       }
+      lastClickTime = now;
     });
 
     menuWrapper.appendChild(item);
@@ -314,6 +326,7 @@ function createMenu() {
   isInputMode = true;
   selectedIndex = 0;
   updateMenuSelection();
+  attachMenuKeyboardListeners();
 }
 
 function updateMenuSelection() {
@@ -332,6 +345,7 @@ function updateMenuSelection() {
 function attachMenuKeyboardListeners() {
   window.addEventListener("keydown", (e) => {
     if (!isInputMode) return;
+
     if (e.key === "ArrowUp") {
       selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
       updateMenuSelection();
@@ -341,7 +355,7 @@ function attachMenuKeyboardListeners() {
       updateMenuSelection();
       if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
     } else if (e.key === "Enter" || e.key === " ") {
-      alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
+      alert(`"${menuItems[selectedIndex]}" を実行`);
     }
   });
 }
