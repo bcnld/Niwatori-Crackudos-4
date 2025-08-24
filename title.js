@@ -377,15 +377,6 @@ document.addEventListener("DOMContentLoaded", () => {
       menuWrapper.style.top = topPosition + "px";
     }
 
-    // タイトル画像
-    [titleImg1, titleImg2].forEach(img => {
-      if (!img) return;
-      img.style.maxWidth = isPortrait ? "90%" : "60%";
-      img.style.height = "auto";
-      img.style.left = "50%";
-      img.style.transform = "translateX(-50%)";
-    });
-
     // Press Any Key テキスト
     if (pressKeyText) {
       pressKeyText.style.left = "50%";
