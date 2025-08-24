@@ -278,6 +278,41 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.body.appendChild(menuWrapper);
+
+  // --- バージョンと会社名追加 ---
+  // 右下：バージョン
+  const versionDiv = document.createElement("div");
+  versionDiv.textContent = "Version 1.0.0";
+  Object.assign(versionDiv.style, {
+    position: "fixed",
+    bottom: "10px",
+    right: "10px",
+    color: "#fff",
+    fontSize: "14px",
+    fontWeight: "bold",
+    textShadow: "0 0 3px black",
+    zIndex: 10000,
+    pointerEvents: "none"
+  });
+  document.body.appendChild(versionDiv);
+
+  // 下中央：会社名
+  const companyDiv = document.createElement("div");
+  companyDiv.textContent = "@2025 Mdm5.inc";
+  Object.assign(companyDiv.style, {
+    position: "fixed",
+    bottom: "10px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    color: "#fff",
+    fontSize: "14px",
+    fontWeight: "bold",
+    textShadow: "0 0 3px black",
+    zIndex: 10000,
+    pointerEvents: "none"
+  });
+  document.body.appendChild(companyDiv);
+
   isInputMode = true;
   selectedIndex = 0;
   updateMenuSelection();
