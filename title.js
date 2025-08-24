@@ -84,6 +84,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+async function showNextLogo() {
+  if (currentLogoIndex >= logos.length) {
+    await showPressBgAndTitle();
+    return;
+  }
+  const logo = logos[currentLogoIndex];
+  await fadeIn(logo, 1000);
+  await new Promise(r => setTimeout(r, 2000));
+  await fadeOut(logo, 1000);
+  currentLogoIndex++;
+  showNextLogo();
+}
+  
 // --- タイトル演出 ---
 async function showPressBgAndTitle() {
   const pressBg = document.createElement("img");
