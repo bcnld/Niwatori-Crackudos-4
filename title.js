@@ -262,72 +262,86 @@ async function showPressBgAndTitle() {
 
   // --- メニュー ---
   const menuItems = ["New Game", "Load", "Settings"];
-  function createMenu() {
-    menuWrapper = document.createElement("div");
-    const rect = titleImg2.getBoundingClientRect();
-    Object.assign(menuWrapper.style, {
-      position: "fixed",
-      top: `${rect.bottom + 20}px`,
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 10000,
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      textShadow: "0 0 5px black"
+let menuWrapper, selectedIndex = 0, isInputMode = false;
+
+function createMenu() {
+  menuWrapper = document.createElement("div");
+  const rect = titleImg2.getBoundingClientRect();
+  Object.assign(menuWrapper.style, {
+    position: "fixed",
+    top: `${rect.bottom + 20}px`,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 10000,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "0 0 5px black"
+  });
+
+  menuItems.forEach((text, i) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    Object.assign(item.style, {
+      cursor: "pointer",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      userSelect: "none",
+      transition: "background-color 0.3s ease,color 0.3s ease"
     });
-    menuItems.forEach((text, i) => {
-      const item = document.createElement("div");
-      item.textContent = text;
-      Object.assign(item.style, {
-        cursor: "pointer",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease"
-      });
-      item.dataset.index = i;
-      item.addEventListener("click", () => {
+    item.dataset.index = i;
+
+    // 🟡 クリック処理修正版
+    item.addEventListener("click", () => {
+      if (selectedIndex === i) {
+        // 2回目クリック → 実行
         alert(`"${menuItems[i]}" はまだ未実装です`);
-      });
-      menuWrapper.appendChild(item);
-    });
-    document.body.appendChild(menuWrapper);
-    isInputMode = true;
-    selectedIndex = 0;
-    updateMenuSelection();
-  }
-
-  function updateMenuSelection() {
-    const items = menuWrapper.querySelectorAll("div");
-    items.forEach((item, idx) => {
-      if (idx === selectedIndex) {
-        item.style.backgroundColor = "rgba(255,255,255,0.2)";
-        item.style.color = "#ff0";
       } else {
-        item.style.backgroundColor = "transparent";
-        item.style.color = "#fff";
+        // 1回目クリック → 選択のみ
+        selectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
       }
     });
-  }
 
-  function attachMenuKeyboardListeners() {
-    window.addEventListener("keydown", (e) => {
-      if (!isInputMode) return;
-      if (e.key === "ArrowUp") {
-        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-      } else if (e.key === "ArrowDown") {
-        selectedIndex = (selectedIndex + 1) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
-      } else if (e.key === "Enter" || e.key === " ") {
-        alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
-      }
-    });
-  }
-});
+    menuWrapper.appendChild(item);
+  });
+
+  document.body.appendChild(menuWrapper);
+  isInputMode = true;
+  selectedIndex = 0;
+  updateMenuSelection();
+}
+
+function updateMenuSelection() {
+  const items = menuWrapper.querySelectorAll("div");
+  items.forEach((item, idx) => {
+    if (idx === selectedIndex) {
+      item.style.backgroundColor = "rgba(255,255,255,0.2)";
+      item.style.color = "#ff0";
+    } else {
+      item.style.backgroundColor = "transparent";
+      item.style.color = "#fff";
+    }
+  });
+}
+
+function attachMenuKeyboardListeners() {
+  window.addEventListener("keydown", (e) => {
+    if (!isInputMode) return;
+    if (e.key === "ArrowUp") {
+      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+    } else if (e.key === "ArrowDown") {
+      selectedIndex = (selectedIndex + 1) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play(); }
+    } else if (e.key === "Enter" || e.key === " ") {
+      alert(`"${menuItems[selectedIndex]}" はまだ未実装です`);
+    }
+  });
+}
