@@ -213,66 +213,77 @@ document.addEventListener("DOMContentLoaded", () => {
     animateScrollingBackground();
   }
 
-  // --- メニュー ---
-  function createMenu() {
-    if (menuWrapper) menuWrapper.remove();
-    menuWrapper = document.createElement("div");
+let lastSelectedIndex = -1; // 直前に選んだ項目を記憶
 
-    let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
-    Object.assign(menuWrapper.style, {
-      position: "fixed",
-      top: `${topPosition}px`,
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 10000,
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      textShadow: "0 0 5px black",
+function createMenu() {
+  if (menuWrapper) menuWrapper.remove();
+  menuWrapper = document.createElement("div");
+
+  let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
+  Object.assign(menuWrapper.style, {
+    position: "fixed",
+    top: `${topPosition}px`,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 10000,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "0 0 5px black",
+  });
+
+  const isTouch = "ontouchstart" in window;
+
+  menuItems.forEach((text, i) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    Object.assign(item.style, {
+      cursor: "pointer",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      userSelect: "none",
+      transition: "background-color 0.3s ease,color 0.3s ease",
     });
+    item.dataset.index = i;
 
-    const isTouch = "ontouchstart" in window;
-
-    menuItems.forEach((text, i) => {
-      const item = document.createElement("div");
-      item.textContent = text;
-      Object.assign(item.style, {
-        cursor: "pointer",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease",
-      });
-      item.dataset.index = i;
-
-      if (!isTouch) {
-        item.addEventListener("mouseover", () => {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        });
-      }
-
-      item.addEventListener("click", () => {
+    if (!isTouch) {
+      item.addEventListener("mouseover", () => {
         selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      });
+    }
 
+    item.addEventListener("click", () => {
+      if (lastSelectedIndex === i) {
+        // 2回目クリックで実行
         if (text === "New Game") {
           startNewGame();
         } else {
           console.log(`"${text}" を実行`);
         }
-      });
-
-      menuWrapper.appendChild(item);
+      } else {
+        // 1回目クリックは選択だけ
+        selectedIndex = i;
+        lastSelectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      }
     });
 
-    document.body.appendChild(menuWrapper);
+    menuWrapper.appendChild(item);
+  });
 
+  document.body.appendChild(menuWrapper);
+
+  selectedIndex = 0;
+  lastSelectedIndex = -1;
+  updateMenuSelection();
+}
+   
     // バージョンと会社名
     if (!versionDiv) {
       versionDiv = document.createElement("div");
