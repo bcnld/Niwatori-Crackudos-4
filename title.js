@@ -360,4 +360,5 @@ function attachMenuKeyboardListeners() {
   });
 }
 
+// ここでDOMContentLoadedのクロージング
 });
