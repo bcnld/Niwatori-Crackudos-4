@@ -369,18 +369,23 @@ document.addEventListener("DOMContentLoaded", () => {
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
 
-  const fadeDuration = 3000; // ← ここを 1500 → 3000 に変更
+  const fadeDuration = 3000; // フェードアウト時間（ms）
+  const fadeSteps = 60;      // フレーム数（滑らかさ）
+  const fadeStepTime = fadeDuration / fadeSteps;
+  const initialVolume = bgm ? bgm.volume : 1;
 
   if (bgm && !bgm.paused) {
-    let fadeOutAudio = setInterval(() => {
-      if (bgm.volume > 0.01) { // ← より滑らかに
-        bgm.volume = Math.max(0, bgm.volume - 0.01); // ← 減少量を小さく
-      } else {
+    let step = 0;
+    const fadeOutAudio = setInterval(() => {
+      step++;
+      const newVolume = Math.max(0, initialVolume * (1 - step / fadeSteps));
+      bgm.volume = newVolume;
+      if (step >= fadeSteps) {
         bgm.pause();
         bgm.currentTime = 0;
         clearInterval(fadeOutAudio);
       }
-    }, 100); // 間隔はそのままでもOK
+    }, fadeStepTime);
   }
 
   fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
