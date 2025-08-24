@@ -257,13 +257,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       item.addEventListener("click", () => {
-        if (selectedIndex === i) {
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-          alert(`"${menuItems[i]}" を実行`);
+        selectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+
+        if (text === "New Game") {
+          startNewGame();
         } else {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+          console.log(`"${text}" を実行`);
         }
       });
 
@@ -315,6 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
     adjustLayout();
   }
 
+  // --- メニュー選択更新 ---
   function updateMenuSelection() {
     if (!menuWrapper) return;
     const items = menuWrapper.querySelectorAll("div");
@@ -329,6 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- キーボード操作 ---
   let keyboardAttached = false;
   function attachMenuKeyboardListeners() {
     if (keyboardAttached) return;
@@ -346,75 +349,75 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       } else if (e.key === "Enter" || e.key === " ") {
-        alert(`"${menuItems[selectedIndex]}" を実行`);
+        if (menuItems[selectedIndex] === "New Game") {
+          startNewGame();
+        } else {
+          console.log(`"${menuItems[selectedIndex]}" を実行`);
+        }
       }
     });
   }
 
   // --- New Game 開始処理 ---
-function startNewGame() {
-  if (!fadeOverlay) return;
+  function startNewGame() {
+    if (!fadeOverlay) return;
 
-  // メニュー・バージョン・会社名を非表示
-  if (menuWrapper) menuWrapper.style.display = "none";
-  if (versionDiv) versionDiv.style.display = "none";
-  if (companyDiv) companyDiv.style.display = "none";
+    // メニュー・バージョン・会社名を非表示
+    if (menuWrapper) menuWrapper.style.display = "none";
+    if (versionDiv) versionDiv.style.display = "none";
+    if (companyDiv) companyDiv.style.display = "none";
 
-  // フェードイン（黒くする）
-  fadeOverlay.style.display = "block";
-  fadeOverlay.style.opacity = 0;
+    // フェードイン（黒くする）
+    fadeOverlay.style.display = "block";
+    fadeOverlay.style.opacity = 0;
 
-  const fadeDuration = 1000; // 1秒
-  let start = null;
+    const fadeDuration = 1000; // 1秒
+    let start = null;
 
-  function fadeStep(ts) {
-    if (!start) start = ts;
-    let progress = (ts - start) / fadeDuration;
-    if (progress > 1) progress = 1;
-    fadeOverlay.style.opacity = progress;
+    function fadeStep(ts) {
+      if (!start) start = ts;
+      let progress = (ts - start) / fadeDuration;
+      if (progress > 1) progress = 1;
+      fadeOverlay.style.opacity = progress;
 
-    if (progress < 1) {
-      requestAnimationFrame(fadeStep);
-    } else {
-      // フェード完了後に画面リセットとBGM切替
-      clearScreen();
-      changeBGM();
-      // ここで次のゲーム画面処理へ移行可能
+      if (progress < 1) {
+        requestAnimationFrame(fadeStep);
+      } else {
+        clearScreen();
+        changeBGM();
+        // ここで次のゲーム画面処理へ移行可能
+      }
+    }
+    requestAnimationFrame(fadeStep);
+  }
+
+  // --- 画面リセット ---
+  function clearScreen() {
+    if (titleImg1) titleImg1.style.display = "none";
+    if (titleImg2) titleImg2.style.display = "none";
+    if (pressKeyText) pressKeyText.style.display = "none";
+    if (centerText) centerText.style.display = "none";
+
+    if (scrollWrapper) {
+      scrollWrapper.remove();
+      scrollWrapper = null;
+      bgElements = [];
+    }
+
+    fadeOverlay.style.opacity = 1;
+  }
+
+  // --- BGM切替 ---
+  function changeBGM() {
+    if (bgm) {
+      bgm.pause();
+      bgm.currentTime = 0;
+      bgm.src = "audio/newgame_bgm.mp3";
+      bgm.loop = true;
+      bgm.volume = 1;
+      bgm.play().catch(()=>{});
     }
   }
-  requestAnimationFrame(fadeStep);
-}
-
-// --- 画面リセット ---
-function clearScreen() {
-  // タイトルやテキスト非表示
-  if (titleImg1) titleImg1.style.display = "none";
-  if (titleImg2) titleImg2.style.display = "none";
-  if (pressKeyText) pressKeyText.style.display = "none";
-  if (centerText) centerText.style.display = "none";
-
-  // 背景スクロール停止＆削除
-  if (scrollWrapper) {
-    scrollWrapper.remove();
-    scrollWrapper = null;
-    bgElements = [];
-  }
-
-  // フェードオーバーレイは残して黒背景
-  fadeOverlay.style.opacity = 1;
-}
-
-// --- BGM切替 ---
-function changeBGM() {
-  if (bgm) {
-    bgm.pause();
-    bgm.currentTime = 0;
-    bgm.src = "audio/newgame_bgm.mp3"; // 新しいBGMファイル
-    bgm.loop = true;
-    bgm.volume = 1;
-    bgm.play().catch(()=>{});
-  }
-}
 
   // --- レイアウト自動調整 ---
   function adjustLayout() {
@@ -422,7 +425,6 @@ function changeBGM() {
     const h = window.innerHeight;
     const isPortrait = h > w;
 
-    // 背景スクロール
     if (scrollWrapper) {
       scrollWrapper.style.width = w + "px";
       scrollWrapper.style.height = h + "px";
@@ -436,7 +438,6 @@ function changeBGM() {
       });
     }
 
-    // Press Any Key テキスト
     if (pressKeyText) {
       pressKeyText.style.left = "50%";
       pressKeyText.style.transform = "translateX(-50%)";
@@ -444,7 +445,6 @@ function changeBGM() {
       pressKeyText.style.fontSize = isPortrait ? "24px" : "18px";
     }
 
-    // 中央クリックテキスト
     if (centerText) {
       centerText.style.left = "50%";
       centerText.style.top = "50%";
@@ -452,7 +452,6 @@ function changeBGM() {
       centerText.style.fontSize = isPortrait ? "28px" : "20px";
     }
 
-    // バージョン・会社名
     if (versionDiv) {
       versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
       versionDiv.style.right = "10px";
@@ -466,10 +465,10 @@ function changeBGM() {
       companyDiv.style.transform = "translateX(-50%)";
       companyDiv.style.position = "fixed";
     }
-}
+  }
 
-// --- 初期化とリサイズ・向き変更に対応 ---
-window.addEventListener("resize", adjustLayout);
-window.addEventListener("orientationchange", adjustLayout);
-window.addEventListener("load", adjustLayout);
+  // --- 初期化とリサイズ対応 ---
+  window.addEventListener("resize", adjustLayout);
+  window.addEventListener("orientationchange", adjustLayout);
+  window.addEventListener("load", adjustLayout);
 });
