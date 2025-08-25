@@ -38,9 +38,12 @@ window.startNewGame = async function() {
     });
   }
 
-  // --- 画面クリア ---
+  // --- 画面クリア（タイトル画像も削除） ---
+  const idsToRemove = ["title-img1", "title-img2", "center-text", "press-any-key"];
   document.body.querySelectorAll("div, img").forEach(el => {
-    if (!el.id || el.id === "fade-overlay") el.remove();
+    if (!el.id || el.id === "fade-overlay") return;
+    if (idsToRemove.includes(el.id)) el.remove();
+    else el.remove();
   });
 
   // --- 背景生成 ---
