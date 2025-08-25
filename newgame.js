@@ -160,8 +160,8 @@ window.startNewGame = async function() {
     const popup = document.createElement("div");
     Object.assign(popup.style, {
       position: "fixed",
-      width: "400px",
-      height: "300px",
+      width: window.innerWidth < 768 ? "300px" : "400px",
+      height: window.innerWidth < 768 ? "250px" : "300px",
       backgroundImage: `url(${selectedImage})`,
       backgroundSize: "contain",
       backgroundRepeat: "no-repeat",
@@ -171,11 +171,11 @@ window.startNewGame = async function() {
       pointerEvents: "auto"
     });
 
-    // ランダム四隅配置
-    const topPos = Math.random() < 0.5 ? 20 : window.innerHeight - 320;
-    const leftPos = Math.random() < 0.5 ? 20 : window.innerWidth - 420;
-    popup.style.top = topPos + "px";
-    popup.style.left = leftPos + "px";
+    // --- ランダム位置に配置（画面内に収まる） ---
+    const maxLeft = window.innerWidth - parseInt(popup.style.width);
+    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
+    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
     // ×ボタン
     const closeBtn = document.createElement("div");
@@ -183,50 +183,20 @@ window.startNewGame = async function() {
     Object.assign(closeBtn.style, {
       position: "absolute",
       top: "5px",
-      right: "5px",
+      right: "8px",
       color: "#fff",
       fontWeight: "bold",
       cursor: "pointer",
-      fontSize: "24px",
+      fontSize: "28px",
       textShadow: "0 0 5px black",
-      zIndex: 5000
+      zIndex: 5001
     });
     closeBtn.addEventListener("click", () => popup.remove());
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
-
-    // 真ん中表示条件
-    const checkAllCornersFilled = () => {
-      const corners = [
-        {x: 20, y: 20}, {x: window.innerWidth-420, y: 20},
-        {x: 20, y: window.innerHeight-320}, {x: window.innerWidth-420, y: window.innerHeight-320}
-      ];
-      let count = 0;
-      for (let c of corners) {
-        if (Math.random() < 0.25) count++;
-      }
-      if (count >= 4) {
-        const centerPopup = document.createElement("div");
-        Object.assign(centerPopup.style, {
-          position: "fixed",
-          width: "600px",
-          height: "450px",
-          top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          backgroundImage: `url(${selectedImage})`,
-          backgroundSize: "contain",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          zIndex: 5000,
-        });
-        document.body.appendChild(centerPopup);
-      }
-    };
-
-    checkAllCornersFilled();
   }
 
   createPopup();
-  setInterval(() => createPopup(), 5000 + Math.random() * 5000);
+  setInterval(() => createPopup(), 4000 + Math.random() * 4000);
 };
