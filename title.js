@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- DOM要素 ---
   const centerText = document.getElementById("center-text");
   const logos = document.querySelectorAll(".company-logo");
   const titleImg1 = document.getElementById("title-img1");
@@ -10,14 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectSfx = document.getElementById("select-sfx");
   const effectSfx = document.getElementById("effect-sfx");
 
-  // --- フェード用オーバーレイ ---
   let fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) {
     fadeOverlay = document.createElement("div");
     fadeOverlay.id = "fade-overlay";
     Object.assign(fadeOverlay.style, {
-      position: "fixed",
-      top: 0, left: 0,
+      position: "fixed", top: 0, left: 0,
       width: "100%", height: "100%",
       backgroundColor: "black",
       opacity: 0,
@@ -42,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let versionDiv, companyDiv;
   let keyboardAttached = false;
 
-  // --- 初期非表示 ---
   logos.forEach(logo => {
     if (!logo) return;
     Object.assign(logo.style, {
@@ -113,13 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
     showNextLogo();
   }
 
-  // --- タイトル演出 ---
   async function showPressBgAndTitle() {
     const pressBg = document.createElement("img");
     pressBg.src = "images/press_bg.png";
     Object.assign(pressBg.style, {
-      position: "fixed",
-      top: 0, left: 0,
+      position: "fixed", top: 0, left: 0,
       width: "120%", height: "120%",
       objectFit: "cover",
       zIndex: 0,
@@ -172,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
     waitForPressKey(pressBg);
   }
 
-  // --- Press Any Key ---
   function waitForPressKey(pressBg) {
     function onInput() {
       if (!pressKeyText || pressKeyText.style.display === "none") return;
@@ -188,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("touchstart", onInput, { capture: true });
   }
 
-  // --- 中央クリック開始 ---
   if (centerText) {
     centerText.addEventListener("click", () => {
       if (started) return;
@@ -197,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 背景スクロール ---
   const scrollSpeed = 1;
   const containerHeight = window.innerHeight;
   const containerWidth = window.innerWidth;
@@ -241,8 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function startBackgroundScroll() {
     scrollWrapper = document.createElement("div");
     Object.assign(scrollWrapper.style, {
-      position: "fixed",
-      top: 0, left: 0,
+      position: "fixed", top: 0, left: 0,
       width: `${containerWidth}px`,
       height: `${containerHeight}px`,
       overflow: "hidden",
@@ -259,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function createMenu() {
     if (menuWrapper) menuWrapper.remove();
     menuWrapper = document.createElement("div");
+    menuWrapper.setAttribute("data-menu-wrapper", "true"); // ← 追加
 
     let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
     Object.assign(menuWrapper.style, {
@@ -300,13 +291,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       item.addEventListener("click", () => {
-        if (selectedIndex === i && item.style.color === "yellow") {
-          executeMenuItem(selectedIndex);
-        } else {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        }
+        selectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+        executeMenuItem(selectedIndex);
       });
 
       menuWrapper.appendChild(item);
@@ -314,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.appendChild(menuWrapper);
 
-    // バージョンと会社名
     if (!versionDiv) {
       versionDiv = document.createElement("div");
       versionDiv.textContent = "Version 1.0.0";
@@ -360,10 +347,18 @@ document.addEventListener("DOMContentLoaded", () => {
   function executeMenuItem(index) {
     const item = menuItems[index];
     if (!item) return;
-    // New Game 関連は削除。必要なら別JSで startNewGame() を呼ぶ
     switch(item) {
-      case "Load": loadGame(); break;
-      case "Settings": openSettings(); break;
+      case "New Game":
+        if (typeof window.startNewGame === "function") {
+          window.startNewGame(); // newgame.js の関数を呼ぶ
+        }
+        break;
+      case "Load":
+        loadGame();
+        break;
+      case "Settings":
+        openSettings();
+        break;
     }
   }
 
@@ -371,11 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!menuWrapper) return;
     const items = menuWrapper.querySelectorAll("div");
     items.forEach((item, idx) => {
-      if (idx === selectedIndex) {
-        item.style.color = "yellow";
-      } else {
-        item.style.color = "#fff";
-      }
+      item.style.color = (idx === selectedIndex) ? "yellow" : "#fff";
     });
   }
 
@@ -396,15 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       } else if (e.key === "Enter" || e.key === " ") {
-        const selectedItem = items[selectedIndex];
-        if (!selectedItem) return;
-
-        if (selectedItem.style.color === "yellow") {
-          executeMenuItem(selectedIndex);
-        } else {
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        }
+        executeMenuItem(selectedIndex);
       }
     });
   }
