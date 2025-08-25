@@ -284,12 +284,17 @@ function createMenu() {
       });
     }
 
-    // クリック時に選択アイテムを実行
+    // --- クリックで「選択→実行」仕様 ---
     item.addEventListener("click", () => {
-      selectedIndex = i;
-      updateMenuSelection();
-      executeMenuItem(selectedIndex);
-      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      if (selectedIndex === i) {
+        // 選択中なら実行
+        executeMenuItem(selectedIndex);
+      } else {
+        // 選択状態にするだけ
+        selectedIndex = i;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      }
     });
 
     menuWrapper.appendChild(item);
