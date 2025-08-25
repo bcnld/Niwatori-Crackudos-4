@@ -426,6 +426,7 @@ function attachMenuKeyboardListeners() {
     const fadeStepTime = fadeDuration / fadeSteps;
     const initialVolume = bgm ? bgm.volume : 1;
 
+    // --- BGMフェードアウト ---
     if (bgm && !bgm.paused) {
         let step = 0;
         const fadeOutAudio = setInterval(() => {
@@ -456,23 +457,64 @@ function attachMenuKeyboardListeners() {
             left: 0,
             width: "100%",
             height: "100%",
+            backgroundColor: "#001022", // ベース色
             backgroundImage: "url('images/character_select_bg.png')",
             backgroundSize: "cover",
             backgroundPosition: "center center",
             zIndex: 1,
+            overflow: "hidden",
         });
         document.body.appendChild(bgDiv);
 
+        // --- 雪画像を落下させる ---
+        const snowCount = 50;
+        const snowflakes = [];
+        for (let i = 0; i < snowCount; i++) {
+            const snow = document.createElement("img");
+            snow.src = "images/snowflake.png"; // 雪画像
+            Object.assign(snow.style, {
+                position: "absolute",
+                top: `${Math.random() * window.innerHeight}px`,
+                left: `${Math.random() * window.innerWidth}px`,
+                width: "20px",
+                height: "20px",
+                pointerEvents: "none",
+            });
+            bgDiv.appendChild(snow);
+            snowflakes.push({
+                el: snow,
+                speed: Math.random() * 2 + 1,
+                drift: (Math.random() - 0.5) * 1,
+            });
+        }
+
+        function animateSnow() {
+            for (let flake of snowflakes) {
+                let top = parseFloat(flake.el.style.top);
+                let left = parseFloat(flake.el.style.left);
+                top += flake.speed;
+                left += flake.drift;
+                if (top > window.innerHeight) top = -20;
+                if (left < -20) left = window.innerWidth;
+                if (left > window.innerWidth) left = -20;
+                flake.el.style.top = top + "px";
+                flake.el.style.left = left + "px";
+            }
+            requestAnimationFrame(animateSnow);
+        }
+        animateSnow();
+
+        // --- フェードイン解除 ---
         fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
         fadeOverlay.style.opacity = 0;
         setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
 
-        // ここでキャラクター選択UIなども作れる
+        // --- キャラクター選択UI作成 ---
         createCharacterSelectUI(bgDiv);
 
     }, fadeDuration);
 }
-
+  
   // --- 画面クリア ---
   function clearScreen() {
     if (titleImg1) titleImg1.style.display = "none";
