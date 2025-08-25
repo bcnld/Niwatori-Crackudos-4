@@ -273,6 +273,7 @@ function createMenu() {
       borderRadius: "8px",
       userSelect: "none",
       transition: "background-color 0.3s ease,color 0.3s ease",
+      color: "#fff"
     });
     item.dataset.index = i;
 
@@ -284,13 +285,13 @@ function createMenu() {
       });
     }
 
-    // --- クリックで「選択→実行」仕様 ---
+    // クリック時に「1回目選択、2回目実行」
     item.addEventListener("click", () => {
-      if (selectedIndex === i) {
-        // 選択中なら実行
+      if (selectedIndex === i && item.style.color === "yellow") {
+        // 2回目なら実行
         executeMenuItem(selectedIndex);
       } else {
-        // 選択状態にするだけ
+        // 1回目は選択
         selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
@@ -363,34 +364,27 @@ function executeMenuItem(index) {
   }
 }
 
-// --- Load 処理 ---
-function loadGame() {
-  hideMenuUI();
-  console.log("Load処理実行");
-  alert("Load Game!（ダミー）");
+// --- updateMenuSelection（選択中は黄色に） ---
+function updateMenuSelection() {
+  if (!menuWrapper) return;
+  const items = menuWrapper.querySelectorAll("div");
+  items.forEach((item, idx) => {
+    if (idx === selectedIndex) {
+      item.style.color = "yellow"; // 選択中
+    } else {
+      item.style.color = "#fff"; // 非選択
+    }
+  });
 }
 
-// --- Settings 処理 ---
-function openSettings() {
-  hideMenuUI();
-  console.log("Settings処理実行");
-  alert("Settings!（ダミー）");
-}
-
-// --- メニュー非表示共通 ---
-function hideMenuUI() {
-  if (menuWrapper) menuWrapper.style.display = "none";
-  if (versionDiv) versionDiv.style.display = "none";
-  if (companyDiv) companyDiv.style.display = "none";
-}
-
-// --- キーボード操作 ---
+// --- キーボード操作（1回目選択、2回目実行） ---
 function attachMenuKeyboardListeners() {
   if (keyboardAttached) return;
   keyboardAttached = true;
 
   window.addEventListener("keydown", (e) => {
     if (!isInputMode) return;
+    const items = menuWrapper.querySelectorAll("div");
 
     if (e.key === "ArrowUp") {
       selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
@@ -401,7 +395,17 @@ function attachMenuKeyboardListeners() {
       updateMenuSelection();
       if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
     } else if (e.key === "Enter" || e.key === " ") {
-      executeMenuItem(selectedIndex);
+      const selectedItem = items[selectedIndex];
+      if (!selectedItem) return;
+
+      if (selectedItem.style.color === "yellow") {
+        // 2回目なら実行
+        executeMenuItem(selectedIndex);
+      } else {
+        // 1回目は選択だけ
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      }
     }
   });
 }
