@@ -414,12 +414,12 @@ function attachMenuKeyboardListeners() {
 function startNewGame() {
     if (!fadeOverlay) return;
 
-    // メニュー非表示
+    // --- メニュー非表示 ---
     if (menuWrapper) menuWrapper.style.display = "none";
     if (versionDiv) versionDiv.style.display = "none";
     if (companyDiv) companyDiv.style.display = "none";
 
-    // フェードオーバーレイ表示
+    // --- フェードオーバーレイ表示 ---
     fadeOverlay.style.display = "block";
     fadeOverlay.style.opacity = 0;
 
@@ -428,7 +428,7 @@ function startNewGame() {
     const fadeStepTime = fadeDuration / fadeSteps;
     const initialVolume = bgm ? bgm.volume : 1;
 
-    // BGMフェードアウト
+    // --- BGMフェードアウト ---
     if (bgm && !bgm.paused) {
         let step = 0;
         const fadeOutAudio = setInterval(() => {
@@ -443,13 +443,15 @@ function startNewGame() {
         }, fadeStepTime);
     }
 
+    // --- フェードイン開始 ---
     fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
     requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
+    // --- フェード終了後の処理 ---
     setTimeout(() => {
         clearScreen();
 
-        // 背景生成
+        // --- 背景生成 ---
         const bgDiv = document.createElement("div");
         Object.assign(bgDiv.style, {
             position: "fixed",
@@ -464,7 +466,7 @@ function startNewGame() {
         });
         document.body.appendChild(bgDiv);
 
-        // 雪生成
+        // --- 雪生成 ---
         const snowCount = 20;
         const snowflakes = [];
         for (let i = 0; i < snowCount; i++) {
@@ -506,18 +508,31 @@ function startNewGame() {
         }
         animateSnow();
 
-        // フェードイン解除
+        // --- フェード解除 ---
         fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
         fadeOverlay.style.opacity = 0;
         setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
 
-        // キャラクター選択UI
+        // --- キャラクター選択UI ---
         createCharacterSelectUI(bgDiv);
 
-        // BGM再生（フェードイン）
-        changeBGM();
+        // --- BGM再生（フェードイン） ---
+        if (bgm) {
+            bgm.src = "Sounds/newgame_bgm.mp3";
+            bgm.loop = true;
+            bgm.volume = 0;
+            bgm.play().catch(()=>{}); // クリック済みなので自動再生制限に引っかからない
+            let step = 0;
+            const steps = 60;
+            const interval = 50;
+            const fadeInAudio = setInterval(() => {
+                step++;
+                bgm.volume = Math.min(1, step / steps);
+                if (step >= steps) clearInterval(fadeInAudio);
+            }, interval);
+        }
 
-        // 広告ポップアップ生成
+        // --- 広告ポップアップ ---
         const popupImages = [
             "images/popup_ad1.png",
             "images/popup_ad2.png",
@@ -536,7 +551,7 @@ function startNewGame() {
                 backgroundImage: `url(${selectedImage})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                zIndex: 4000, // 最前面に
+                zIndex: 4000,
                 overflow: "hidden",
                 opacity: 0,
             });
@@ -548,7 +563,6 @@ function startNewGame() {
             popup.style.left = fromLeft ? "-220px" : "auto";
             popup.style.right = fromLeft ? "auto" : "-220px";
 
-            // ×ボタン
             const closeBtn = document.createElement("div");
             closeBtn.textContent = "×";
             Object.assign(closeBtn.style, {
@@ -578,28 +592,10 @@ function startNewGame() {
             setTimeout(() => popup.remove(), 10000);
         }
 
-        // 最初に1回ポップアップ生成
         createPopup();
-
-        // ランダム間隔でポップアップ生成
-        setInterval(() => { createPopup(); }, 5000 + Math.random() * 5000);
+        setInterval(() => createPopup(), 5000 + Math.random() * 5000);
 
     }, fadeDuration);
-}
-
-// --- BGM切替 ---
-function changeBGM() {
-    if (bgm) {
-      bgm.src = "Sounds/newgame_bgm.mp3";
-      bgm.loop = true;
-      bgm.volume = 0;
-      bgm.play().catch(()=>{});
-      let fadeInAudio = setInterval(() => {
-        if (bgm.volume < 0.95) {
-          bgm.volume = Math.min(1, bgm.volume + 0.05);
-        } else { clearInterval(fadeInAudio); }
-      }, 100);
-    }
 }
   
   // --- 画面クリア ---
