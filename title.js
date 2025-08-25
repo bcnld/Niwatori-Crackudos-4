@@ -242,144 +242,164 @@ document.addEventListener("DOMContentLoaded", () => {
     animateScrollingBackground();
   }
 
-  // --- メニュー作成 ---
-  function createMenu() {
-    if (menuWrapper) menuWrapper.remove();
-    menuWrapper = document.createElement("div");
+function createMenu() {
+  if (menuWrapper) menuWrapper.remove();
+  menuWrapper = document.createElement("div");
 
-    let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
-    Object.assign(menuWrapper.style, {
-      position: "fixed",
-      top: `${topPosition}px`,
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 10000,
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      textShadow: "0 0 5px black",
+  let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
+  Object.assign(menuWrapper.style, {
+    position: "fixed",
+    top: `${topPosition}px`,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 10000,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "0 0 5px black",
+  });
+
+  const isTouch = "ontouchstart" in window;
+
+  menuItems.forEach((text, i) => {
+    const item = document.createElement("div");
+    item.textContent = text;
+    Object.assign(item.style, {
+      cursor: "pointer",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      userSelect: "none",
+      transition: "background-color 0.3s ease,color 0.3s ease",
     });
+    item.dataset.index = i;
 
-    const isTouch = "ontouchstart" in window;
-
-    menuItems.forEach((text, i) => {
-      const item = document.createElement("div");
-      item.textContent = text;
-      Object.assign(item.style, {
-        cursor: "pointer",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        userSelect: "none",
-        transition: "background-color 0.3s ease,color 0.3s ease",
-      });
-      item.dataset.index = i;
-
-      if (!isTouch) {
-        item.addEventListener("mouseover", () => {
-          selectedIndex = i;
-          updateMenuSelection();
-          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-        });
-      }
-
-      // クリックでは選択のみ
-      item.addEventListener("click", () => {
+    if (!isTouch) {
+      item.addEventListener("mouseover", () => {
         selectedIndex = i;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
       });
-
-      menuWrapper.appendChild(item);
-    });
-
-    document.body.appendChild(menuWrapper);
-
-    // バージョンと会社名
-    if (!versionDiv) {
-      versionDiv = document.createElement("div");
-      versionDiv.textContent = "Version 1.0.0";
-      Object.assign(versionDiv.style, {
-        position: "fixed",
-        bottom: "10px",
-        right: "10px",
-        color: "#fff",
-        fontSize: "14px",
-        fontWeight: "bold",
-        textShadow: "0 0 3px black",
-        zIndex: 10000,
-        pointerEvents: "none"
-      });
-      document.body.appendChild(versionDiv);
     }
 
-    if (!companyDiv) {
-      companyDiv = document.createElement("div");
-      companyDiv.textContent = "@2025 Mdm5.inc";
-      Object.assign(companyDiv.style, {
-        position: "fixed",
-        bottom: "10px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        color: "#fff",
-        fontSize: "14px",
-        fontWeight: "bold",
-        textShadow: "0 0 3px black",
-        zIndex: 10000,
-        pointerEvents: "none"
-      });
-      document.body.appendChild(companyDiv);
+    // クリック時に選択アイテムを実行
+    item.addEventListener("click", () => {
+      selectedIndex = i;
+      updateMenuSelection();
+      executeMenuItem(selectedIndex);
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+    });
+
+    menuWrapper.appendChild(item);
+  });
+
+  document.body.appendChild(menuWrapper);
+
+  // バージョンと会社名
+  if (!versionDiv) {
+    versionDiv = document.createElement("div");
+    versionDiv.textContent = "Version 1.0.0";
+    Object.assign(versionDiv.style, {
+      position: "fixed",
+      bottom: "10px",
+      right: "10px",
+      color: "#fff",
+      fontSize: "14px",
+      fontWeight: "bold",
+      textShadow: "0 0 3px black",
+      zIndex: 10000,
+      pointerEvents: "none"
+    });
+    document.body.appendChild(versionDiv);
+  }
+
+  if (!companyDiv) {
+    companyDiv = document.createElement("div");
+    companyDiv.textContent = "@2025 Mdm5.inc";
+    Object.assign(companyDiv.style, {
+      position: "fixed",
+      bottom: "10px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      color: "#fff",
+      fontSize: "14px",
+      fontWeight: "bold",
+      textShadow: "0 0 3px black",
+      zIndex: 10000,
+      pointerEvents: "none"
+    });
+    document.body.appendChild(companyDiv);
+  }
+
+  isInputMode = true;
+  selectedIndex = 0;
+  updateMenuSelection();
+  attachMenuKeyboardListeners();
+  adjustLayout();
+}
+
+// --- メニュー決定処理 ---
+function executeMenuItem(index) {
+  const item = menuItems[index];
+  if (!item) return;
+
+  switch(item) {
+    case "New Game":
+      startNewGame();
+      break;
+    case "Load":
+      loadGame();
+      break;
+    case "Settings":
+      openSettings();
+      break;
+  }
+}
+
+// --- Load 処理 ---
+function loadGame() {
+  hideMenuUI();
+  console.log("Load処理実行");
+  alert("Load Game!（ダミー）");
+}
+
+// --- Settings 処理 ---
+function openSettings() {
+  hideMenuUI();
+  console.log("Settings処理実行");
+  alert("Settings!（ダミー）");
+}
+
+// --- メニュー非表示共通 ---
+function hideMenuUI() {
+  if (menuWrapper) menuWrapper.style.display = "none";
+  if (versionDiv) versionDiv.style.display = "none";
+  if (companyDiv) companyDiv.style.display = "none";
+}
+
+// --- キーボード操作 ---
+function attachMenuKeyboardListeners() {
+  if (keyboardAttached) return;
+  keyboardAttached = true;
+
+  window.addEventListener("keydown", (e) => {
+    if (!isInputMode) return;
+
+    if (e.key === "ArrowUp") {
+      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+    } else if (e.key === "ArrowDown") {
+      selectedIndex = (selectedIndex + 1) % menuItems.length;
+      updateMenuSelection();
+      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+    } else if (e.key === "Enter" || e.key === " ") {
+      executeMenuItem(selectedIndex);
     }
-
-    isInputMode = true;
-    selectedIndex = 0;
-    updateMenuSelection();
-    attachMenuKeyboardListeners();
-    adjustLayout();
-  }
-
-  // --- メニュー選択更新 ---
-  function updateMenuSelection() {
-    if (!menuWrapper) return;
-    const items = menuWrapper.querySelectorAll("div");
-    items.forEach((item, idx) => {
-      if (idx === selectedIndex) {
-        item.style.backgroundColor = "rgba(255,255,255,0.2)";
-        item.style.color = "#ff0";
-      } else {
-        item.style.backgroundColor = "transparent";
-        item.style.color = "#fff";
-      }
-    });
-  }
-
-  // --- キーボード操作 ---
-  function attachMenuKeyboardListeners() {
-    if (keyboardAttached) return;
-    keyboardAttached = true;
-
-    window.addEventListener("keydown", (e) => {
-      if (!isInputMode) return;
-
-      if (e.key === "ArrowUp") {
-        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      } else if (e.key === "ArrowDown") {
-        selectedIndex = (selectedIndex + 1) % menuItems.length;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      } else if (e.key === "Enter" || e.key === " ") {
-        if (menuItems[selectedIndex] === "New Game") {
-          startNewGame();
-        } else {
-          console.log(`"${menuItems[selectedIndex]}" を実行`);
-        }
-      }
-    });
-  }
+  });
+}
 
   // --- New Game 開始処理 ---
   function startNewGame() {
