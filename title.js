@@ -422,6 +422,7 @@ async function startNewGame() {
     // --- フェードオーバーレイ表示 ---
     fadeOverlay.style.display = "block";
     fadeOverlay.style.opacity = 0;
+    fadeOverlay.style.zIndex = 5000;
     const fadeDuration = 2000;
     fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
     requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
@@ -479,6 +480,7 @@ async function startNewGame() {
             height: "60px",
             pointerEvents: "none",
             transform: `rotate(${Math.random() * 360}deg)`,
+            zIndex: 2,
         });
         bgDiv.appendChild(snow);
         snowflakes.push({
@@ -512,7 +514,8 @@ async function startNewGame() {
     await fadeOut(fadeOverlay, 1000);
 
     // --- キャラクター選択UI ---
-    createCharacterSelectUI(bgDiv);
+    const characterUI = createCharacterSelectUI(bgDiv);
+    characterUI.style.zIndex = 1000; // 雪より前面
 
     // --- 新規BGM再生（フェードイン） ---
     if (bgm) {
