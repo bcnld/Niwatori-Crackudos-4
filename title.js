@@ -36,8 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let isInputMode = false;
   const menuItems = ["New Game", "Load", "Settings"];
   let scrollWrapper = null;
-  let bgElements = [];
   const bgImageWidth = 3600;
+  let bgElements = [];
 
   let versionDiv, companyDiv;
   let keyboardAttached = false;
@@ -110,45 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- タイトル演出 ---
   async function showPressBgAndTitle() {
-    const pressBg = document.createElement("img");
-    pressBg.src = "images/press_bg.png";
-    Object.assign(pressBg.style, {
-      position: "fixed",
-      top: 0, left: 0,
-      width: "120%", height: "120%",
-      objectFit: "cover",
-      zIndex: 0,
-      transform: "translate(-10%, -10%)",
-      opacity: 0,
-      transition: "all 3s ease"
-    });
-    document.body.appendChild(pressBg);
-    requestAnimationFrame(() => pressBg.style.opacity = 1);
-
     if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.currentTime = 0; bgm.play().catch(()=>{}); }
-
-    if (fullscreenEffect) {
-      fullscreenEffect.src = "images/transition.png";
-      Object.assign(fullscreenEffect.style, {
-        display: "block",
-        opacity: 1,
-        position: "fixed",
-        top: 0, left: 0,
-        width: "100%", height: "100%",
-        zIndex: 9999,
-        objectFit: "cover",
-        transition: "opacity 2s ease"
-      });
-      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play().catch(()=>{}); }
-      setTimeout(() => fullscreenEffect.style.opacity = 0, 1500);
-      setTimeout(() => fullscreenEffect.style.display = "none", 3500);
-    }
-
-    setTimeout(() => {
-      pressBg.style.width = "100%";
-      pressBg.style.height = "100%";
-      pressBg.style.transform = "translate(0,0)";
-    }, 50);
 
     if (titleImg1) await fadeIn(titleImg1, 2000);
     if (titleImg1) await fadeOut(titleImg1, 1000);
@@ -159,20 +121,15 @@ document.addEventListener("DOMContentLoaded", () => {
       requestAnimationFrame(() => pressKeyText.style.opacity = 1);
     }
 
-    waitForPressKey(pressBg);
+    waitForPressKey();
   }
 
-  // --- Press Any Key ---
-  function waitForPressKey(pressBg) {
+  function waitForPressKey() {
     function onInput() {
       if (!pressKeyText || pressKeyText.style.display === "none") return;
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
-      fadeOut(pressKeyText, 500);
-      fadeOut(pressBg, 500).then(() => {
-        startBackgroundScroll();
-        createMenu();
-      });
+      fadeOut(pressKeyText, 500).then(() => createMenu());
     }
     window.addEventListener("keydown", onInput, { capture: true });
     window.addEventListener("touchstart", onInput, { capture: true });
@@ -187,424 +144,145 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 背景スクロール ---
-  const scrollSpeed = 1;
-  const containerHeight = window.innerHeight;
-  const containerWidth = window.innerWidth;
-  function createBgDiv(x) {
-    const div = document.createElement("div");
-    Object.assign(div.style, {
-      position: "absolute",
-      top: 0, left: `${x}px`,
-      width: `${bgImageWidth}px`,
-      height: `${containerHeight}px`,
-      backgroundImage: "url('images/menu.png')",
-      backgroundSize: "cover",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center center"
-    });
-    return div;
-  }
+  // --- メニュー生成 ---
+  function createMenu() {
+    if (menuWrapper) menuWrapper.remove();
+    menuWrapper = document.createElement("div");
 
-  function animateScrollingBackground() {
-    for (let i = 0; i < bgElements.length; i++) {
-      let left = parseFloat(bgElements[i].style.left);
-      left -= scrollSpeed;
-      bgElements[i].style.left = left + "px";
-    }
-    if (bgElements.length && parseFloat(bgElements[0].style.left) + bgImageWidth <= 0) {
-      const removed = bgElements.shift(); removed.remove();
-    }
-    if (bgElements.length) {
-      const lastDiv = bgElements[bgElements.length - 1];
-      if (parseFloat(lastDiv.style.left) + bgImageWidth <= containerWidth) {
-        const newDiv = createBgDiv(parseFloat(lastDiv.style.left) + bgImageWidth);
-        scrollWrapper.appendChild(newDiv); bgElements.push(newDiv);
-      }
-    }
-    requestAnimationFrame(animateScrollingBackground);
-  }
-
-  function startBackgroundScroll() {
-    scrollWrapper = document.createElement("div");
-    Object.assign(scrollWrapper.style, {
+    let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
+    Object.assign(menuWrapper.style, {
       position: "fixed",
-      top: 0, left: 0,
-      width: `${containerWidth}px`,
-      height: `${containerHeight}px`,
-      overflow: "hidden",
-      zIndex: 1,
-      pointerEvents: "none"
-    });
-    document.body.appendChild(scrollWrapper);
-    bgElements = [createBgDiv(0), createBgDiv(bgImageWidth)];
-    bgElements.forEach(div => scrollWrapper.appendChild(div));
-    animateScrollingBackground();
-  }
-
-function createMenu() {
-  if (menuWrapper) menuWrapper.remove();
-  menuWrapper = document.createElement("div");
-
-  let topPosition = titleImg2 ? titleImg2.getBoundingClientRect().bottom + 20 : 100;
-  Object.assign(menuWrapper.style, {
-    position: "fixed",
-    top: `${topPosition}px`,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 10000,
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#fff",
-    textShadow: "0 0 5px black",
-  });
-
-  const isTouch = "ontouchstart" in window;
-
-  menuItems.forEach((text, i) => {
-    const item = document.createElement("div");
-    item.textContent = text;
-    Object.assign(item.style, {
-      cursor: "pointer",
-      padding: "10px 20px",
-      borderRadius: "8px",
-      userSelect: "none",
-      transition: "background-color 0.3s ease,color 0.3s ease",
-      color: "#fff"
-    });
-    item.dataset.index = i;
-
-    if (!isTouch) {
-      item.addEventListener("mouseover", () => {
-        selectedIndex = i;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      });
-    }
-
-    // クリック時に「1回目選択、2回目実行」
-    item.addEventListener("click", () => {
-      if (selectedIndex === i && item.style.color === "yellow") {
-        // 2回目なら実行
-        executeMenuItem(selectedIndex);
-      } else {
-        // 1回目は選択
-        selectedIndex = i;
-        updateMenuSelection();
-        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      }
-    });
-
-    menuWrapper.appendChild(item);
-  });
-
-  document.body.appendChild(menuWrapper);
-
-  // バージョンと会社名
-  if (!versionDiv) {
-    versionDiv = document.createElement("div");
-    versionDiv.textContent = "Version 1.0.0";
-    Object.assign(versionDiv.style, {
-      position: "fixed",
-      bottom: "10px",
-      right: "10px",
-      color: "#fff",
-      fontSize: "14px",
-      fontWeight: "bold",
-      textShadow: "0 0 3px black",
-      zIndex: 10000,
-      pointerEvents: "none"
-    });
-    document.body.appendChild(versionDiv);
-  }
-
-  if (!companyDiv) {
-    companyDiv = document.createElement("div");
-    companyDiv.textContent = "@2025 Mdm5.inc";
-    Object.assign(companyDiv.style, {
-      position: "fixed",
-      bottom: "10px",
+      top: `${topPosition}px`,
       left: "50%",
       transform: "translateX(-50%)",
-      color: "#fff",
-      fontSize: "14px",
-      fontWeight: "bold",
-      textShadow: "0 0 3px black",
       zIndex: 10000,
-      pointerEvents: "none"
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#fff",
+      textShadow: "0 0 5px black",
     });
-    document.body.appendChild(companyDiv);
-  }
 
-  isInputMode = true;
-  selectedIndex = 0;
-  updateMenuSelection();
-  attachMenuKeyboardListeners();
-  adjustLayout();
-}
+    const isTouch = "ontouchstart" in window;
 
-// --- メニュー決定処理 ---
-function executeMenuItem(index) {
-  const item = menuItems[index];
-  if (!item) return;
+    menuItems.forEach((text, i) => {
+      const item = document.createElement("div");
+      item.textContent = text;
+      Object.assign(item.style, {
+        cursor: "pointer",
+        padding: "10px 20px",
+        borderRadius: "8px",
+        userSelect: "none",
+        transition: "background-color 0.3s ease,color 0.3s ease",
+        color: "#fff"
+      });
+      item.dataset.index = i;
 
-  switch(item) {
-    case "New Game":
-      startNewGame();
-      break;
-    case "Load":
-      loadGame();
-      break;
-    case "Settings":
-      openSettings();
-      break;
-  }
-}
+      if (!isTouch) {
+        item.addEventListener("mouseover", () => {
+          selectedIndex = i;
+          updateMenuSelection();
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+        });
+      }
 
-// --- updateMenuSelection（選択中は黄色に） ---
-function updateMenuSelection() {
-  if (!menuWrapper) return;
-  const items = menuWrapper.querySelectorAll("div");
-  items.forEach((item, idx) => {
-    if (idx === selectedIndex) {
-      item.style.color = "yellow"; // 選択中
-    } else {
-      item.style.color = "#fff"; // 非選択
+      item.addEventListener("click", () => {
+        if (selectedIndex === i && item.style.color === "yellow") {
+          // New Game 実行は newgame.js で
+          if (i === 0) window.startNewGame?.();
+        } else {
+          selectedIndex = i;
+          updateMenuSelection();
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+        }
+      });
+
+      menuWrapper.appendChild(item);
+    });
+
+    document.body.appendChild(menuWrapper);
+
+    // バージョンと会社名
+    if (!versionDiv) {
+      versionDiv = document.createElement("div");
+      versionDiv.textContent = "Version 1.0.0";
+      Object.assign(versionDiv.style, {
+        position: "fixed",
+        bottom: "10px",
+        right: "10px",
+        color: "#fff",
+        fontSize: "14px",
+        fontWeight: "bold",
+        textShadow: "0 0 3px black",
+        zIndex: 10000,
+        pointerEvents: "none"
+      });
+      document.body.appendChild(versionDiv);
     }
-  });
-}
 
-// --- キーボード操作（1回目選択、2回目実行） ---
-function attachMenuKeyboardListeners() {
-  if (keyboardAttached) return;
-  keyboardAttached = true;
+    if (!companyDiv) {
+      companyDiv = document.createElement("div");
+      companyDiv.textContent = "@2025 Mdm5.inc";
+      Object.assign(companyDiv.style, {
+        position: "fixed",
+        bottom: "10px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        color: "#fff",
+        fontSize: "14px",
+        fontWeight: "bold",
+        textShadow: "0 0 3px black",
+        zIndex: 10000,
+        pointerEvents: "none"
+      });
+      document.body.appendChild(companyDiv);
+    }
 
-  window.addEventListener("keydown", (e) => {
-    if (!isInputMode) return;
+    isInputMode = true;
+    selectedIndex = 0;
+    updateMenuSelection();
+    attachMenuKeyboardListeners();
+    adjustLayout();
+  }
+
+  function updateMenuSelection() {
+    if (!menuWrapper) return;
     const items = menuWrapper.querySelectorAll("div");
+    items.forEach((item, idx) => {
+      item.style.color = idx === selectedIndex ? "yellow" : "#fff";
+    });
+  }
 
-    if (e.key === "ArrowUp") {
-      selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
-      updateMenuSelection();
-      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-    } else if (e.key === "ArrowDown") {
-      selectedIndex = (selectedIndex + 1) % menuItems.length;
-      updateMenuSelection();
-      if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-    } else if (e.key === "Enter" || e.key === " ") {
-      const selectedItem = items[selectedIndex];
-      if (!selectedItem) return;
+  function attachMenuKeyboardListeners() {
+    if (keyboardAttached) return;
+    keyboardAttached = true;
 
-      if (selectedItem.style.color === "yellow") {
-        // 2回目なら実行
-        executeMenuItem(selectedIndex);
-      } else {
-        // 1回目は選択だけ
+    window.addEventListener("keydown", (e) => {
+      if (!isInputMode) return;
+      const items = menuWrapper.querySelectorAll("div");
+
+      if (e.key === "ArrowUp") {
+        selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
         updateMenuSelection();
         if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
-      }
-    }
-  });
-}
+      } else if (e.key === "ArrowDown") {
+        selectedIndex = (selectedIndex + 1) % menuItems.length;
+        updateMenuSelection();
+        if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
+      } else if (e.key === "Enter" || e.key === " ") {
+        const selectedItem = items[selectedIndex];
+        if (!selectedItem) return;
 
-// --- New Game 開始処理 ---
-async function startNewGame() {
-    if (!fadeOverlay) return;
-
-    // --- メニュー非表示 ---
-    if (menuWrapper) menuWrapper.style.display = "none";
-    if (versionDiv) versionDiv.style.display = "none";
-    if (companyDiv) companyDiv.style.display = "none";
-
-    // --- フェードオーバーレイ表示 ---
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.opacity = 0;
-    fadeOverlay.style.zIndex = 5000;
-    const fadeDuration = 2000;
-    fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
-
-    // --- 既存BGMフェードアウト ---
-    if (bgm && !bgm.paused) {
-        const fadeSteps = 60;
-        let step = 0;
-        const interval = fadeDuration / fadeSteps;
-        const startVolume = bgm.volume;
-
-        await new Promise(resolve => {
-            const fadeOut = setInterval(() => {
-                step++;
-                bgm.volume = Math.max(0, startVolume * (1 - step / fadeSteps));
-                if (step >= fadeSteps) {
-                    clearInterval(fadeOut);
-                    bgm.pause();
-                    bgm.currentTime = 0;
-                    resolve();
-                }
-            }, interval);
-        });
-    }
-
-    // --- フェード完了後、画面クリア ---
-    clearScreen();
-
-    // --- 背景生成 ---
-    const bgDiv = document.createElement("div");
-    Object.assign(bgDiv.style, {
-        position: "fixed",
-        top: 0, left: 0,
-        width: "100%", height: "100%",
-        backgroundColor: "#001022",
-        backgroundImage: "url('images/character_select_bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-        zIndex: 1,
-        overflow: "hidden",
-    });
-    document.body.appendChild(bgDiv);
-
-    // --- 雪生成 ---
-    const snowCount = 20;
-    const snowflakes = [];
-    for (let i = 0; i < snowCount; i++) {
-        const snow = document.createElement("img");
-        snow.src = "images/snowflake.png";
-        Object.assign(snow.style, {
-            position: "absolute",
-            top: `${Math.random() * window.innerHeight}px`,
-            left: `${Math.random() * window.innerWidth}px`,
-            width: "60px",
-            height: "60px",
-            pointerEvents: "none",
-            transform: `rotate(${Math.random() * 360}deg)`,
-            zIndex: 2,
-        });
-        bgDiv.appendChild(snow);
-        snowflakes.push({
-            el: snow,
-            speed: Math.random() * 2 + 1,
-            drift: (Math.random() - 0.5) * 1,
-            rotationSpeed: (Math.random() - 0.5) * 2
-        });
-    }
-
-    function animateSnow() {
-        for (let flake of snowflakes) {
-            let top = parseFloat(flake.el.style.top);
-            let left = parseFloat(flake.el.style.left);
-            let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
-            top += flake.speed;
-            left += flake.drift;
-            rot += flake.rotationSpeed;
-            if (top > window.innerHeight) top = -60;
-            if (left < -60) left = window.innerWidth;
-            if (left > window.innerWidth) left = -60;
-            flake.el.style.top = top + "px";
-            flake.el.style.left = left + "px";
-            flake.el.style.transform = `rotate(${rot}deg)`;
+        if (selectedItem.style.color === "yellow") {
+          if (selectedIndex === 0) window.startNewGame?.(); // New Game
+        } else {
+          updateMenuSelection();
+          if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
         }
-        requestAnimationFrame(animateSnow);
-    }
-    animateSnow();
-
-    // --- フェード解除 ---
-    await fadeOut(fadeOverlay, 1000);
-
-    // --- キャラクター選択UI ---
-    const characterUI = createCharacterSelectUI(bgDiv);
-    characterUI.style.zIndex = 1000; // 雪より前面
-
-    // --- 新規BGM再生（フェードイン） ---
-    if (bgm) {
-        bgm.src = "Sounds/newgame_bgm.mp3";
-        bgm.loop = true;
-        bgm.volume = 0;
-        bgm.play().catch(()=>{});
-
-        let step = 0;
-        const steps = 60;
-        const interval = 50;
-        const fadeInAudio = setInterval(() => {
-            step++;
-            bgm.volume = Math.min(1, step / steps);
-            if (step >= steps) clearInterval(fadeInAudio);
-        }, interval);
-    }
-
-    // --- 広告ポップアップ ---
-    const popupImages = [
-        "images/popup_ad1.png",
-        "images/popup_ad2.png",
-        "images/popup_ad3.png",
-        "images/popup_ad4.png",
-        "images/popup_ad5.png",
-    ];
-
-    function createPopup() {
-        const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
-        const popup = document.createElement("div");
-        Object.assign(popup.style, {
-            position: "fixed",
-            width: "200px",
-            height: "150px",
-            backgroundImage: `url(${selectedImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            zIndex: 4000,
-            overflow: "hidden",
-            opacity: 0,
-        });
-
-        const fromTop = Math.random() < 0.5;
-        const fromLeft = Math.random() < 0.5;
-        popup.style.top = fromTop ? "-200px" : "auto";
-        popup.style.bottom = fromTop ? "auto" : "-200px";
-        popup.style.left = fromLeft ? "-220px" : "auto";
-        popup.style.right = fromLeft ? "auto" : "-220px";
-
-        const closeBtn = document.createElement("div");
-        closeBtn.textContent = "×";
-        Object.assign(closeBtn.style, {
-            position: "absolute",
-            top: "5px",
-            right: "5px",
-            color: "#fff",
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontSize: "18px",
-            textShadow: "0 0 3px black",
-        });
-        closeBtn.addEventListener("click", () => popup.remove());
-        popup.appendChild(closeBtn);
-
-        document.body.appendChild(popup);
-
-        requestAnimationFrame(() => {
-            popup.style.transition = "all 1s ease";
-            popup.style.opacity = 1;
-            if (fromTop) popup.style.top = "20px";
-            else popup.style.bottom = "20px";
-            if (fromLeft) popup.style.left = "20px";
-            else popup.style.right = "20px";
-        });
-
-        setTimeout(() => popup.remove(), 10000);
-    }
-
-    createPopup();
-    setInterval(() => createPopup(), 5000 + Math.random() * 5000);
-}
-  
-  // --- 画面クリア ---
-  function clearScreen() {
-    if (titleImg1) titleImg1.style.display = "none";
-    if (titleImg2) titleImg2.style.display = "none";
-    if (pressKeyText) pressKeyText.style.display = "none";
-    if (centerText) centerText.style.display = "none";
-    if (scrollWrapper) { scrollWrapper.remove(); scrollWrapper = null; bgElements = []; }
+      }
+    });
   }
 
   // --- レイアウト調整 ---
@@ -612,19 +290,6 @@ async function startNewGame() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const isPortrait = h > w;
-
-    if (scrollWrapper) {
-      scrollWrapper.style.width = w + "px";
-      scrollWrapper.style.height = h + "px";
-    }
-    if (bgElements) {
-      bgElements.forEach((div, i) => {
-        div.style.height = h + "px";
-        div.style.width = bgImageWidth + "px";
-        div.style.top = "0px";
-        div.style.left = (i === 0 ? 0 : bgImageWidth) + "px";
-      });
-    }
 
     if (pressKeyText) {
       pressKeyText.style.left = "50%";
@@ -640,23 +305,10 @@ async function startNewGame() {
       centerText.style.fontSize = isPortrait ? "28px" : "20px";
     }
 
-    if (versionDiv) {
-      versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
-      versionDiv.style.right = "10px";
-      versionDiv.style.bottom = "10px";
-      versionDiv.style.position = "fixed";
-    }
-
-    if (companyDiv) {
-      companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
-      companyDiv.style.left = "50%";
-      companyDiv.style.bottom = "10px";
-      companyDiv.style.transform = "translateX(-50%)";
-      companyDiv.style.position = "fixed";
-    }
+    if (versionDiv) versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
+    if (companyDiv) companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
   }
 
-  // --- 初期化 ---
   window.addEventListener("resize", adjustLayout);
   window.addEventListener("orientationchange", adjustLayout);
   window.addEventListener("load", adjustLayout);
