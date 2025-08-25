@@ -476,8 +476,8 @@ function attachMenuKeyboardListeners() {
                 position: "absolute",
                 top: `${Math.random() * window.innerHeight}px`,
                 left: `${Math.random() * window.innerWidth}px`,
-                width: "20px",
-                height: "20px",
+                width: "60px",
+                height: "60px",
                 pointerEvents: "none",
             });
             bgDiv.appendChild(snow);
