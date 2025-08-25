@@ -36,8 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let isInputMode = false;
   const menuItems = ["New Game", "Load", "Settings"];
   let scrollWrapper = null;
-  const bgImageWidth = 3600;
   let bgElements = [];
+  const bgImageWidth = 3600;
 
   let versionDiv, companyDiv;
   let keyboardAttached = false;
@@ -46,9 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
   logos.forEach(logo => {
     if (!logo) return;
     Object.assign(logo.style, {
-      display: "none", position: "fixed",
+      display: "none",
+      position: "fixed",
       top: 0, left: 0,
-      width: "100%", height: "100%",
+      width: "100%",
+      height: "100%",
       objectFit: "cover",
       zIndex: 9998
     });
@@ -88,7 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
         let p = Math.min((ts - start) / duration, 1);
         el.style.opacity = 1 - p;
         if (p < 1) requestAnimationFrame(step);
-        else { el.style.display = "none"; resolve(); }
+        else {
+          el.style.display = "none";
+          resolve();
+        }
       }
       requestAnimationFrame(step);
     });
@@ -110,7 +115,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- タイトル演出 ---
   async function showPressBgAndTitle() {
-    if (bgm) { bgm.loop = true; bgm.volume = 1; bgm.currentTime = 0; bgm.play().catch(()=>{}); }
+    const pressBg = document.createElement("img");
+    pressBg.src = "images/press_bg.png";
+    Object.assign(pressBg.style, {
+      position: "fixed",
+      top: 0, left: 0,
+      width: "120%", height: "120%",
+      objectFit: "cover",
+      zIndex: 0,
+      transform: "translate(-10%, -10%)",
+      opacity: 0,
+      transition: "all 3s ease"
+    });
+    document.body.appendChild(pressBg);
+    requestAnimationFrame(() => pressBg.style.opacity = 1);
+
+    if (bgm) {
+      bgm.loop = true;
+      bgm.volume = 1;
+      bgm.currentTime = 0;
+      bgm.play().catch(()=>{});
+    }
+
+    if (fullscreenEffect) {
+      fullscreenEffect.src = "images/transition.png";
+      Object.assign(fullscreenEffect.style, {
+        display: "block",
+        opacity: 1,
+        position: "fixed",
+        top: 0, left: 0,
+        width: "100%", height: "100%",
+        zIndex: 9999,
+        objectFit: "cover",
+        transition: "opacity 2s ease"
+      });
+      if (effectSfx) { effectSfx.currentTime = 0; effectSfx.play().catch(()=>{}); }
+      setTimeout(() => fullscreenEffect.style.opacity = 0, 1500);
+      setTimeout(() => fullscreenEffect.style.display = "none", 3500);
+    }
+
+    setTimeout(() => {
+      pressBg.style.width = "100%";
+      pressBg.style.height = "100%";
+      pressBg.style.transform = "translate(0,0)";
+    }, 50);
 
     if (titleImg1) await fadeIn(titleImg1, 2000);
     if (titleImg1) await fadeOut(titleImg1, 1000);
@@ -121,15 +169,20 @@ document.addEventListener("DOMContentLoaded", () => {
       requestAnimationFrame(() => pressKeyText.style.opacity = 1);
     }
 
-    waitForPressKey();
+    waitForPressKey(pressBg);
   }
 
-  function waitForPressKey() {
+  // --- Press Any Key ---
+  function waitForPressKey(pressBg) {
     function onInput() {
       if (!pressKeyText || pressKeyText.style.display === "none") return;
       window.removeEventListener("keydown", onInput, true);
       window.removeEventListener("touchstart", onInput, true);
-      fadeOut(pressKeyText, 500).then(() => createMenu());
+      fadeOut(pressKeyText, 500);
+      fadeOut(pressBg, 500).then(() => {
+        startBackgroundScroll();
+        createMenu();
+      });
     }
     window.addEventListener("keydown", onInput, { capture: true });
     window.addEventListener("touchstart", onInput, { capture: true });
@@ -144,7 +197,65 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- メニュー生成 ---
+  // --- 背景スクロール ---
+  const scrollSpeed = 1;
+  const containerHeight = window.innerHeight;
+  const containerWidth = window.innerWidth;
+
+  function createBgDiv(x) {
+    const div = document.createElement("div");
+    Object.assign(div.style, {
+      position: "absolute",
+      top: 0, left: `${x}px`,
+      width: `${bgImageWidth}px`,
+      height: `${containerHeight}px`,
+      backgroundImage: "url('images/menu.png')",
+      backgroundSize: "cover",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center center"
+    });
+    return div;
+  }
+
+  function animateScrollingBackground() {
+    for (let i = 0; i < bgElements.length; i++) {
+      let left = parseFloat(bgElements[i].style.left);
+      left -= scrollSpeed;
+      bgElements[i].style.left = left + "px";
+    }
+    if (bgElements.length && parseFloat(bgElements[0].style.left) + bgImageWidth <= 0) {
+      const removed = bgElements.shift();
+      removed.remove();
+    }
+    if (bgElements.length) {
+      const lastDiv = bgElements[bgElements.length - 1];
+      if (parseFloat(lastDiv.style.left) + bgImageWidth <= containerWidth) {
+        const newDiv = createBgDiv(parseFloat(lastDiv.style.left) + bgImageWidth);
+        scrollWrapper.appendChild(newDiv);
+        bgElements.push(newDiv);
+      }
+    }
+    requestAnimationFrame(animateScrollingBackground);
+  }
+
+  function startBackgroundScroll() {
+    scrollWrapper = document.createElement("div");
+    Object.assign(scrollWrapper.style, {
+      position: "fixed",
+      top: 0, left: 0,
+      width: `${containerWidth}px`,
+      height: `${containerHeight}px`,
+      overflow: "hidden",
+      zIndex: 1,
+      pointerEvents: "none"
+    });
+    document.body.appendChild(scrollWrapper);
+    bgElements = [createBgDiv(0), createBgDiv(bgImageWidth)];
+    bgElements.forEach(div => scrollWrapper.appendChild(div));
+    animateScrollingBackground();
+  }
+
+  // --- メニュー ---
   function createMenu() {
     if (menuWrapper) menuWrapper.remove();
     menuWrapper = document.createElement("div");
@@ -162,7 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fontSize: "24px",
       fontWeight: "bold",
       color: "#fff",
-      textShadow: "0 0 5px black",
+      textShadow: "0 0 5px black"
     });
 
     const isTouch = "ontouchstart" in window;
@@ -190,8 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       item.addEventListener("click", () => {
         if (selectedIndex === i && item.style.color === "yellow") {
-          // New Game 実行は newgame.js で
-          if (i === 0) window.startNewGame?.();
+          executeMenuItem(selectedIndex);
         } else {
           selectedIndex = i;
           updateMenuSelection();
@@ -247,11 +357,25 @@ document.addEventListener("DOMContentLoaded", () => {
     adjustLayout();
   }
 
+  function executeMenuItem(index) {
+    const item = menuItems[index];
+    if (!item) return;
+    // New Game 関連は削除。必要なら別JSで startNewGame() を呼ぶ
+    switch(item) {
+      case "Load": loadGame(); break;
+      case "Settings": openSettings(); break;
+    }
+  }
+
   function updateMenuSelection() {
     if (!menuWrapper) return;
     const items = menuWrapper.querySelectorAll("div");
     items.forEach((item, idx) => {
-      item.style.color = idx === selectedIndex ? "yellow" : "#fff";
+      if (idx === selectedIndex) {
+        item.style.color = "yellow";
+      } else {
+        item.style.color = "#fff";
+      }
     });
   }
 
@@ -276,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!selectedItem) return;
 
         if (selectedItem.style.color === "yellow") {
-          if (selectedIndex === 0) window.startNewGame?.(); // New Game
+          executeMenuItem(selectedIndex);
         } else {
           updateMenuSelection();
           if (selectSfx) { selectSfx.currentTime = 0; selectSfx.play().catch(()=>{}); }
@@ -285,11 +409,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- レイアウト調整 ---
   function adjustLayout() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const isPortrait = h > w;
+
+    if (scrollWrapper) {
+      scrollWrapper.style.width = w + "px";
+      scrollWrapper.style.height = h + "px";
+    }
+    if (bgElements) {
+      bgElements.forEach((div, i) => {
+        div.style.height = h + "px";
+        div.style.width = bgImageWidth + "px";
+        div.style.top = "0px";
+        div.style.left = (i === 0 ? 0 : bgImageWidth) + "px";
+      });
+    }
 
     if (pressKeyText) {
       pressKeyText.style.left = "50%";
@@ -305,8 +441,20 @@ document.addEventListener("DOMContentLoaded", () => {
       centerText.style.fontSize = isPortrait ? "28px" : "20px";
     }
 
-    if (versionDiv) versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
-    if (companyDiv) companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
+    if (versionDiv) {
+      versionDiv.style.fontSize = isPortrait ? "14px" : "12px";
+      versionDiv.style.right = "10px";
+      versionDiv.style.bottom = "10px";
+      versionDiv.style.position = "fixed";
+    }
+
+    if (companyDiv) {
+      companyDiv.style.fontSize = isPortrait ? "14px" : "12px";
+      companyDiv.style.left = "50%";
+      companyDiv.style.bottom = "10px";
+      companyDiv.style.transform = "translateX(-50%)";
+      companyDiv.style.position = "fixed";
+    }
   }
 
   window.addEventListener("resize", adjustLayout);
