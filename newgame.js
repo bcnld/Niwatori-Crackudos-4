@@ -9,6 +9,10 @@ window.startNewGame = async function() {
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
+  // --- タイトル2削除 ---
+  const titleImg2 = document.getElementById("title-img2");
+  if (titleImg2) titleImg2.remove();
+
   // --- フェードオーバーレイ表示 ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
@@ -38,12 +42,9 @@ window.startNewGame = async function() {
     });
   }
 
-  // --- 画面クリア（タイトル画像も削除） ---
-  const idsToRemove = ["title-img1", "title-img2", "center-text", "press-any-key"];
+  // --- 画面クリア ---
   document.body.querySelectorAll("div, img").forEach(el => {
-    if (!el.id || el.id === "fade-overlay") return;
-    if (idsToRemove.includes(el.id)) el.remove();
-    else el.remove();
+    if (!el.id || el.id === "fade-overlay") el.remove();
   });
 
   // --- 背景生成 ---
@@ -156,10 +157,11 @@ window.startNewGame = async function() {
     const popup = document.createElement("div");
     Object.assign(popup.style, {
       position: "fixed",
-      width: "200px",
-      height: "150px",
+      width: "300px",
+      height: "225px",
       backgroundImage: `url(${selectedImage})`,
-      backgroundSize: "cover",
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
       backgroundPosition: "center",
       zIndex: 4000,
       overflow: "hidden",
@@ -168,10 +170,11 @@ window.startNewGame = async function() {
 
     const fromTop = Math.random() < 0.5;
     const fromLeft = Math.random() < 0.5;
-    popup.style.top = fromTop ? "-200px" : "auto";
-    popup.style.bottom = fromTop ? "auto" : "-200px";
-    popup.style.left = fromLeft ? "-220px" : "auto";
-    popup.style.right = fromLeft ? "auto" : "-220px";
+
+    popup.style.top = fromTop ? "-250px" : "auto";
+    popup.style.bottom = fromTop ? "auto" : "-250px";
+    popup.style.left = fromLeft ? "-320px" : "auto";
+    popup.style.right = fromLeft ? "auto" : "-320px";
 
     const closeBtn = document.createElement("div");
     closeBtn.textContent = "×";
@@ -182,8 +185,8 @@ window.startNewGame = async function() {
       color: "#fff",
       fontWeight: "bold",
       cursor: "pointer",
-      fontSize: "18px",
-      textShadow: "0 0 3px black",
+      fontSize: "20px",
+      textShadow: "0 0 5px black",
     });
     closeBtn.addEventListener("click", () => popup.remove());
     popup.appendChild(closeBtn);
