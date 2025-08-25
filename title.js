@@ -411,7 +411,7 @@ function attachMenuKeyboardListeners() {
 }
 
   // --- New Game 開始処理 ---
-  function startNewGame() {
+function startNewGame() {
     if (!fadeOverlay) return;
 
     if (menuWrapper) menuWrapper.style.display = "none";
@@ -504,13 +504,75 @@ function attachMenuKeyboardListeners() {
         }
         animateSnow();
 
+        // --- キャラクター選択UI作成 ---
+        createCharacterSelectUI(bgDiv);
+
+        // --- ランダム広告ポップアップ生成 ---
+        function createPopup() {
+            const popup = document.createElement("div");
+            const size = Math.random() * 120 + 80; // 80～200px
+            Object.assign(popup.style, {
+                position: "fixed",
+                width: size + "px",
+                height: size + "px",
+                backgroundImage: "url('images/popup_ad.png')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                zIndex: 10,
+                top: Math.random() < 0.5 ? "-200px" : null,
+                left: Math.random() < 0.5 ? "-200px" : null,
+                right: Math.random() < 0.5 ? "-200px" : null,
+                bottom: Math.random() < 0.5 ? "-200px" : null,
+                transition: "all 1s ease",
+            });
+
+            // × ボタン
+            const closeBtn = document.createElement("div");
+            closeBtn.textContent = "×";
+            Object.assign(closeBtn.style, {
+                position: "absolute",
+                top: "5px",
+                right: "5px",
+                width: "24px",
+                height: "24px",
+                backgroundColor: "rgba(0,0,0,0.5)",
+                color: "#fff",
+                textAlign: "center",
+                lineHeight: "24px",
+                cursor: "pointer",
+                borderRadius: "50%",
+                fontWeight: "bold",
+                zIndex: 11,
+            });
+            closeBtn.addEventListener("click", () => popup.remove());
+            popup.appendChild(closeBtn);
+
+            document.body.appendChild(popup);
+
+            // 少し遅延して画面内に移動
+            setTimeout(() => {
+                const targetTop = Math.random() * (window.innerHeight - size);
+                const targetLeft = Math.random() * (window.innerWidth - size);
+                popup.style.top = targetTop + "px";
+                popup.style.left = targetLeft + "px";
+            }, 100);
+
+            // 自動で一定時間後に消す（任意）
+            setTimeout(() => {
+                if (popup.parentNode) popup.remove();
+            }, 8000);
+        }
+
+        // 1〜3個ランダム生成
+        const popupNum = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < popupNum; i++) {
+            setTimeout(createPopup, i * 500); // 少しずらして出現
+        }
+
         // --- フェードイン解除 ---
         fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
         fadeOverlay.style.opacity = 0;
         setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
-
-        // --- キャラクター選択UI作成 ---
-        createCharacterSelectUI(bgDiv);
 
     }, fadeDuration);
 }
