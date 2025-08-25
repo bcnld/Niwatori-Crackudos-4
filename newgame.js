@@ -9,10 +9,6 @@ window.startNewGame = async function() {
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
-  // --- タイトル2削除 ---
-  const titleImg2 = document.getElementById("title-img2");
-  if (titleImg2) titleImg2.remove();
-
   // --- フェードオーバーレイ表示 ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
@@ -111,6 +107,10 @@ window.startNewGame = async function() {
   fadeOverlay.style.opacity = 0;
   setTimeout(() => fadeOverlay.style.display = "none", 1000);
 
+  // --- タイトル2消去 ---
+  const title2 = document.getElementById("title-img2");
+  if (title2) title2.remove();
+
   // --- キャラクター選択UI ---
   const characterUI = document.createElement("div");
   characterUI.textContent = "ここにキャラクター選択UIを表示";
@@ -143,7 +143,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- 広告ポップアップ ---
+  // --- 広告ポップアップ（全表示＆大きめ） ---
   const popupImages = [
     "images/popup_ad1.png",
     "images/popup_ad2.png",
@@ -154,55 +154,76 @@ window.startNewGame = async function() {
 
   function createPopup() {
     const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
-    const popup = document.createElement("div");
-    Object.assign(popup.style, {
-      position: "fixed",
-      width: "300px",
-      height: "225px",
-      backgroundImage: `url(${selectedImage})`,
-      backgroundSize: "contain",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-      zIndex: 4000,
-      overflow: "hidden",
-      opacity: 0,
-    });
 
-    const fromTop = Math.random() < 0.5;
-    const fromLeft = Math.random() < 0.5;
+    const img = new Image();
+    img.src = selectedImage;
+    img.onload = () => {
+      const aspect = img.width / img.height;
+      const maxHeight = window.innerHeight * 0.7;
+      const maxWidth = window.innerWidth * 0.7;
+      let popupHeight = img.height;
+      let popupWidth = img.width;
 
-    popup.style.top = fromTop ? "-250px" : "auto";
-    popup.style.bottom = fromTop ? "auto" : "-250px";
-    popup.style.left = fromLeft ? "-320px" : "auto";
-    popup.style.right = fromLeft ? "auto" : "-320px";
+      if (popupHeight > maxHeight) {
+        popupHeight = maxHeight;
+        popupWidth = popupHeight * aspect;
+      }
+      if (popupWidth > maxWidth) {
+        popupWidth = maxWidth;
+        popupHeight = popupWidth / aspect;
+      }
 
-    const closeBtn = document.createElement("div");
-    closeBtn.textContent = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px",
-      right: "5px",
-      color: "#fff",
-      fontWeight: "bold",
-      cursor: "pointer",
-      fontSize: "20px",
-      textShadow: "0 0 5px black",
-    });
-    closeBtn.addEventListener("click", () => popup.remove());
-    popup.appendChild(closeBtn);
+      const popup = document.createElement("div");
+      Object.assign(popup.style, {
+        position: "fixed",
+        width: `${popupWidth}px`,
+        height: `${popupHeight}px`,
+        backgroundImage: `url(${selectedImage})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        zIndex: 4000,
+        overflow: "hidden",
+        opacity: 0,
+      });
 
-    document.body.appendChild(popup);
+      // 画面外からスライドイン
+      const fromTop = Math.random() < 0.5;
+      const fromLeft = Math.random() < 0.5;
+      popup.style.top = fromTop ? `-${popupHeight + 20}px` : "auto";
+      popup.style.bottom = fromTop ? "auto" : `-${popupHeight + 20}px`;
+      popup.style.left = fromLeft ? `-${popupWidth + 20}px` : "auto";
+      popup.style.right = fromLeft ? "auto" : `-${popupWidth + 20}px`;
 
-    requestAnimationFrame(() => {
-      popup.style.transition = "all 1s ease";
-      popup.style.opacity = 1;
-      if (fromTop) popup.style.top = "20px";
-      else popup.style.bottom = "20px";
-      if (fromLeft) popup.style.left = "20px";
-      else popup.style.right = "20px";
-    });
+      // 閉じるボタン
+      const closeBtn = document.createElement("div");
+      closeBtn.textContent = "×";
+      Object.assign(closeBtn.style, {
+        position: "absolute",
+        top: "5px",
+        right: "5px",
+        color: "#fff",
+        fontWeight: "bold",
+        cursor: "pointer",
+        fontSize: "20px",
+        textShadow: "0 0 5px black",
+      });
+      closeBtn.addEventListener("click", () => popup.remove());
+      popup.appendChild(closeBtn);
 
-    setTimeout(() => popup.remove(), 10000);
+      document.body.appendChild(popup);
+
+      requestAnimationFrame(() => {
+        popup.style.transition = "all 1s ease";
+        popup.style.opacity = 1;
+        if (fromTop) popup.style.top = "20px";
+        else popup.style.bottom = "20px";
+        if (fromLeft) popup.style.left = "20px";
+        else popup.style.right = "20px";
+      });
+
+      setTimeout(() => popup.remove(), 10000);
+    };
   }
 
   createPopup();
