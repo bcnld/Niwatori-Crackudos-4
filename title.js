@@ -414,10 +414,12 @@ function attachMenuKeyboardListeners() {
 function startNewGame() {
     if (!fadeOverlay) return;
 
+    // --- メニュー非表示 ---
     if (menuWrapper) menuWrapper.style.display = "none";
     if (versionDiv) versionDiv.style.display = "none";
     if (companyDiv) companyDiv.style.display = "none";
 
+    // --- フェードオーバーレイ表示 ---
     fadeOverlay.style.display = "block";
     fadeOverlay.style.opacity = 0;
 
@@ -445,7 +447,7 @@ function startNewGame() {
     requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
     setTimeout(() => {
-        // フェードアウト完了時の処理
+        // --- フェードアウト完了時の処理 ---
         clearScreen();
         changeBGM();
 
@@ -457,7 +459,7 @@ function startNewGame() {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "#001022", // ベース色
+            backgroundColor: "#001022",
             backgroundImage: "url('images/character_select_bg.png')",
             backgroundSize: "cover",
             backgroundPosition: "center center",
@@ -466,12 +468,12 @@ function startNewGame() {
         });
         document.body.appendChild(bgDiv);
 
-        // --- 雪画像を落下させる ---
+        // --- 雪生成 ---
         const snowCount = 50;
         const snowflakes = [];
         for (let i = 0; i < snowCount; i++) {
             const snow = document.createElement("img");
-            snow.src = "images/snowflake.png"; // 雪画像
+            snow.src = "images/snowflake.png";
             Object.assign(snow.style, {
                 position: "absolute",
                 top: `${Math.random() * window.innerHeight}px`,
@@ -487,7 +489,6 @@ function startNewGame() {
                 drift: (Math.random() - 0.5) * 1,
             });
         }
-
         function animateSnow() {
             for (let flake of snowflakes) {
                 let top = parseFloat(flake.el.style.top);
@@ -504,75 +505,71 @@ function startNewGame() {
         }
         animateSnow();
 
-        // --- キャラクター選択UI作成 ---
+        // --- フェードイン解除 ---
+        fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+        fadeOverlay.style.opacity = 0;
+        setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+
+        // --- キャラクター選択UI ---
         createCharacterSelectUI(bgDiv);
 
-        // --- ランダム広告ポップアップ生成 ---
+        // --- 広告ポップアップ生成（5種類ランダム） ---
+        const popupImages = [
+            "images/popup_ad1.png",
+            "images/popup_ad2.png",
+            "images/popup_ad3.png",
+            "images/popup_ad4.png",
+            "images/popup_ad5.png",
+        ];
+
         function createPopup() {
-            const popup = document.createElement("div");
-            const size = Math.random() * 120 + 80; // 80～200px
-            Object.assign(popup.style, {
+            const img = document.createElement("div");
+            const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
+
+            Object.assign(img.style, {
                 position: "fixed",
-                width: size + "px",
-                height: size + "px",
-                backgroundImage: "url('images/popup_ad.png')",
+                width: "200px",
+                height: "150px",
+                backgroundImage: `url(${selectedImage})`,
                 backgroundSize: "cover",
-                backgroundPosition: "center",
-                zIndex: 10,
-                top: Math.random() < 0.5 ? "-200px" : null,
-                left: Math.random() < 0.5 ? "-200px" : null,
-                right: Math.random() < 0.5 ? "-200px" : null,
-                bottom: Math.random() < 0.5 ? "-200px" : null,
+                top: Math.random() < 0.5 ? "-200px" : "auto",
+                bottom: Math.random() < 0.5 ? "-200px" : "auto",
+                left: Math.random() < 0.5 ? "-220px" : "auto",
+                right: Math.random() < 0.5 ? "-220px" : "auto",
+                zIndex: 2000,
                 transition: "all 1s ease",
             });
 
-            // × ボタン
+            // ×ボタン
             const closeBtn = document.createElement("div");
             closeBtn.textContent = "×";
             Object.assign(closeBtn.style, {
                 position: "absolute",
                 top: "5px",
                 right: "5px",
-                width: "24px",
-                height: "24px",
-                backgroundColor: "rgba(0,0,0,0.5)",
                 color: "#fff",
-                textAlign: "center",
-                lineHeight: "24px",
-                cursor: "pointer",
-                borderRadius: "50%",
                 fontWeight: "bold",
-                zIndex: 11,
+                cursor: "pointer",
+                fontSize: "18px",
+                textShadow: "0 0 3px black",
             });
-            closeBtn.addEventListener("click", () => popup.remove());
-            popup.appendChild(closeBtn);
+            closeBtn.addEventListener("click", () => img.remove());
+            img.appendChild(closeBtn);
 
-            document.body.appendChild(popup);
+            document.body.appendChild(img);
 
-            // 少し遅延して画面内に移動
-            setTimeout(() => {
-                const targetTop = Math.random() * (window.innerHeight - size);
-                const targetLeft = Math.random() * (window.innerWidth - size);
-                popup.style.top = targetTop + "px";
-                popup.style.left = targetLeft + "px";
-            }, 100);
-
-            // 自動で一定時間後に消す（任意）
-            setTimeout(() => {
-                if (popup.parentNode) popup.remove();
-            }, 8000);
+            requestAnimationFrame(() => {
+                img.style.top = img.style.top === "-200px" ? "20px" : img.style.top;
+                img.style.bottom = img.style.bottom === "-200px" ? "20px" : img.style.bottom;
+                img.style.left = img.style.left === "-220px" ? "20px" : img.style.left;
+                img.style.right = img.style.right === "-220px" ? "20px" : img.style.right;
+            });
         }
 
-        // 1〜3個ランダム生成
-        const popupNum = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < popupNum; i++) {
-            setTimeout(createPopup, i * 500); // 少しずらして出現
-        }
-
-        // --- フェードイン解除 ---
-        fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-        fadeOverlay.style.opacity = 0;
-        setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+        // ランダム間隔でポップアップ生成
+        setInterval(() => {
+            createPopup();
+        }, 5000 + Math.random() * 5000); // 5~10秒ごと
 
     }, fadeDuration);
 }
