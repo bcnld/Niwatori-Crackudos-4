@@ -427,26 +427,51 @@ function attachMenuKeyboardListeners() {
     const initialVolume = bgm ? bgm.volume : 1;
 
     if (bgm && !bgm.paused) {
-      let step = 0;
-      const fadeOutAudio = setInterval(() => {
-        step++;
-        const newVolume = Math.max(0, initialVolume * (1 - step / fadeSteps));
-        bgm.volume = newVolume;
-        if (step >= fadeSteps) { bgm.pause(); bgm.currentTime = 0; clearInterval(fadeOutAudio); }
-      }, fadeStepTime);
+        let step = 0;
+        const fadeOutAudio = setInterval(() => {
+            step++;
+            const newVolume = Math.max(0, initialVolume * (1 - step / fadeSteps));
+            bgm.volume = newVolume;
+            if (step >= fadeSteps) { 
+                bgm.pause(); 
+                bgm.currentTime = 0; 
+                clearInterval(fadeOutAudio); 
+            }
+        }, fadeStepTime);
     }
 
     fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
     requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
     setTimeout(() => {
-      clearScreen();
-      changeBGM();
-      fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-      fadeOverlay.style.opacity = 0;
-      setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+        // フェードアウト完了時の処理
+        clearScreen();
+        changeBGM();
+
+        // --- 背景生成 ---
+        const bgDiv = document.createElement("div");
+        Object.assign(bgDiv.style, {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: "url('images/character_select_bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            zIndex: 1,
+        });
+        document.body.appendChild(bgDiv);
+
+        fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
+        fadeOverlay.style.opacity = 0;
+        setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+
+        // ここでキャラクター選択UIなども作れる
+        createCharacterSelectUI(bgDiv);
+
     }, fadeDuration);
-  }
+}
 
   // --- 画面クリア ---
   function clearScreen() {
