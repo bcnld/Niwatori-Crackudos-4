@@ -87,7 +87,6 @@ window.startNewGame = async function() {
       rotationSpeed: (Math.random() - 0.5) * 2
     });
   }
-
   function animateSnow() {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
@@ -112,28 +111,12 @@ window.startNewGame = async function() {
   fadeOverlay.style.opacity = 0;
   setTimeout(() => fadeOverlay.style.display = "none", 1000);
 
-  // --- キャラクター選択UI ---
-  const characterUI = document.createElement("div");
-  characterUI.textContent = "ここにキャラクター選択UIを表示";
-  Object.assign(characterUI.style, {
-    position: "fixed",
-    top: "50%", left: "50%",
-    transform: "translate(-50%, -50%)",
-    zIndex: 1000,
-    color: "#fff",
-    fontSize: "24px",
-    fontWeight: "bold",
-    textAlign: "center",
-  });
-  bgDiv.appendChild(characterUI);
-
   // --- 新規BGM再生（フェードイン） ---
   if (bgm) {
     bgm.src = "Sounds/newgame_bgm.mp3";
     bgm.loop = true;
     bgm.volume = 0;
     bgm.play().catch(()=>{});
-
     let step = 0;
     const steps = 60;
     const interval = 50;
@@ -143,6 +126,57 @@ window.startNewGame = async function() {
       if (step >= steps) clearInterval(fadeInAudio);
     }, interval);
   }
+
+  // --- キャラクター選択UI ---
+  const characterUI = document.createElement("div");
+  Object.assign(characterUI.style, {
+    position: "fixed",
+    top: "50%", left: "50%",
+    transform: "translate(-50%, -50%)",
+    zIndex: 1000,
+    display: "flex",
+    gap: "100px",
+    justifyContent: "center",
+    alignItems: "center",
+  });
+
+  const characters = [
+    { name: "主人公1", src: "images/hero1.png" },
+    { name: "主人公2", src: "images/hero2.png" },
+  ];
+
+  let selectedIndex = null;
+  let selectionConfirmed = false;
+
+  characters.forEach((char, index) => {
+    const img = document.createElement("img");
+    img.src = char.src;
+    img.style.width = "200px";
+    img.style.height = "300px";
+    img.style.transition = "all 0.3s ease";
+    img.style.cursor = "pointer";
+
+    img.addEventListener("click", () => {
+      if (!selectionConfirmed) {
+        // 選択表示
+        selectedIndex = index;
+        characters.forEach((c, i) => {
+          c.img.style.transform = i === index ? "scale(1.2)" : "scale(0.9)";
+        });
+      } else if (selectedIndex === index) {
+        // 決定したら処理実行
+        alert(`${char.name} が選択されました！`);
+      }
+    });
+
+    characterUI.appendChild(img);
+    char.img = img;
+  });
+
+  // 初期状態で選択なし、小さく
+  characters.forEach(c => c.img.style.transform = "scale(0.9)");
+
+  bgDiv.appendChild(characterUI);
 
   // --- ポップアップ設定（GIF2 + MP43、音付き） ---
   const popupMedia = [
@@ -167,8 +201,6 @@ window.startNewGame = async function() {
       overflow: "hidden",
       pointerEvents: "auto",
     });
-
-    // ランダム位置
     const maxLeft = window.innerWidth - parseInt(popup.style.width);
     const maxTop = window.innerHeight - parseInt(popup.style.height);
     popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
@@ -184,7 +216,7 @@ window.startNewGame = async function() {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = false; // 音付き
+      mediaEl.muted = false;
       mediaEl.volume = 1;
       mediaEl.playsInline = true;
       mediaEl.controls = false;
@@ -192,33 +224,30 @@ window.startNewGame = async function() {
     }
     popup.appendChild(mediaEl);
 
-    // ×ボタン
     const closeBtn = document.createElement("div");
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px", right: "8px",
-      color: "#fff",
-      fontWeight: "bold",
-      cursor: "pointer",
-      fontSize: "28px",
-      textShadow: "0 0 5px black",
-      zIndex: 5001
+      position: "absolute", top: "5px", right: "8px",
+      color: "#fff", fontWeight: "bold", cursor: "pointer",
+      fontSize: "28px", textShadow: "0 0 5px black", zIndex: 5001
     });
     closeBtn.addEventListener("click", () => {
       popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(()=>{});
+      popupCloseSound.play().catch(() => {});
       popup.remove();
     });
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
-
-    // 出現音
     popupSound.currentTime = 0;
-    popupSound.play().catch(()=>{});
+    popupSound.play().catch(() => {});
   }
 
-  createPopup();
-  setInterval(() => createPopup(), 4000 + Math.random() * 4000);
+  function startRandomPopups() {
+    createPopup();
+    const nextTime = 4000 + Math.random() * 4000;
+    setTimeout(startRandomPopups, nextTime);
+  }
+
+  startRandomPopups();
 };
