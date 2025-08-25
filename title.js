@@ -423,7 +423,7 @@ function startNewGame() {
     fadeOverlay.style.display = "block";
     fadeOverlay.style.opacity = 0;
 
-    const fadeDuration = 3000; // ms
+    const fadeDuration = 2000; // フェード時間
     const fadeSteps = 60;
     const fadeStepTime = fadeDuration / fadeSteps;
     const initialVolume = bgm ? bgm.volume : 1;
@@ -433,8 +433,7 @@ function startNewGame() {
         let step = 0;
         const fadeOutAudio = setInterval(() => {
             step++;
-            const newVolume = Math.max(0, initialVolume * (1 - step / fadeSteps));
-            bgm.volume = newVolume;
+            bgm.volume = Math.max(0, initialVolume * (1 - step / fadeSteps));
             if (step >= fadeSteps) { 
                 bgm.pause(); 
                 bgm.currentTime = 0; 
@@ -468,42 +467,52 @@ function startNewGame() {
         });
         document.body.appendChild(bgDiv);
 
-        // --- 雪生成 ---
-        const snowCount = 50;
-        const snowflakes = [];
-        for (let i = 0; i < snowCount; i++) {
-            const snow = document.createElement("img");
-            snow.src = "images/snowflake.png";
-            Object.assign(snow.style, {
+        // --- 背景エフェクト（雪） ---
+        const effectCount = 15;
+        const effects = [];
+        for (let i = 0; i < effectCount; i++) {
+            const e = document.createElement("img");
+            e.src = "images/snowflake.png";
+            const size = 30 + Math.random() * 30;
+            Object.assign(e.style, {
                 position: "absolute",
                 top: `${Math.random() * window.innerHeight}px`,
                 left: `${Math.random() * window.innerWidth}px`,
-                width: "60px",
-                height: "60px",
+                width: `${size}px`,
+                height: `${size}px`,
                 pointerEvents: "none",
+                transform: `rotate(${Math.random() * 360}deg)`,
             });
-            bgDiv.appendChild(snow);
-            snowflakes.push({
-                el: snow,
-                speed: Math.random() * 2 + 1,
+            bgDiv.appendChild(e);
+            effects.push({
+                el: e,
+                speed: 1 + Math.random() * 2,
                 drift: (Math.random() - 0.5) * 1,
+                rotation: Math.random() * 360,
+                rotationSpeed: (Math.random() - 0.5) * 2,
             });
         }
-        function animateSnow() {
-            for (let flake of snowflakes) {
-                let top = parseFloat(flake.el.style.top);
-                let left = parseFloat(flake.el.style.left);
-                top += flake.speed;
-                left += flake.drift;
-                if (top > window.innerHeight) top = -20;
-                if (left < -20) left = window.innerWidth;
-                if (left > window.innerWidth) left = -20;
-                flake.el.style.top = top + "px";
-                flake.el.style.left = left + "px";
+
+        function animateEffects() {
+            for (let ef of effects) {
+                let top = parseFloat(ef.el.style.top);
+                let left = parseFloat(ef.el.style.left);
+                ef.rotation += ef.rotationSpeed;
+
+                top += ef.speed;
+                left += ef.drift;
+
+                if (top > window.innerHeight) top = -50;
+                if (left < -50) left = window.innerWidth;
+                if (left > window.innerWidth) left = -50;
+
+                ef.el.style.top = top + "px";
+                ef.el.style.left = left + "px";
+                ef.el.style.transform = `rotate(${ef.rotation}deg)`;
             }
-            requestAnimationFrame(animateSnow);
+            requestAnimationFrame(animateEffects);
         }
-        animateSnow();
+        animateEffects();
 
         // --- フェードイン解除 ---
         fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
@@ -513,7 +522,7 @@ function startNewGame() {
         // --- キャラクター選択UI ---
         createCharacterSelectUI(bgDiv);
 
-        // --- 広告ポップアップ生成（5種類ランダム） ---
+        // --- 広告ポップアップ生成（必ず表示） ---
         const popupImages = [
             "images/popup_ad1.png",
             "images/popup_ad2.png",
@@ -537,7 +546,6 @@ function startNewGame() {
                 opacity: 0,
             });
 
-            // ランダム画面外初期位置
             const fromTop = Math.random() < 0.5;
             const fromLeft = Math.random() < 0.5;
             popup.style.top = fromTop ? "-200px" : "auto";
@@ -545,7 +553,6 @@ function startNewGame() {
             popup.style.left = fromLeft ? "-220px" : "auto";
             popup.style.right = fromLeft ? "auto" : "-220px";
 
-            // ×ボタン
             const closeBtn = document.createElement("div");
             closeBtn.textContent = "×";
             Object.assign(closeBtn.style, {
@@ -579,7 +586,10 @@ function startNewGame() {
             }, 10000);
         }
 
-        // ランダム間隔でポップアップ生成
+        // 最初に必ずポップアップ1つ表示
+        createPopup();
+
+        // 以降はランダム間隔でポップアップ
         setInterval(() => {
             createPopup();
         }, 5000 + Math.random() * 5000);
