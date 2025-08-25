@@ -139,7 +139,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- ポップアップ生成（大きくて邪魔、消えない仕様） ---
+  // --- ポップアップ（大きくて邪魔、消えない、四隅＋中央） ---
   const popupImages = [
     "images/popup_ad1.png",
     "images/popup_ad2.png",
@@ -147,6 +147,7 @@ window.startNewGame = async function() {
     "images/popup_ad4.png",
     "images/popup_ad5.png",
   ];
+  const activePopups = [];
 
   function createPopup() {
     const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
@@ -183,15 +184,22 @@ window.startNewGame = async function() {
         opacity: 0,
       });
 
-      // ランダム配置（画面端から少し外れた位置）
-      const fromTop = Math.random() < 0.5;
-      const fromLeft = Math.random() < 0.5;
-      popup.style.top = fromTop ? `-${popupHeight + 20}px` : "auto";
-      popup.style.bottom = fromTop ? "auto" : `-${popupHeight + 20}px`;
-      popup.style.left = fromLeft ? `-${popupWidth + 20}px` : "auto";
-      popup.style.right = fromLeft ? "auto" : `-${popupWidth + 20}px`;
+      const positions = [
+        { top: "20px", left: "20px" },
+        { top: "20px", right: "20px" },
+        { bottom: "20px", left: "20px" },
+        { bottom: "20px", right: "20px" }
+      ];
 
-      // 閉じるボタン
+      let pos;
+      if (activePopups.length < 4) {
+        pos = positions[activePopups.length];
+      } else {
+        pos = { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+      }
+
+      Object.assign(popup.style, pos);
+
       const closeBtn = document.createElement("div");
       closeBtn.textContent = "×";
       Object.assign(closeBtn.style, {
@@ -204,24 +212,25 @@ window.startNewGame = async function() {
         fontSize: "20px",
         textShadow: "0 0 5px black",
       });
-      closeBtn.addEventListener("click", () => popup.remove());
+      closeBtn.addEventListener("click", () => {
+        popup.remove();
+        const idx = activePopups.indexOf(popup);
+        if (idx !== -1) activePopups.splice(idx, 1);
+      });
       popup.appendChild(closeBtn);
 
       document.body.appendChild(popup);
+      activePopups.push(popup);
 
       requestAnimationFrame(() => {
-        popup.style.transition = "all 1s ease";
+        popup.style.transition = "opacity 1s ease";
         popup.style.opacity = 1;
-        if (fromTop) popup.style.top = "20px";
-        else popup.style.bottom = "20px";
-        if (fromLeft) popup.style.left = "20px";
-        else popup.style.right = "20px";
       });
     };
   }
 
-  // 初回ポップアップ生成
+  // 初回生成
   createPopup();
-  // 定期的に複数ポップアップを生成（邪魔用）
+  // 定期生成（邪魔用）
   setInterval(() => createPopup(), 5000 + Math.random() * 5000);
 };
