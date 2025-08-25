@@ -421,34 +421,34 @@ function startNewGame() {
 
     // --- フェードオーバーレイ表示 ---
     fadeOverlay.style.display = "block";
-    fadeOverlay.style.opacity = 0;
 
-    const fadeDuration = 3000; // ms
+    // --- BGMフェードアウト ---
     const fadeSteps = 60;
+    const fadeDuration = 2000; // ms
     const fadeStepTime = fadeDuration / fadeSteps;
     const initialVolume = bgm ? bgm.volume : 1;
 
-    // --- BGMフェードアウト ---
     if (bgm && !bgm.paused) {
         let step = 0;
         const fadeOutAudio = setInterval(() => {
             step++;
             const newVolume = Math.max(0, initialVolume * (1 - step / fadeSteps));
             bgm.volume = newVolume;
-            if (step >= fadeSteps) { 
-                bgm.pause(); 
-                bgm.currentTime = 0; 
-                clearInterval(fadeOutAudio); 
+            if (step >= fadeSteps) {
+                bgm.pause();
+                bgm.currentTime = 0;
+                clearInterval(fadeOutAudio);
             }
         }, fadeStepTime);
     }
 
     // --- フェードイン開始 ---
+    fadeOverlay.style.opacity = 0;
     fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
     requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
     // --- フェード終了後の処理 ---
-    setTimeout(() => {
+    setTimeout(async () => {
         clearScreen();
 
         // --- 背景生成 ---
@@ -489,6 +489,7 @@ function startNewGame() {
                 rotationSpeed: (Math.random() - 0.5) * 2
             });
         }
+
         function animateSnow() {
             for (let flake of snowflakes) {
                 let top = parseFloat(flake.el.style.top);
@@ -509,9 +510,7 @@ function startNewGame() {
         animateSnow();
 
         // --- フェード解除 ---
-        fadeOverlay.style.transition = `opacity ${fadeDuration}ms ease`;
-        fadeOverlay.style.opacity = 0;
-        setTimeout(() => fadeOverlay.style.display = "none", fadeDuration);
+        await fadeOut(fadeOverlay, 1000);
 
         // --- キャラクター選択UI ---
         createCharacterSelectUI(bgDiv);
