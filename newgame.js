@@ -107,10 +107,6 @@ window.startNewGame = async function() {
   fadeOverlay.style.opacity = 0;
   setTimeout(() => fadeOverlay.style.display = "none", 1000);
 
-  // --- タイトル2消去 ---
-  const title2 = document.getElementById("title-img2");
-  if (title2) title2.remove();
-
   // --- キャラクター選択UI ---
   const characterUI = document.createElement("div");
   characterUI.textContent = "ここにキャラクター選択UIを表示";
@@ -143,7 +139,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- 広告ポップアップ（全表示＆大きめ） ---
+  // --- ポップアップ生成（大きくて邪魔、消えない仕様） ---
   const popupImages = [
     "images/popup_ad1.png",
     "images/popup_ad2.png",
@@ -159,8 +155,8 @@ window.startNewGame = async function() {
     img.src = selectedImage;
     img.onload = () => {
       const aspect = img.width / img.height;
-      const maxHeight = window.innerHeight * 0.7;
-      const maxWidth = window.innerWidth * 0.7;
+      const maxHeight = window.innerHeight * 0.8;
+      const maxWidth = window.innerWidth * 0.8;
       let popupHeight = img.height;
       let popupWidth = img.width;
 
@@ -187,7 +183,7 @@ window.startNewGame = async function() {
         opacity: 0,
       });
 
-      // 画面外からスライドイン
+      // ランダム配置（画面端から少し外れた位置）
       const fromTop = Math.random() < 0.5;
       const fromLeft = Math.random() < 0.5;
       popup.style.top = fromTop ? `-${popupHeight + 20}px` : "auto";
@@ -221,11 +217,11 @@ window.startNewGame = async function() {
         if (fromLeft) popup.style.left = "20px";
         else popup.style.right = "20px";
       });
-
-      setTimeout(() => popup.remove(), 10000);
     };
   }
 
+  // 初回ポップアップ生成
   createPopup();
+  // 定期的に複数ポップアップを生成（邪魔用）
   setInterval(() => createPopup(), 5000 + Math.random() * 5000);
 };
