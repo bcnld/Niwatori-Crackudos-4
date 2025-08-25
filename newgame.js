@@ -2,12 +2,20 @@ window.startNewGame = async function() {
   // --- DOM要素 ---
   const fadeOverlay = document.getElementById("fade-overlay");
   const bgm = document.getElementById("bgm");
+  const titleImg2 = document.getElementById("title-img2");
 
   if (!fadeOverlay) return;
 
   // --- メニュー非表示 ---
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
+
+  // --- タイトル2消去 ---
+  if (titleImg2) {
+    titleImg2.style.transition = "opacity 0.5s ease";
+    titleImg2.style.opacity = 0;
+    setTimeout(() => titleImg2.remove(), 500);
+  }
 
   // --- フェードオーバーレイ表示 ---
   fadeOverlay.style.display = "block";
@@ -22,12 +30,10 @@ window.startNewGame = async function() {
     const fadeSteps = 60;
     let step = 0;
     const interval = fadeDuration / fadeSteps;
-    const startVolume = bgm.volume;
-
     await new Promise(resolve => {
       const fadeOut = setInterval(() => {
         step++;
-        bgm.volume = Math.max(0, startVolume * (1 - step / fadeSteps));
+        bgm.volume = Math.max(0, bgm.volume * (1 - step / fadeSteps));
         if (step >= fadeSteps) {
           clearInterval(fadeOut);
           bgm.pause();
@@ -38,9 +44,10 @@ window.startNewGame = async function() {
     });
   }
 
-  // --- 画面クリア ---
+  // --- 画面クリア（フェードオーバーレイ以外） ---
   document.body.querySelectorAll("div, img").forEach(el => {
-    if (!el.id || el.id === "fade-overlay") el.remove();
+    if (!el.id || el.id === "fade-overlay") return;
+    el.remove();
   });
 
   // --- 背景生成 ---
@@ -139,7 +146,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- ポップアップ（大きくて邪魔、消えない、四隅＋中央） ---
+  // --- 邪魔用ポップアップ ---
   const popupImages = [
     "images/popup_ad1.png",
     "images/popup_ad2.png",
@@ -147,90 +154,79 @@ window.startNewGame = async function() {
     "images/popup_ad4.png",
     "images/popup_ad5.png",
   ];
-  const activePopups = [];
 
   function createPopup() {
     const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
+    const popup = document.createElement("div");
+    Object.assign(popup.style, {
+      position: "fixed",
+      width: "400px",
+      height: "300px",
+      backgroundImage: `url(${selectedImage})`,
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center center",
+      zIndex: 4000,
+      overflow: "hidden",
+      pointerEvents: "auto"
+    });
 
-    const img = new Image();
-    img.src = selectedImage;
-    img.onload = () => {
-      const aspect = img.width / img.height;
-      const maxHeight = window.innerHeight * 0.8;
-      const maxWidth = window.innerWidth * 0.8;
-      let popupHeight = img.height;
-      let popupWidth = img.width;
+    // ランダム四隅配置
+    const topPos = Math.random() < 0.5 ? 20 : window.innerHeight - 320;
+    const leftPos = Math.random() < 0.5 ? 20 : window.innerWidth - 420;
+    popup.style.top = topPos + "px";
+    popup.style.left = leftPos + "px";
 
-      if (popupHeight > maxHeight) {
-        popupHeight = maxHeight;
-        popupWidth = popupHeight * aspect;
-      }
-      if (popupWidth > maxWidth) {
-        popupWidth = maxWidth;
-        popupHeight = popupWidth / aspect;
-      }
+    // ×ボタン
+    const closeBtn = document.createElement("div");
+    closeBtn.textContent = "×";
+    Object.assign(closeBtn.style, {
+      position: "absolute",
+      top: "5px",
+      right: "5px",
+      color: "#fff",
+      fontWeight: "bold",
+      cursor: "pointer",
+      fontSize: "24px",
+      textShadow: "0 0 5px black",
+      zIndex: 5000
+    });
+    closeBtn.addEventListener("click", () => popup.remove());
+    popup.appendChild(closeBtn);
 
-      const popup = document.createElement("div");
-      Object.assign(popup.style, {
-        position: "fixed",
-        width: `${popupWidth}px`,
-        height: `${popupHeight}px`,
-        backgroundImage: `url(${selectedImage})`,
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        zIndex: 4000,
-        overflow: "hidden",
-        opacity: 0,
-      });
+    document.body.appendChild(popup);
 
-      const positions = [
-        { top: "20px", left: "20px" },
-        { top: "20px", right: "20px" },
-        { bottom: "20px", left: "20px" },
-        { bottom: "20px", right: "20px" }
+    // 真ん中表示条件
+    const checkAllCornersFilled = () => {
+      const corners = [
+        {x: 20, y: 20}, {x: window.innerWidth-420, y: 20},
+        {x: 20, y: window.innerHeight-320}, {x: window.innerWidth-420, y: window.innerHeight-320}
       ];
-
-      let pos;
-      if (activePopups.length < 4) {
-        pos = positions[activePopups.length];
-      } else {
-        pos = { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+      let count = 0;
+      for (let c of corners) {
+        if (Math.random() < 0.25) count++;
       }
-
-      Object.assign(popup.style, pos);
-
-      const closeBtn = document.createElement("div");
-      closeBtn.textContent = "×";
-      Object.assign(closeBtn.style, {
-        position: "absolute",
-        top: "5px",
-        right: "5px",
-        color: "#fff",
-        fontWeight: "bold",
-        cursor: "pointer",
-        fontSize: "20px",
-        textShadow: "0 0 5px black",
-      });
-      closeBtn.addEventListener("click", () => {
-        popup.remove();
-        const idx = activePopups.indexOf(popup);
-        if (idx !== -1) activePopups.splice(idx, 1);
-      });
-      popup.appendChild(closeBtn);
-
-      document.body.appendChild(popup);
-      activePopups.push(popup);
-
-      requestAnimationFrame(() => {
-        popup.style.transition = "opacity 1s ease";
-        popup.style.opacity = 1;
-      });
+      if (count >= 4) {
+        const centerPopup = document.createElement("div");
+        Object.assign(centerPopup.style, {
+          position: "fixed",
+          width: "600px",
+          height: "450px",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          backgroundImage: `url(${selectedImage})`,
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          zIndex: 5000,
+        });
+        document.body.appendChild(centerPopup);
+      }
     };
+
+    checkAllCornersFilled();
   }
 
-  // 初回生成
   createPopup();
-  // 定期生成（邪魔用）
   setInterval(() => createPopup(), 5000 + Math.random() * 5000);
 };
