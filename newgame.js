@@ -1,9 +1,7 @@
 window.startNewGame = async function() {
-  // --- DOM要素 ---
   const fadeOverlay = document.getElementById("fade-overlay");
   const bgm = document.getElementById("bgm");
   const titleImg2 = document.getElementById("title-img2");
-
   if (!fadeOverlay) return;
 
   // --- メニュー非表示 ---
@@ -17,7 +15,7 @@ window.startNewGame = async function() {
     setTimeout(() => titleImg2.remove(), 500);
   }
 
-  // --- フェードオーバーレイ表示 ---
+  // --- フェードオーバーレイ ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
   fadeOverlay.style.zIndex = 5000;
@@ -146,14 +144,15 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- ポップアップGIF/MP4 ---
+  // --- ポップアップ設定（GIF2 + MP43、音付き） ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
     { type: "video", src: "videos/popup1.mp4" },
     { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" }
+    { type: "video", src: "videos/popup3.mp4" },
   ];
+
   const popupSound = new Audio("Sounds/popup.mp3");
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 
@@ -166,8 +165,14 @@ window.startNewGame = async function() {
       height: window.innerWidth < 768 ? "250px" : "300px",
       zIndex: 4000,
       overflow: "hidden",
-      pointerEvents: "auto"
+      pointerEvents: "auto",
     });
+
+    // ランダム位置
+    const maxLeft = window.innerWidth - parseInt(popup.style.width);
+    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
+    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
     let mediaEl;
     if (selected.type === "img") {
@@ -179,7 +184,10 @@ window.startNewGame = async function() {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = true;
+      mediaEl.muted = false; // 音付き
+      mediaEl.volume = 1;
+      mediaEl.playsInline = true;
+      mediaEl.controls = false;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
     }
     popup.appendChild(mediaEl);
@@ -189,8 +197,7 @@ window.startNewGame = async function() {
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
       position: "absolute",
-      top: "5px",
-      right: "8px",
+      top: "5px", right: "8px",
       color: "#fff",
       fontWeight: "bold",
       cursor: "pointer",
@@ -199,17 +206,11 @@ window.startNewGame = async function() {
       zIndex: 5001
     });
     closeBtn.addEventListener("click", () => {
-      popup.remove();
       popupCloseSound.currentTime = 0;
       popupCloseSound.play().catch(()=>{});
+      popup.remove();
     });
     popup.appendChild(closeBtn);
-
-    // ランダム位置
-    const maxLeft = window.innerWidth - parseInt(popup.style.width);
-    const maxTop = window.innerHeight - parseInt(popup.style.height);
-    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
-    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
     document.body.appendChild(popup);
 
