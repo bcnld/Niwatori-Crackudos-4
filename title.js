@@ -523,22 +523,27 @@ function startNewGame() {
         ];
 
         function createPopup() {
-            const img = document.createElement("div");
             const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
-
-            Object.assign(img.style, {
+            const popup = document.createElement("div");
+            Object.assign(popup.style, {
                 position: "fixed",
                 width: "200px",
                 height: "150px",
                 backgroundImage: `url(${selectedImage})`,
                 backgroundSize: "cover",
-                top: Math.random() < 0.5 ? "-200px" : "auto",
-                bottom: Math.random() < 0.5 ? "-200px" : "auto",
-                left: Math.random() < 0.5 ? "-220px" : "auto",
-                right: Math.random() < 0.5 ? "-220px" : "auto",
+                backgroundPosition: "center",
                 zIndex: 2000,
-                transition: "all 1s ease",
+                overflow: "hidden",
+                opacity: 0,
             });
+
+            // ランダム画面外初期位置
+            const fromTop = Math.random() < 0.5;
+            const fromLeft = Math.random() < 0.5;
+            popup.style.top = fromTop ? "-200px" : "auto";
+            popup.style.bottom = fromTop ? "auto" : "-200px";
+            popup.style.left = fromLeft ? "-220px" : "auto";
+            popup.style.right = fromLeft ? "auto" : "-220px";
 
             // ×ボタン
             const closeBtn = document.createElement("div");
@@ -553,23 +558,31 @@ function startNewGame() {
                 fontSize: "18px",
                 textShadow: "0 0 3px black",
             });
-            closeBtn.addEventListener("click", () => img.remove());
-            img.appendChild(closeBtn);
+            closeBtn.addEventListener("click", () => popup.remove());
+            popup.appendChild(closeBtn);
 
-            document.body.appendChild(img);
+            document.body.appendChild(popup);
 
+            // スライドイン
             requestAnimationFrame(() => {
-                img.style.top = img.style.top === "-200px" ? "20px" : img.style.top;
-                img.style.bottom = img.style.bottom === "-200px" ? "20px" : img.style.bottom;
-                img.style.left = img.style.left === "-220px" ? "20px" : img.style.left;
-                img.style.right = img.style.right === "-220px" ? "20px" : img.style.right;
+                popup.style.transition = "all 1s ease";
+                popup.style.opacity = 1;
+                if (fromTop) popup.style.top = "20px";
+                else popup.style.bottom = "20px";
+                if (fromLeft) popup.style.left = "20px";
+                else popup.style.right = "20px";
             });
+
+            // 自動で消す場合（10秒後）
+            setTimeout(() => {
+                popup.remove();
+            }, 10000);
         }
 
         // ランダム間隔でポップアップ生成
         setInterval(() => {
             createPopup();
-        }, 5000 + Math.random() * 5000); // 5~10秒ごと
+        }, 5000 + Math.random() * 5000);
 
     }, fadeDuration);
 }
