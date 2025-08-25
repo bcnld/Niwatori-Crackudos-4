@@ -155,6 +155,10 @@ window.startNewGame = async function() {
     "images/popup_ad5.png",
   ];
 
+  // 効果音用audio
+  const popupSound = new Audio("Sounds/popup.mp3");
+  const popupCloseSound = new Audio("Sounds/popup_x.mp3");
+
   function createPopup() {
     const selectedImage = popupImages[Math.floor(Math.random() * popupImages.length)];
     const popup = document.createElement("div");
@@ -191,10 +195,18 @@ window.startNewGame = async function() {
       textShadow: "0 0 5px black",
       zIndex: 5001
     });
-    closeBtn.addEventListener("click", () => popup.remove());
+    closeBtn.addEventListener("click", () => {
+      popupCloseSound.currentTime = 0;
+      popupCloseSound.play().catch(()=>{});
+      popup.remove();
+    });
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
+
+    // 出現音を再生
+    popupSound.currentTime = 0;
+    popupSound.play().catch(()=>{});
   }
 
   createPopup();
