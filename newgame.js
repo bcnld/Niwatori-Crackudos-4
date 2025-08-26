@@ -42,7 +42,7 @@ window.startNewGame = async function() {
     });
   }
 
-  // --- 画面クリア ---
+  // --- 画面クリア（フェードオーバーレイ以外） ---
   document.body.querySelectorAll("div, img, video").forEach(el => {
     if (!el.id || el.id === "fade-overlay") return;
     el.remove();
@@ -118,6 +118,7 @@ window.startNewGame = async function() {
     bgm.loop = true;
     bgm.volume = 0;
     bgm.play().catch(()=>{});
+
     let step = 0;
     const steps = 60;
     const interval = 50;
@@ -132,11 +133,12 @@ window.startNewGame = async function() {
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
     position: "fixed",
-    top: "50%", left: "50%",
+    top: "50%",
+    left: "50%",
     transform: "translate(-50%, -50%)",
-    display: "flex",
-    gap: "50px",
     zIndex: 1000,
+    display: "flex",
+    gap: "60px"
   });
   bgDiv.appendChild(characterUI);
 
@@ -144,63 +146,83 @@ window.startNewGame = async function() {
     { name: "主人公1", img: "images/hero1.png" },
     { name: "主人公2", img: "images/hero2.png" }
   ];
-
   let selectedIndex = null;
   let confirmed = false;
 
-  characters.forEach((char, idx) => {
+  characters.forEach((c, i) => {
     const charDiv = document.createElement("div");
-    const img = document.createElement("img");
-    img.src = char.img;
-    img.style.width = "150px";
-    img.style.transition = "transform 0.2s";
-    img.style.cursor = "pointer";
-    charDiv.appendChild(img);
-    characterUI.appendChild(charDiv);
+    Object.assign(charDiv.style, {
+      width: "200px",
+      height: "300px",
+      backgroundImage: `url(${c.img})`,
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center bottom",
+      cursor: "pointer",
+      transition: "transform 0.3s",
+    });
 
     charDiv.addEventListener("click", () => {
       if (!confirmed) {
-        selectedIndex = idx;
-        characters.forEach((c, i) => {
-          const childImg = characterUI.children[i].children[0];
-          childImg.style.transform = i === idx ? "scale(1.2)" : "scale(0.9)";
+        // 選択
+        selectedIndex = i;
+        characters.forEach((_, j) => {
+          const sibling = characterUI.children[j];
+          sibling.style.transform = j === i ? "scale(1.2)" : "scale(0.9)";
         });
-        confirmed = true;
-      } else if (selectedIndex === idx && confirmed) {
-        alert(`${char.name}を選択しました！`); // 選択確定処理
+      } else {
+        // 決定時の処理
+        console.log(`主人公${i + 1}を選択してゲーム開始`);
+        // TODO: ゲーム開始処理
       }
     });
+
+    characterUI.appendChild(charDiv);
   });
 
-  // --- フェードイン後 0.5秒でテロップ表示 ---
+  // --- テロップ表示 ---
   setTimeout(() => {
+    const overlay = document.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: 0, left: 0,
+      width: "100%", height: "100%",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      zIndex: 1200,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      cursor: "pointer"
+    });
+
     const telop = document.createElement("div");
     telop.textContent = "主人公を選んでください";
     Object.assign(telop.style, {
-      position: "fixed",
-      top: "50%", left: "50%",
-      transform: "translate(-50%, -50%)",
-      padding: "20px 40px",
-      backgroundColor: "rgba(0,0,0,0.7)",
-      color: "#fff",
-      fontSize: "28px",
+      padding: "30px 60px",
+      backgroundColor: "#fff",
+      color: "#000",
+      fontSize: "36px",
       fontWeight: "bold",
       borderRadius: "10px",
-      zIndex: 2000,
       textAlign: "center",
-      cursor: "pointer"
     });
-    document.body.appendChild(telop);
-    telop.addEventListener("click", () => telop.remove());
+
+    overlay.appendChild(telop);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", () => {
+      overlay.remove();
+      confirmed = true;
+    });
   }, 500);
 
-  // --- ポップアップ（GIF2 + MP4 3個、音付き、ランダム） ---
+  // --- ポップアップ設定（GIF2 + MP43、音付き） ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
     { type: "video", src: "videos/popup1.mp4" },
     { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" }
+    { type: "video", src: "videos/popup3.mp4" },
   ];
   const popupSound = new Audio("Sounds/popup.mp3");
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
@@ -216,8 +238,11 @@ window.startNewGame = async function() {
       overflow: "hidden",
       pointerEvents: "auto",
     });
-    popup.style.left = Math.floor(Math.random() * (window.innerWidth - parseInt(popup.style.width))) + "px";
-    popup.style.top = Math.floor(Math.random() * (window.innerHeight - parseInt(popup.style.height))) + "px";
+
+    const maxLeft = window.innerWidth - parseInt(popup.style.width);
+    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
+    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
     let mediaEl;
     if (selected.type === "img") {
@@ -240,16 +265,27 @@ window.startNewGame = async function() {
     const closeBtn = document.createElement("div");
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
-      position: "absolute", top: "5px", right: "8px",
-      color: "#fff", fontWeight: "bold", cursor: "pointer",
-      fontSize: "28px", textShadow: "0 0 5px black", zIndex: 5001
+      position: "absolute",
+      top: "5px", right: "8px",
+      color: "#fff",
+      fontWeight: "bold",
+      cursor: "pointer",
+      fontSize: "28px",
+      textShadow: "0 0 5px black",
+      zIndex: 5001
     });
-    closeBtn.addEventListener("click", () => { popupCloseSound.play().catch(()=>{}); popup.remove(); });
+    closeBtn.addEventListener("click", () => {
+      popupCloseSound.currentTime = 0;
+      popupCloseSound.play().catch(()=>{});
+      popup.remove();
+    });
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
+    popupSound.currentTime = 0;
     popupSound.play().catch(()=>{});
   }
+
   createPopup();
   setInterval(() => createPopup(), 4000 + Math.random() * 4000);
 };
