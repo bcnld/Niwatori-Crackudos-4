@@ -129,7 +129,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- キャラクター選択UI（名前表示付き＋選択アニメーション） ---
+  // --- キャラクター選択UI（名前表示＋1回目クリックで選択・2回目クリックで決定） ---
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
     position: "fixed",
@@ -156,7 +156,6 @@ window.startNewGame = async function() {
       flexDirection: "column",
       alignItems: "center",
       cursor: "pointer",
-      transition: "transform 0.3s",
       perspective: "600px",
     });
 
@@ -224,12 +223,12 @@ window.startNewGame = async function() {
       } else if (selectedIndex === i) {
         // 2回目クリック → 決定
         console.log(`${c.name} を決定してゲーム開始`);
-        // TODO: ゲーム開始処理
+        // TODO: ゲーム開始処理をここに記述
       }
     });
   });
 
-  // --- テロップ表示 ---
+  // --- テロップ表示（主人公選択確認） ---
   setTimeout(() => {
     const overlay = document.createElement("div");
     Object.assign(overlay.style, {
