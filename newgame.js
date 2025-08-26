@@ -129,7 +129,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- キャラクター選択UI ---
+  // --- キャラクター選択UI（名前表示付き） ---
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
     position: "fixed",
@@ -138,18 +138,27 @@ window.startNewGame = async function() {
     transform: "translate(-50%, -50%)",
     zIndex: 1000,
     display: "flex",
-    gap: "60px"
+    gap: "60px",
   });
   bgDiv.appendChild(characterUI);
 
   const characters = [
-    { name: "主人公1", img: "images/hero1.png" },
-    { name: "主人公2", img: "images/hero2.png" }
+    { name: "犬", img: "images/hero1.png" },
+    { name: "うんこ", img: "images/hero2.png" }
   ];
   let selectedIndex = null;
   let confirmed = false;
 
   characters.forEach((c, i) => {
+    const charWrapper = document.createElement("div");
+    Object.assign(charWrapper.style, {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      cursor: "pointer",
+      transition: "transform 0.3s",
+    });
+
     const charDiv = document.createElement("div");
     Object.assign(charDiv.style, {
       width: "200px",
@@ -158,26 +167,34 @@ window.startNewGame = async function() {
       backgroundSize: "contain",
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center bottom",
-      cursor: "pointer",
-      transition: "transform 0.3s",
     });
 
-    charDiv.addEventListener("click", () => {
+    const nameLabel = document.createElement("div");
+    nameLabel.textContent = c.name;
+    Object.assign(nameLabel.style, {
+      marginTop: "10px",
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#fff",
+      textShadow: "2px 2px 4px black",
+    });
+
+    charWrapper.appendChild(charDiv);
+    charWrapper.appendChild(nameLabel);
+
+    charWrapper.addEventListener("click", () => {
       if (!confirmed) {
-        // 選択
         selectedIndex = i;
-        characters.forEach((_, j) => {
-          const sibling = characterUI.children[j];
+        [...characterUI.children].forEach((sibling, j) => {
           sibling.style.transform = j === i ? "scale(1.2)" : "scale(0.9)";
         });
       } else {
-        // 決定時の処理
-        console.log(`主人公${i + 1}を選択してゲーム開始`);
+        console.log(`${c.name} を選択してゲーム開始`);
         // TODO: ゲーム開始処理
       }
     });
 
-    characterUI.appendChild(charDiv);
+    characterUI.appendChild(charWrapper);
   });
 
   // --- テロップ表示 ---
@@ -216,7 +233,7 @@ window.startNewGame = async function() {
     });
   }, 500);
 
-  // --- ポップアップ設定（GIF2 + MP43、音付き） ---
+  // --- ポップアップ ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
@@ -266,7 +283,8 @@ window.startNewGame = async function() {
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
       position: "absolute",
-      top: "5px", right: "8px",
+      top: "5px",
+      right: "8px",
       color: "#fff",
       fontWeight: "bold",
       cursor: "pointer",
@@ -276,14 +294,14 @@ window.startNewGame = async function() {
     });
     closeBtn.addEventListener("click", () => {
       popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(()=>{});
+      popupCloseSound.play().catch(() => {});
       popup.remove();
     });
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
     popupSound.currentTime = 0;
-    popupSound.play().catch(()=>{});
+    popupSound.play().catch(() => {});
   }
 
   createPopup();
