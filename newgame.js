@@ -129,7 +129,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- キャラクター選択UI（名前表示付き） ---
+  // --- キャラクター選択UI（名前表示付き＋選択アニメーション） ---
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
     position: "fixed",
@@ -157,6 +157,7 @@ window.startNewGame = async function() {
       alignItems: "center",
       cursor: "pointer",
       transition: "transform 0.3s",
+      perspective: "600px",
     });
 
     const charDiv = document.createElement("div");
@@ -167,6 +168,9 @@ window.startNewGame = async function() {
       backgroundSize: "contain",
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center bottom",
+      border: "4px solid transparent",
+      borderRadius: "12px",
+      transition: "transform 0.6s ease, border-color 0.3s",
     });
 
     const nameLabel = document.createElement("div");
@@ -181,20 +185,48 @@ window.startNewGame = async function() {
 
     charWrapper.appendChild(charDiv);
     charWrapper.appendChild(nameLabel);
+    characterUI.appendChild(charWrapper);
+
+    let rotateAngle = 0;
+    let rotateAnimId;
+
+    function startRotate() {
+      cancelAnimationFrame(rotateAnimId);
+      function animate() {
+        rotateAngle += 1;
+        charDiv.style.transform = `rotateZ(${rotateAngle}deg)`;
+        rotateAnimId = requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function stopRotate() {
+      cancelAnimationFrame(rotateAnimId);
+      charDiv.style.transform = `rotateZ(0deg)`;
+    }
 
     charWrapper.addEventListener("click", () => {
       if (!confirmed) {
+        // 1回目クリック → 選択
         selectedIndex = i;
         [...characterUI.children].forEach((sibling, j) => {
-          sibling.style.transform = j === i ? "scale(1.2)" : "scale(0.9)";
+          const div = sibling.firstChild;
+          if (j === i) {
+            sibling.style.transform = "scale(1.2)";
+            div.style.borderColor = "yellow";
+            startRotate();
+          } else {
+            sibling.style.transform = "scale(0.9)";
+            div.style.borderColor = "transparent";
+            stopRotate();
+          }
         });
-      } else {
-        console.log(`${c.name} を選択してゲーム開始`);
+      } else if (selectedIndex === i) {
+        // 2回目クリック → 決定
+        console.log(`${c.name} を決定してゲーム開始`);
         // TODO: ゲーム開始処理
       }
     });
-
-    characterUI.appendChild(charWrapper);
   });
 
   // --- テロップ表示 ---
