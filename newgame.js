@@ -42,7 +42,7 @@ window.startNewGame = async function() {
     });
   }
 
-  // --- 画面クリア（フェードオーバーレイ以外） ---
+  // --- 画面クリア ---
   document.body.querySelectorAll("div, img, video").forEach(el => {
     if (!el.id || el.id === "fade-overlay") return;
     el.remove();
@@ -112,13 +112,12 @@ window.startNewGame = async function() {
   fadeOverlay.style.opacity = 0;
   setTimeout(() => fadeOverlay.style.display = "none", 1000);
 
-  // --- 新規BGM再生（フェードイン） ---
+  // --- 新規BGM再生 ---
   if (bgm) {
     bgm.src = "Sounds/newgame_bgm.mp3";
     bgm.loop = true;
     bgm.volume = 0;
     bgm.play().catch(()=>{});
-
     let step = 0;
     const steps = 60;
     const interval = 50;
@@ -129,7 +128,7 @@ window.startNewGame = async function() {
     }, interval);
   }
 
-  // --- キャラクター選択UI（名前表示＋1回目クリックで選択・2回目クリックで決定） ---
+  // --- キャラクター選択UI ---
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
     position: "fixed",
@@ -147,7 +146,6 @@ window.startNewGame = async function() {
     { name: "うんこ", img: "images/hero2.png" }
   ];
   let selectedIndex = null;
-  let confirmed = false;
 
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
@@ -192,7 +190,7 @@ window.startNewGame = async function() {
     function startRotate() {
       cancelAnimationFrame(rotateAnimId);
       function animate() {
-        rotateAngle += 1;
+        rotateAngle += 2; // 回転速度
         charDiv.style.transform = `rotateZ(${rotateAngle}deg)`;
         rotateAnimId = requestAnimationFrame(animate);
       }
@@ -204,137 +202,26 @@ window.startNewGame = async function() {
       charDiv.style.transform = `rotateZ(0deg)`;
     }
 
+    charWrapper.addEventListener("mouseenter", () => {
+      // マウスが乗ったら黄色枠＋回転
+      charDiv.style.borderColor = "yellow";
+      startRotate();
+      selectedIndex = i;
+      [...characterUI.children].forEach((sibling, j) => {
+        if (j !== i) {
+          sibling.firstChild.style.borderColor = "transparent";
+        }
+      });
+    });
+
+    charWrapper.addEventListener("mouseleave", () => {
+      // 離れても回転は止めず、枠色は透明に
+      charDiv.style.borderColor = "transparent";
+    });
+
     charWrapper.addEventListener("click", () => {
-      if (!confirmed) {
-        // 1回目クリック → 選択
-        selectedIndex = i;
-        [...characterUI.children].forEach((sibling, j) => {
-          const div = sibling.firstChild;
-          if (j === i) {
-            sibling.style.transform = "scale(1.2)";
-            div.style.borderColor = "yellow";
-            startRotate();
-          } else {
-            sibling.style.transform = "scale(0.9)";
-            div.style.borderColor = "transparent";
-            stopRotate();
-          }
-        });
-      } else if (selectedIndex === i) {
-        // 2回目クリック → 決定
-        console.log(`${c.name} を決定してゲーム開始`);
-        // TODO: ゲーム開始処理をここに記述
-      }
+      // クリック処理は後で
+      console.log(`${c.name} がクリックされました（処理未実装）`);
     });
   });
-
-  // --- テロップ表示（主人公選択確認） ---
-  setTimeout(() => {
-    const overlay = document.createElement("div");
-    Object.assign(overlay.style, {
-      position: "fixed",
-      top: 0, left: 0,
-      width: "100%", height: "100%",
-      backgroundColor: "rgba(0,0,0,0.5)",
-      zIndex: 1200,
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      cursor: "pointer"
-    });
-
-    const telop = document.createElement("div");
-    telop.textContent = "主人公を選んでください";
-    Object.assign(telop.style, {
-      padding: "30px 60px",
-      backgroundColor: "#fff",
-      color: "#000",
-      fontSize: "36px",
-      fontWeight: "bold",
-      borderRadius: "10px",
-      textAlign: "center",
-    });
-
-    overlay.appendChild(telop);
-    document.body.appendChild(overlay);
-
-    overlay.addEventListener("click", () => {
-      overlay.remove();
-      confirmed = true;
-    });
-  }, 500);
-
-  // --- ポップアップ ---
-  const popupMedia = [
-    { type: "img", src: "images/popup1.gif" },
-    { type: "img", src: "images/popup2.gif" },
-    { type: "video", src: "videos/popup1.mp4" },
-    { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" },
-  ];
-  const popupSound = new Audio("Sounds/popup.mp3");
-  const popupCloseSound = new Audio("Sounds/popup_x.mp3");
-
-  function createPopup() {
-    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
-    const popup = document.createElement("div");
-    Object.assign(popup.style, {
-      position: "fixed",
-      width: window.innerWidth < 768 ? "300px" : "400px",
-      height: window.innerWidth < 768 ? "250px" : "300px",
-      zIndex: 4000,
-      overflow: "hidden",
-      pointerEvents: "auto",
-    });
-
-    const maxLeft = window.innerWidth - parseInt(popup.style.width);
-    const maxTop = window.innerHeight - parseInt(popup.style.height);
-    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
-    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
-
-    let mediaEl;
-    if (selected.type === "img") {
-      mediaEl = document.createElement("img");
-      mediaEl.src = selected.src;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    } else {
-      mediaEl = document.createElement("video");
-      mediaEl.src = selected.src;
-      mediaEl.autoplay = true;
-      mediaEl.loop = true;
-      mediaEl.muted = false;
-      mediaEl.volume = 1;
-      mediaEl.playsInline = true;
-      mediaEl.controls = false;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    }
-    popup.appendChild(mediaEl);
-
-    const closeBtn = document.createElement("div");
-    closeBtn.textContent = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px",
-      right: "8px",
-      color: "#fff",
-      fontWeight: "bold",
-      cursor: "pointer",
-      fontSize: "28px",
-      textShadow: "0 0 5px black",
-      zIndex: 5001
-    });
-    closeBtn.addEventListener("click", () => {
-      popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(() => {});
-      popup.remove();
-    });
-    popup.appendChild(closeBtn);
-
-    document.body.appendChild(popup);
-    popupSound.currentTime = 0;
-    popupSound.play().catch(() => {});
-  }
-
-  createPopup();
-  setInterval(() => createPopup(), 4000 + Math.random() * 4000);
 };
