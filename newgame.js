@@ -136,7 +136,7 @@ window.startNewGame = async function () {
     textAlign: "center",
     zIndex: 1200,
   });
-  telop.textContent = "主人公を選択してください";
+  telop.textContent = "鶏の餌食を選択してください";
   document.body.appendChild(telop);
 
   // --- キャラクターUI ---
@@ -221,7 +221,7 @@ window.startNewGame = async function () {
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
-      nameBox.placeholder = "名前を入力してください";
+      nameBox.placeholder = "鶏の餌食の名前を決めてください";
       Object.assign(nameBox.style, {
         position: "fixed",
         top: "55%",
@@ -269,7 +269,7 @@ window.startNewGame = async function () {
       bgDiv.appendChild(cancelBtn);
     }
 
-    telop.textContent = "主人公の名前を決めてください";
+    telop.textContent = "鶏の餌食の名前を入力してください";
 
     flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex); // 名前入力時に未選択キャラを飛ばす
 
@@ -295,7 +295,7 @@ window.startNewGame = async function () {
       selectedIndex = null;
       [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
       nameBox = confirmBtn = cancelBtn = null;
-      telop.textContent = "主人公を選択してください";
+      telop.textContent = "鶏の餌食を選択してください";
     };
   }
 
@@ -381,7 +381,7 @@ window.startNewGame = async function () {
       selectedIndex = i;
       auras[i].style.opacity = 1;
       startRotation(imgs[i]);
-      telop.textContent = "主人公を選択中。もう一度クリックで決定。";
+      telop.textContent = "もう一度クリックで決定。";
     });
   });
 
