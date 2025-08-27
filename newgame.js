@@ -271,6 +271,8 @@ window.startNewGame = async function () {
 
     telop.textContent = "主人公の名前を決めてください";
 
+    flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex); // 名前入力時に未選択キャラを飛ばす
+
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
@@ -283,13 +285,12 @@ window.startNewGame = async function () {
     };
 
     cancelBtn.onclick = () => {
-      // --- キャンセル処理 ---
       if (selectedIndex !== null) {
         const sel = selectedIndex;
         const other = sel === 0 ? 1 : 0;
         stopRotation();
         auras[sel].style.opacity = 0;
-        flyIn(other);
+        flyIn(other); // キャンセルで未選択キャラ戻す
       }
       selectedIndex = null;
       [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
@@ -363,20 +364,23 @@ window.startNewGame = async function () {
 
     // --- クリック ---
     charWrapper.addEventListener("click", () => {
+      const other = i === 0 ? 1 : 0;
+
       if (selectedIndex === i) {
+        // 2回目クリック → 名前入力表示
         showNameInput(c);
         return;
       }
-      const other = i === 0 ? 1 : 0;
+
       if (selectedIndex !== null && selectedIndex !== i) {
         auras[selectedIndex].style.opacity = 0;
         stopRotation();
         imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
+
       selectedIndex = i;
       auras[i].style.opacity = 1;
       startRotation(imgs[i]);
-      flyOut(other, i);
       telop.textContent = "主人公を選択中。もう一度クリックで決定。";
     });
   });
