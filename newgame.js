@@ -158,37 +158,65 @@ window.startNewGame = async function () {
     { name: "うんこ", img: "images/hero2.png" },
   ];
 
+  // --- 状態 ---
+  const wrappers = [];
+  const imgs = [];
+  const auras = [];
   let selectedIndex = null;
-  let rotationTimer = null;
+  let rotatingImg = null;
+  let rotateAngle = 0;
+  let rotationRAF = null;
   let nameBox = null;
   let confirmBtn = null;
 
-  function resetOtherChar(i) {
-    [...characterUI.children].forEach((sibling, j) => {
-      const siblingAura = sibling.querySelector(".aura");
-      const siblingImg = sibling.querySelector("img");
-      if (j !== i) {
-        sibling.style.transform = `scale(1)`;
-        siblingAura.style.opacity = 0;
-        siblingImg.style.transform = "rotateY(0deg)";
-      }
-    });
-  }
-
+  // --- 回転（カクつき防止: CSSトランジションを使わず rAF） ---
   function startRotation(img) {
     stopRotation();
-    let angle = 0;
-    rotationTimer = setInterval(() => {
-      angle = (angle + 2) % 360;
-      img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
-    }, 16);
+    rotatingImg = img;
+    rotateAngle = 0;
+    rotatingImg.style.willChange = "transform";
+    rotatingImg.style.backfaceVisibility = "visible";
+    rotatingImg.style.transformStyle = "preserve-3d";
+    // 回転中はトランジションを切る（カクつき防止）
+    rotatingImg.style.transition = "none";
+    const step = () => {
+      // 2deg/フレーム, 360でループ（引っかかり無し）
+      rotateAngle += 2;
+      if (rotateAngle >= 360) rotateAngle -= 360;
+      rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+      rotationRAF = requestAnimationFrame(step);
+    };
+    rotationRAF = requestAnimationFrame(step);
+  }
+  function stopRotation() {
+    if (rotationRAF) cancelAnimationFrame(rotationRAF);
+    rotationRAF = null;
+    if (rotatingImg) {
+      // 元向きへスムーズに戻す
+      rotatingImg.style.transition = "transform 0.3s ease";
+      rotatingImg.style.transform = "rotateY(0deg) scale(1)";
+      rotatingImg = null;
+    }
   }
 
-  function stopRotation() {
-    if (rotationTimer) {
-      clearInterval(rotationTimer);
-      rotationTimer = null;
-    }
+  // --- 飛ばす／戻す（選択時に“未選択の方”を飛ばす。キャンセルで戻す） ---
+  function flyOut(otherIndex, selectedIdx) {
+    const w = wrappers[otherIndex];
+    if (!w) return;
+    const dir = selectedIdx === 0 ? 1 : -1; // 0を選択→もう片方は右へ／1を選択→左へ
+    const dist = window.innerWidth + 400; // 画面外まで確実に
+    w.style.transition = "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
+    w.style.transform = `translateX(${dir * dist}px)`;
+    w.style.opacity = "0";
+    w.dataset.offscreen = "1";
+  }
+  function flyIn(index) {
+    const w = wrappers[index];
+    if (!w) return;
+    w.style.transition = "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
+    w.style.transform = "translateX(0)";
+    w.style.opacity = "1";
+    w.dataset.offscreen = "0";
   }
 
   function showNameInput(c) {
@@ -225,23 +253,27 @@ window.startNewGame = async function () {
       bgDiv.appendChild(confirmBtn);
     }
     telop.textContent = "主人公の名前を決めてください";
+
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
         console.log(`確定: ${c.name}, 名前: ${heroName}`);
-        if (nameBox) {
-          nameBox.remove();
-          nameBox = null;
-        }
-        if (confirmBtn) {
-          confirmBtn.remove();
-          confirmBtn = null;
-        }
+        if (nameBox) { nameBox.remove(); nameBox = null; }
+        if (confirmBtn) { confirmBtn.remove(); confirmBtn = null; }
         if (telop) telop.remove();
         if (characterUI) characterUI.remove();
       } else {
+        // --- キャンセル：すべて元に戻す ---
+        if (selectedIndex !== null) {
+          const sel = selectedIndex;
+          const other = sel === 0 ? 1 : 0;
+          // 選択中の回転停止＆オーラOFF
+          stopRotation();
+          auras[sel].style.opacity = 0;
+          // 画面外に飛んでいた方を戻す
+          flyIn(other);
+        }
         selectedIndex = null;
-        resetOtherChar(-1);
         telop.textContent = "主人公を選択してください";
       }
     };
@@ -257,7 +289,7 @@ window.startNewGame = async function () {
       cursor: "pointer",
       perspective: "600px",
       position: "relative",
-      transition: "transform 0.6s ease",
+      transition: "transform 0.6s ease, opacity 0.6s ease",
     });
 
     const aura = document.createElement("div");
@@ -270,8 +302,7 @@ window.startNewGame = async function () {
       height: "320px",
       transform: "translate(-50%, -50%) scale(1)",
       borderRadius: "50%",
-      background:
-        "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
+      background: "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
       filter: "blur(20px)",
       opacity: 0,
       transition: "opacity 0.3s ease, transform 0.3s ease",
@@ -287,8 +318,12 @@ window.startNewGame = async function () {
       objectFit: "contain",
       border: "4px solid transparent",
       borderRadius: "12px",
-      transition: "transform 0.6s ease, border-color 0.3s",
+      // 回転はJSで行うため transform のトランジションは付けない
+      transition: "opacity 0.3s ease, border-color 0.3s ease",
       zIndex: 1,
+      backfaceVisibility: "visible",
+      transformStyle: "preserve-3d",
+      willChange: "transform",
     });
     charWrapper.appendChild(charImg);
 
@@ -304,22 +339,38 @@ window.startNewGame = async function () {
     charWrapper.appendChild(nameLabel);
 
     characterUI.appendChild(charWrapper);
+    wrappers[i] = charWrapper;
+    imgs[i] = charImg;
+    auras[i] = aura;
 
+    // クリック：選択 or 名前入力
     charWrapper.addEventListener("click", () => {
+      // すでに選択中の同一キャラ → 名前入力
       if (selectedIndex === i) {
         showNameInput(c);
-      } else {
-        if (selectedIndex !== null) {
-          const prevChar = characterUI.children[selectedIndex];
-          prevChar.querySelector(".aura").style.opacity = 0;
-          stopRotation(prevChar.querySelector("img"));
-        }
-        selectedIndex = i;
-        aura.style.opacity = 1;
-        startRotation(charImg);
-        resetOtherChar(i);
-        telop.textContent = "主人公を選択してください";
+        return;
       }
+
+      // 新規選択：選ばれていない方を“この瞬間”に飛ばす
+      const other = i === 0 ? 1 : 0;
+
+      // 以前の選択があれば止める＆オーラ消す（向きは元に）
+      if (selectedIndex !== null && selectedIndex !== i) {
+        auras[selectedIndex].style.opacity = 0;
+        stopRotation();
+        imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
+      }
+
+      // 自分を選択（回転ON、オーラON）
+      selectedIndex = i;
+      auras[i].style.opacity = 1;
+      startRotation(imgs[i]);
+
+      // 相手を画面外へ（右 or 左）
+      flyOut(other, i);
+
+      // テロップ
+      telop.textContent = "主人公を選択中。もう一度クリックで決定。";
     });
   });
 
