@@ -128,11 +128,11 @@ window.startNewGame = async function () {
     top: "10%",
     left: "50%",
     transform: "translateX(-50%)",
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     padding: "20px 40px",
     borderRadius: "10px",
-    color: "#fff",
-    fontSize: "28px",
+    color: "#000",
+    fontSize: "32px",
     fontWeight: "bold",
     textAlign: "center",
     zIndex: 1200,
@@ -158,31 +158,22 @@ window.startNewGame = async function () {
     { name: "うんこ", img: "images/hero2.png" },
   ];
 
-  // --- 状態 ---
   const wrappers = [];
   const imgs = [];
   const auras = [];
   let selectedIndex = null;
-  let rotatingImg = null;
-  let rotateAngle = 0;
   let rotationRAF = null;
   let nameBox = null;
   let confirmBtn = null;
   let cancelBtn = null;
 
-  // --- 回転 ---
+  // --- 回転制御 ---
   function startRotation(img) {
     stopRotation();
-    rotatingImg = img;
-    rotateAngle = 0;
-    rotatingImg.style.willChange = "transform";
-    rotatingImg.style.backfaceVisibility = "visible";
-    rotatingImg.style.transformStyle = "preserve-3d";
-    rotatingImg.style.transition = "none";
+    let angle = 0;
     const step = () => {
-      rotateAngle += 2;
-      if (rotateAngle >= 360) rotateAngle -= 360;
-      rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+      angle = (angle + 3) % 360;
+      img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
       rotationRAF = requestAnimationFrame(step);
     };
     rotationRAF = requestAnimationFrame(step);
@@ -190,11 +181,9 @@ window.startNewGame = async function () {
   function stopRotation() {
     if (rotationRAF) cancelAnimationFrame(rotationRAF);
     rotationRAF = null;
-    if (rotatingImg) {
-      rotatingImg.style.transition = "transform 0.3s ease";
-      rotatingImg.style.transform = "rotateY(0deg) scale(1)";
-      rotatingImg = null;
-    }
+    imgs.forEach((img) => {
+      img.style.transform = "rotateY(0deg) scale(1)";
+    });
   }
 
   // --- 飛ばす／戻す ---
@@ -219,6 +208,7 @@ window.startNewGame = async function () {
     w.dataset.offscreen = "0";
   }
 
+  // --- 名前入力UI ---
   function showNameInput(c) {
     if (!nameBox) {
       nameBox = document.createElement("input");
@@ -282,7 +272,6 @@ window.startNewGame = async function () {
     };
 
     cancelBtn.onclick = () => {
-      // --- キャンセル処理 ---
       if (selectedIndex !== null) {
         const sel = selectedIndex;
         const other = sel === 0 ? 1 : 0;
@@ -291,9 +280,7 @@ window.startNewGame = async function () {
         flyIn(other);
       }
       selectedIndex = null;
-      [nameBox, confirmBtn, cancelBtn].forEach((el) => {
-        if (el) el.remove();
-      });
+      [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
       nameBox = confirmBtn = cancelBtn = null;
       telop.textContent = "主人公を選択してください";
     };
@@ -323,7 +310,7 @@ window.startNewGame = async function () {
       transform: "translate(-50%, -50%) scale(1)",
       borderRadius: "50%",
       background:
-        "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
+        "radial-gradient(circle, rgba(255,255,0,0.6), rgba(255,255,0,0))",
       filter: "blur(20px)",
       opacity: 0,
       transition: "opacity 0.3s ease, transform 0.3s ease",
@@ -373,7 +360,6 @@ window.startNewGame = async function () {
       if (selectedIndex !== null && selectedIndex !== i) {
         auras[selectedIndex].style.opacity = 0;
         stopRotation();
-        imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
       selectedIndex = i;
       auras[i].style.opacity = 1;
@@ -395,7 +381,8 @@ window.startNewGame = async function () {
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 
   function createPopup() {
-    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
+    const selected =
+      popupMedia[Math.floor(Math.random() * popupMedia.length)];
     const popup = document.createElement("div");
     Object.assign(popup.style, {
       position: "fixed",
