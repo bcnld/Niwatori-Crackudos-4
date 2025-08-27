@@ -167,6 +167,71 @@ window.startNewGame = async function() {
   ];
   let selectedIndex = null;
 
+  // 確認ダイアログ生成関数
+  function createConfirmDialog(message, onYes, onNo) {
+    const overlay = document.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: 0, left: 0,
+      width: "100%", height: "100%",
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 9999
+    });
+
+    const dialog = document.createElement("div");
+    Object.assign(dialog.style, {
+      background: "#fff",
+      padding: "20px",
+      borderRadius: "12px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+      textAlign: "center",
+      minWidth: "250px"
+    });
+
+    const msg = document.createElement("p");
+    msg.textContent = message;
+    msg.style.marginBottom = "20px";
+
+    const btnBox = document.createElement("div");
+    btnBox.style.display = "flex";
+    btnBox.style.justifyContent = "space-around";
+
+    const yesBtn = document.createElement("button");
+    yesBtn.textContent = "はい";
+    Object.assign(yesBtn.style, {
+      padding: "8px 16px", borderRadius: "8px", border: "none",
+      background: "#4caf50", color: "#fff", cursor: "pointer"
+    });
+
+    const noBtn = document.createElement("button");
+    noBtn.textContent = "いいえ";
+    Object.assign(noBtn.style, {
+      padding: "8px 16px", borderRadius: "8px", border: "none",
+      background: "#f44336", color: "#fff", cursor: "pointer"
+    });
+
+    yesBtn.addEventListener("click", () => {
+      document.body.removeChild(overlay);
+      if (onYes) onYes();
+    });
+
+    noBtn.addEventListener("click", () => {
+      document.body.removeChild(overlay);
+      if (onNo) onNo();
+    });
+
+    btnBox.appendChild(yesBtn);
+    btnBox.appendChild(noBtn);
+    dialog.appendChild(msg);
+    dialog.appendChild(btnBox);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+  }
+
+  // キャラごとのUI生成
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -201,101 +266,64 @@ window.startNewGame = async function() {
     charWrapper.appendChild(nameLabel);
     characterUI.appendChild(charWrapper);
 
-    // --- 透明部分判定用キャンバス ---
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    charImg.onload = () => {
-      canvas.width = charImg.naturalWidth;
-      canvas.height = charImg.naturalHeight;
-      ctx.drawImage(charImg, 0, 0);
-    };
-
-    let rotateAngle = 0;
-    let rotateAnimId;
-    function startRotate() {
-      cancelAnimationFrame(rotateAnimId);
-      function animate() {
-        rotateAngle += 2;
-        charImg.style.transform = `rotateZ(${rotateAngle}deg)`;
-        rotateAnimId = requestAnimationFrame(animate);
-      }
-      animate();
-    }
-    function stopRotate() {
-      cancelAnimationFrame(rotateAnimId);
-      charImg.style.transform = `rotateZ(0deg)`;
-    }
-
-    charImg.addEventListener("mousemove", (e) => {
-      const rect = charImg.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      const pixel = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
-      if (pixel[3] > 0) {
-        charImg.style.borderColor = "yellow";
-        startRotate();
-        selectedIndex = i;
-      } else {
-        charImg.style.borderColor = "transparent";
-      }
-    });
-
-    charImg.addEventListener("mouseleave", () => {
-      charImg.style.borderColor = "transparent";
-      stopRotate();
-    });
-
     charImg.addEventListener("click", () => {
-      if (selectedIndex === i) {
-        characterUI.children.forEach((sibling, j) => {
-          if (j !== i) {
-            sibling.style.transition = "all 0.5s ease";
-            sibling.style.transform = `translateX(${j < i ? "-200%" : "200%"})`;
-            sibling.style.opacity = "0";
+      selectedIndex = i;
+      characterUI.children.forEach((sibling, j) => {
+        if (j !== i) {
+          sibling.style.transition = "all 0.5s ease";
+          sibling.style.transform = `translateX(${j < i ? "-200%" : "200%"})`;
+          sibling.style.opacity = "0";
+        }
+      });
+
+      const nameBox = document.createElement("input");
+      nameBox.type = "text";
+      nameBox.placeholder = "名前を入力してください";
+      Object.assign(nameBox.style, {
+        position: "fixed",
+        top: "50%",
+        left: i === 0 ? "60%" : "40%",
+        transform: "translateY(-50%)",
+        zIndex: 1100,
+        padding: "10px 15px",
+        fontSize: "20px",
+        borderRadius: "8px",
+      });
+      bgDiv.appendChild(nameBox);
+
+      const confirmBtn = document.createElement("button");
+      confirmBtn.textContent = "決定";
+      Object.assign(confirmBtn.style, {
+        position: "fixed",
+        top: "60%",
+        left: i === 0 ? "60%" : "40%",
+        transform: "translateY(-50%)",
+        zIndex: 1100,
+        padding: "10px 20px",
+        fontSize: "20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+      });
+      bgDiv.appendChild(confirmBtn);
+
+      telop.textContent = "主人公の名前を決めてください";
+
+      confirmBtn.addEventListener("click", () => {
+        const heroName = nameBox.value.trim() || c.name;
+        createConfirmDialog(
+          `主人公「${heroName}」でよろしいですか？`,
+          () => {
+            console.log(`確定: ${c.name}, 名前: ${heroName}`);
+            nameBox.remove();
+            confirmBtn.remove();
+            telop.remove();
+            // TODO: 本編開始処理
+          },
+          () => {
+            console.log("キャンセルされました");
           }
-        });
-
-        const nameBox = document.createElement("input");
-        nameBox.type = "text";
-        nameBox.placeholder = "名前を入力してください";
-        Object.assign(nameBox.style, {
-          position: "fixed",
-          top: "50%",
-          left: i === 0 ? "60%" : "40%",
-          transform: "translateY(-50%)",
-          zIndex: 1100,
-          padding: "10px 15px",
-          fontSize: "20px",
-          borderRadius: "8px",
-        });
-        bgDiv.appendChild(nameBox);
-
-        const confirmBtn = document.createElement("button");
-        confirmBtn.textContent = "決定";
-        Object.assign(confirmBtn.style, {
-          position: "fixed",
-          top: "60%",
-          left: i === 0 ? "60%" : "40%",
-          transform: "translateY(-50%)",
-          zIndex: 1100,
-          padding: "10px 20px",
-          fontSize: "20px",
-          borderRadius: "8px",
-          cursor: "pointer",
-        });
-        bgDiv.appendChild(confirmBtn);
-
-        telop.textContent = "主人公の名前を決めてください";
-
-        confirmBtn.addEventListener("click", () => {
-          const heroName = nameBox.value.trim() || c.name;
-          console.log(`主人公: ${c.name}, 名前: ${heroName}`);
-          // TODO: ゲーム本編開始処理
-          nameBox.remove();
-          confirmBtn.remove();
-          telop.remove();
-        });
-      }
+        );
+      });
     });
   });
 
