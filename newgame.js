@@ -84,8 +84,7 @@ window.startNewGame = async function () {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-      let rot =
-        parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
+      let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
@@ -128,11 +127,11 @@ window.startNewGame = async function () {
     top: "10%",
     left: "50%",
     transform: "translateX(-50%)",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     padding: "20px 40px",
     borderRadius: "10px",
-    color: "#000",
-    fontSize: "32px",
+    color: "#fff",
+    fontSize: "28px",
     fontWeight: "bold",
     textAlign: "center",
     zIndex: 1200,
@@ -158,32 +157,43 @@ window.startNewGame = async function () {
     { name: "うんこ", img: "images/hero2.png" },
   ];
 
+  // --- 状態管理 ---
   const wrappers = [];
   const imgs = [];
   const auras = [];
   let selectedIndex = null;
+  let rotatingImg = null;
   let rotationRAF = null;
   let nameBox = null;
   let confirmBtn = null;
   let cancelBtn = null;
 
-  // --- 回転制御 ---
+  // --- 回転 ---
   function startRotation(img) {
     stopRotation();
-    let angle = 0;
+    rotatingImg = img;
+    let rotateAngle = 0;
+    rotatingImg.style.willChange = "transform";
+    rotatingImg.style.backfaceVisibility = "visible";
+    rotatingImg.style.transformStyle = "preserve-3d";
+    rotatingImg.style.transition = "none";
     const step = () => {
-      angle = (angle + 3) % 360;
-      img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
+      rotateAngle += 2;
+      if (rotateAngle >= 360) rotateAngle -= 360;
+      rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
       rotationRAF = requestAnimationFrame(step);
     };
     rotationRAF = requestAnimationFrame(step);
   }
+
   function stopRotation() {
     if (rotationRAF) cancelAnimationFrame(rotationRAF);
     rotationRAF = null;
-    imgs.forEach((img) => {
-      img.style.transform = "rotateY(0deg) scale(1)";
-    });
+    if (rotatingImg) {
+      rotatingImg.style.transition = "transform 0.3s ease";
+      rotatingImg.style.transform = "rotateY(0deg) scale(1)";
+      rotatingImg = null;
+    }
   }
 
   // --- 飛ばす／戻す ---
@@ -192,23 +202,21 @@ window.startNewGame = async function () {
     if (!w) return;
     const dir = selectedIdx === 0 ? 1 : -1;
     const dist = window.innerWidth + 400;
-    w.style.transition =
-      "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
+    w.style.transition = "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
     w.style.transform = `translateX(${dir * dist}px)`;
     w.style.opacity = "0";
     w.dataset.offscreen = "1";
   }
+
   function flyIn(index) {
     const w = wrappers[index];
     if (!w) return;
-    w.style.transition =
-      "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
+    w.style.transition = "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
     w.style.transform = "translateX(0)";
     w.style.opacity = "1";
     w.dataset.offscreen = "0";
   }
 
-  // --- 名前入力UI ---
   function showNameInput(c) {
     if (!nameBox) {
       nameBox = document.createElement("input");
@@ -226,6 +234,7 @@ window.startNewGame = async function () {
       });
       bgDiv.appendChild(nameBox);
     }
+
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
@@ -242,6 +251,7 @@ window.startNewGame = async function () {
       });
       bgDiv.appendChild(confirmBtn);
     }
+
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
@@ -268,10 +278,12 @@ window.startNewGame = async function () {
         [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
         if (telop) telop.remove();
         if (characterUI) characterUI.remove();
+        selectedIndex = null;
       }
     };
 
     cancelBtn.onclick = () => {
+      // --- キャンセル処理 ---
       if (selectedIndex !== null) {
         const sel = selectedIndex;
         const other = sel === 0 ? 1 : 0;
@@ -309,8 +321,7 @@ window.startNewGame = async function () {
       height: "320px",
       transform: "translate(-50%, -50%) scale(1)",
       borderRadius: "50%",
-      background:
-        "radial-gradient(circle, rgba(255,255,0,0.6), rgba(255,255,0,0))",
+      background: "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
       filter: "blur(20px)",
       opacity: 0,
       transition: "opacity 0.3s ease, transform 0.3s ease",
@@ -360,6 +371,7 @@ window.startNewGame = async function () {
       if (selectedIndex !== null && selectedIndex !== i) {
         auras[selectedIndex].style.opacity = 0;
         stopRotation();
+        imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
       selectedIndex = i;
       auras[i].style.opacity = 1;
@@ -381,8 +393,7 @@ window.startNewGame = async function () {
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 
   function createPopup() {
-    const selected =
-      popupMedia[Math.floor(Math.random() * popupMedia.length)];
+    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
     const popup = document.createElement("div");
     Object.assign(popup.style, {
       position: "fixed",
@@ -399,11 +410,7 @@ window.startNewGame = async function () {
     if (selected.type === "img") {
       mediaEl = document.createElement("img");
       mediaEl.src = selected.src;
-      Object.assign(mediaEl.style, {
-        width: "100%",
-        height: "100%",
-        objectFit: "contain",
-      });
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
     } else {
       mediaEl = document.createElement("video");
       mediaEl.src = selected.src;
@@ -411,11 +418,7 @@ window.startNewGame = async function () {
       mediaEl.loop = true;
       mediaEl.muted = false;
       mediaEl.volume = 1.0;
-      Object.assign(mediaEl.style, {
-        width: "100%",
-        height: "100%",
-        objectFit: "contain",
-      });
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
       mediaEl.play().catch(() => {});
     }
     popup.appendChild(mediaEl);
