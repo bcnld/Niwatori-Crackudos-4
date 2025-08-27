@@ -166,7 +166,7 @@ window.startNewGame = async function() {
   ];
   let selectedIndex = null;
 
-  // --- キャラクターUI生成・オーラ＋Z回転 ---
+  // --- キャラクターUI生成・オーラ＋Z回転＋選択アニメーション ---
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -227,9 +227,11 @@ window.startNewGame = async function() {
 
     // --- ホバー時 ---
     charWrapper.addEventListener("mouseenter", () => {
-      aura.style.opacity = 1;
-      aura.style.transform = "translate(-50%, -50%) scale(1.2)";
-      charImg.style.transform = "rotateY(15deg)";
+      if (selectedIndex !== i) {
+        aura.style.opacity = 1;
+        aura.style.transform = "translate(-50%, -50%) scale(1.2)";
+        charImg.style.transform = "rotateY(15deg)";
+      }
     });
     charWrapper.addEventListener("mouseleave", () => {
       if (selectedIndex !== i) {
@@ -248,6 +250,7 @@ window.startNewGame = async function() {
       charImg.style.transform = "rotateY(0deg) scale(1.2)";
       charWrapper.style.zIndex = 2000;
 
+      // 選択されなかったキャラを左右に移動
       characterUI.children.forEach((sibling, j) => {
         if (j !== i) {
           sibling.style.transform = `translateX(${j < i ? "-200%" : "200%"}) scale(0.8)`;
@@ -294,17 +297,21 @@ window.startNewGame = async function() {
 
       telop.textContent = "主人公の名前を決めてください";
 
+      // 確定ボタン
       confirmBtn.addEventListener("click", () => {
         const heroName = nameBox.value.trim() || c.name;
         createConfirmDialog(
           `主人公「${heroName}」でよろしいですか？`,
           () => {
             console.log(`確定: ${c.name}, 名前: ${heroName}`);
+            // UI削除
             nameBox.remove();
             confirmBtn.remove();
             telop.remove();
+            characterUI.remove();
           },
           () => {
+            // キャンセル時リセット
             selectedIndex = null;
             characterUI.children.forEach((sibling) => {
               sibling.style.transform = "scale(1)";
