@@ -128,6 +128,25 @@ window.startNewGame = async function() {
     }, interval);
   }
 
+  // --- テロップ表示 ---
+  const telop = document.createElement("div");
+  Object.assign(telop.style, {
+    position: "fixed",
+    top: "10%",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: "20px 40px",
+    borderRadius: "10px",
+    color: "#fff",
+    fontSize: "28px",
+    fontWeight: "bold",
+    textAlign: "center",
+    zIndex: 1200,
+  });
+  telop.textContent = "主人公を選択してください";
+  document.body.appendChild(telop);
+
   // --- キャラクター選択UI ---
   const characterUI = document.createElement("div");
   Object.assign(characterUI.style, {
@@ -147,22 +166,6 @@ window.startNewGame = async function() {
   ];
   let selectedIndex = null;
 
-  // --- テロップ（主人公選択） ---
-  const selectTelop = document.createElement("div");
-  selectTelop.textContent = "主人公を選択してください";
-  Object.assign(selectTelop.style, {
-    position: "fixed",
-    top: "10%",
-    left: "50%",
-    transform: "translateX(-50%)",
-    fontSize: "36px",
-    fontWeight: "bold",
-    color: "#fff",
-    textShadow: "2px 2px 6px black",
-    zIndex: 1200,
-  });
-  document.body.appendChild(selectTelop);
-
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -171,21 +174,19 @@ window.startNewGame = async function() {
       alignItems: "center",
       cursor: "pointer",
       perspective: "600px",
-      transition: "transform 0.6s ease",
     });
 
-    const charDiv = document.createElement("div");
-    Object.assign(charDiv.style, {
+    const charImg = document.createElement("img");
+    charImg.src = c.img;
+    Object.assign(charImg.style, {
       width: "200px",
       height: "300px",
-      backgroundImage: `url(${c.img})`,
-      backgroundSize: "contain",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center bottom",
+      objectFit: "contain",
       border: "4px solid transparent",
       borderRadius: "12px",
       transition: "transform 0.6s ease, border-color 0.3s",
     });
+    charWrapper.appendChild(charImg);
 
     const nameLabel = document.createElement("div");
     nameLabel.textContent = c.name;
@@ -196,105 +197,107 @@ window.startNewGame = async function() {
       color: "#fff",
       textShadow: "2px 2px 4px black",
     });
-
-    charWrapper.appendChild(charDiv);
     charWrapper.appendChild(nameLabel);
     characterUI.appendChild(charWrapper);
 
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    charImg.onload = () => {
+      canvas.width = charImg.naturalWidth;
+      canvas.height = charImg.naturalHeight;
+      ctx.drawImage(charImg, 0, 0);
+    };
+
     let rotateAngle = 0;
     let rotateAnimId;
-
     function startRotate() {
       cancelAnimationFrame(rotateAnimId);
       function animate() {
         rotateAngle += 2;
-        charDiv.style.transform = `rotateZ(${rotateAngle}deg)`;
+        charImg.style.transform = `rotateZ(${rotateAngle}deg)`;
         rotateAnimId = requestAnimationFrame(animate);
       }
       animate();
     }
-
     function stopRotate() {
       cancelAnimationFrame(rotateAnimId);
-      charDiv.style.transform = `rotateZ(0deg)`;
+      charImg.style.transform = `rotateZ(0deg)`;
     }
 
-    // --- マウスイベント ---
-    charWrapper.addEventListener("mouseenter", () => {
-      charDiv.style.borderColor = "yellow";
-      startRotate();
-      selectedIndex = i;
-      [...characterUI.children].forEach((sibling, j) => {
-        if (j !== i) sibling.firstChild.style.borderColor = "transparent";
-      });
+    charImg.addEventListener("mousemove", (e) => {
+      const rect = charImg.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const pixel = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+      if (pixel[3] > 0) {
+        charImg.style.borderColor = "yellow";
+        startRotate();
+        selectedIndex = i;
+      } else {
+        charImg.style.borderColor = "transparent";
+      }
     });
 
-    charWrapper.addEventListener("mouseleave", () => {
-      charDiv.style.borderColor = "transparent";
+    charImg.addEventListener("mouseleave", () => {
+      charImg.style.borderColor = "transparent";
+      stopRotate();
     });
 
-    charWrapper.addEventListener("click", () => {
-      if (selectedIndex === null) return;
-      // --- 選択されなかったキャラを画面外にアニメーション ---
-      [...characterUI.children].forEach((sibling, j) => {
-        if (j !== selectedIndex) {
-          sibling.style.transition = "transform 1s ease";
-          sibling.style.transform = j < selectedIndex ? "translateX(-150vw)" : "translateX(150vw)";
-        }
-      });
-
-      // --- 名前入力UIを表示 ---
-      setTimeout(() => {
-        selectTelop.textContent = "主人公の名前を決めてください";
-
-        const nameUI = document.createElement("div");
-        Object.assign(nameUI.style, {
-          position: "fixed",
-          top: "60%",
-          left: selectedIndex === 0 ? "60%" : "40%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 1100,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+    charImg.addEventListener("click", () => {
+      if (selectedIndex === i) {
+        // 選択したキャラ以外を画面外へ
+        characterUI.children.forEach((sibling, j) => {
+          if (j !== i) {
+            sibling.style.transition = "all 0.5s ease";
+            sibling.style.transform = `translateX(${j < i ? "-200%" : "200%"})`;
+            sibling.style.opacity = "0";
+          }
         });
 
-        const nameInput = document.createElement("input");
-        Object.assign(nameInput.style, {
-          fontSize: "24px",
-          padding: "8px 12px",
+        // --- 名前入力UI ---
+        const nameBox = document.createElement("input");
+        nameBox.type = "text";
+        nameBox.placeholder = "名前を入力してください";
+        Object.assign(nameBox.style, {
+          position: "fixed",
+          top: "50%",
+          left: i === 0 ? "60%" : "40%", // hero1なら右、hero2なら左
+          transform: "translateY(-50%)",
+          zIndex: 1100,
+          padding: "10px 15px",
+          fontSize: "20px",
           borderRadius: "8px",
         });
-        nameInput.placeholder = "名前を入力してください";
-        nameUI.appendChild(nameInput);
+        bgDiv.appendChild(nameBox);
 
         const confirmBtn = document.createElement("button");
         confirmBtn.textContent = "決定";
         Object.assign(confirmBtn.style, {
-          marginTop: "10px",
-          padding: "8px 16px",
+          position: "fixed",
+          top: "60%",
+          left: i === 0 ? "60%" : "40%",
+          transform: "translateY(-50%)",
+          zIndex: 1100,
+          padding: "10px 20px",
           fontSize: "20px",
           borderRadius: "8px",
           cursor: "pointer",
         });
+        bgDiv.appendChild(confirmBtn);
+
+        telop.textContent = "主人公の名前を決めてください";
 
         confirmBtn.addEventListener("click", () => {
-          const heroName = nameInput.value.trim();
-          if (!heroName) {
-            alert("名前を入力してください");
-            return;
-          }
-          console.log(`主人公: ${characters[selectedIndex].name}, 名前: ${heroName} でゲーム開始`);
-          // TODO: ゲーム開始処理をここに追加
-          nameUI.remove();
-          selectTelop.remove();
+          const heroName = nameBox.value.trim() || c.name;
+          console.log(`主人公: ${c.name}, 名前: ${heroName}`);
+          // TODO: ゲーム本編開始処理
+
+          // UIを消す
+          nameBox.remove();
+          confirmBtn.remove();
+          telop.remove();
         });
-
-        nameUI.appendChild(confirmBtn);
-        bgDiv.appendChild(nameUI);
-
-        nameInput.focus();
-      }, 700); // 選択キャラが画面外にアニメーションした後に表示
+      }
     });
   });
 };
