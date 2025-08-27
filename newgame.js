@@ -158,17 +158,36 @@ window.startNewGame = async function() {
   let selectedIndex = null;
   let nameBox = null;
   let confirmBtn = null;
+  let rotateRequest = null;
+  let rotateAngle = 0;
 
-  function resetOtherChar(i) {
+  function startRotation(img) {
+    stopRotation();
+    function rotate() {
+      rotateAngle += 0.8;
+      img.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+      rotateRequest = requestAnimationFrame(rotate);
+    }
+    rotate();
+  }
+
+  function stopRotation(img) {
+    if (rotateRequest) cancelAnimationFrame(rotateRequest);
+    rotateRequest = null;
+    rotateAngle = 0;
+    if (img) img.style.transform = "rotateY(0deg) scale(1)";
+  }
+
+  function resetOtherChar(exceptIndex) {
     characterUI.children.forEach((sibling, j) => {
       const siblingAura = sibling.querySelector("div");
       const siblingImg = sibling.querySelector("img");
-      if (j !== i) {
-        sibling.style.transform = `translateX(${j < i ? "-200%" : "200%"}) scale(0.8)`;
+      if (j !== exceptIndex) {
+        sibling.style.transform = `translateX(${j < exceptIndex ? "-200%" : "200%"}) scale(0.8)`;
         sibling.style.opacity = "0";
         siblingAura.style.opacity = 0;
         siblingAura.style.transform = "translate(-50%, -50%) scale(1)";
-        siblingImg.style.transform = "rotateY(0deg) scale(0.8)";
+        stopRotation(siblingImg);
       }
     });
   }
@@ -229,6 +248,9 @@ window.startNewGame = async function() {
           characterUI.children.forEach((sibling) => {
             sibling.style.transform = "scale(1)";
             sibling.style.opacity = "1";
+            sibling.querySelector("div").style.opacity = 0;
+            sibling.querySelector("div").style.transform = "translate(-50%, -50%) scale(1)";
+            sibling.querySelector("img").style.transform = "rotateY(0deg) scale(1)";
           });
           telop.textContent = "主人公を選択してください";
         }
@@ -316,8 +338,8 @@ window.startNewGame = async function() {
         aura.style.background = "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))";
         aura.style.opacity = 1;
         aura.style.transform = "translate(-50%, -50%) scale(1.5)";
-        charImg.style.transform = "rotateY(0deg) scale(1.2)";
         charWrapper.style.zIndex = 2000;
+        startRotation(charImg);
         resetOtherChar(i);
         if (nameBox) { nameBox.style.opacity=0; setTimeout(()=>{nameBox.remove();nameBox=null;},600); }
         if (confirmBtn) { confirmBtn.style.opacity=0; setTimeout(()=>{confirmBtn.remove();confirmBtn=null;},600); }
