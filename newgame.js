@@ -88,7 +88,6 @@ window.startNewGame = async function() {
       rotationSpeed: (Math.random() - 0.5) * 2
     });
   }
-
   function animateSnow() {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
@@ -167,69 +166,7 @@ window.startNewGame = async function() {
   ];
   let selectedIndex = null;
 
-  function createConfirmDialog(message, onYes, onNo) {
-    const overlay = document.createElement("div");
-    Object.assign(overlay.style, {
-      position: "fixed",
-      top: 0, left: 0,
-      width: "100%", height: "100%",
-      background: "rgba(0,0,0,0.6)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 9999
-    });
-
-    const dialog = document.createElement("div");
-    Object.assign(dialog.style, {
-      background: "#fff",
-      padding: "20px",
-      borderRadius: "12px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-      textAlign: "center",
-      minWidth: "250px"
-    });
-
-    const msg = document.createElement("p");
-    msg.textContent = message;
-    msg.style.marginBottom = "20px";
-
-    const btnBox = document.createElement("div");
-    btnBox.style.display = "flex";
-    btnBox.style.justifyContent = "space-around";
-
-    const yesBtn = document.createElement("button");
-    yesBtn.textContent = "はい";
-    Object.assign(yesBtn.style, {
-      padding: "8px 16px", borderRadius: "8px", border: "none",
-      background: "#4caf50", color: "#fff", cursor: "pointer"
-    });
-
-    const noBtn = document.createElement("button");
-    noBtn.textContent = "いいえ";
-    Object.assign(noBtn.style, {
-      padding: "8px 16px", borderRadius: "8px", border: "none",
-      background: "#f44336", color: "#fff", cursor: "pointer"
-    });
-
-    yesBtn.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      if (onYes) onYes();
-    });
-    noBtn.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      if (onNo) onNo();
-    });
-
-    btnBox.appendChild(yesBtn);
-    btnBox.appendChild(noBtn);
-    dialog.appendChild(msg);
-    dialog.appendChild(btnBox);
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-  }
-
-  // --- キャラUI生成・アニメーション付き ---
+  // --- キャラクターUI生成・オーラ＋Z回転 ---
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -238,9 +175,27 @@ window.startNewGame = async function() {
       alignItems: "center",
       cursor: "pointer",
       perspective: "600px",
-      pointerEvents: "auto",
+      position: "relative",
       transition: "transform 0.6s ease, opacity 0.6s ease"
     });
+
+    // オーラ
+    const aura = document.createElement("div");
+    Object.assign(aura.style, {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      width: "220px",
+      height: "320px",
+      transform: "translate(-50%, -50%) scale(1)",
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(255,255,0,0.4), rgba(255,255,0,0))",
+      filter: "blur(20px)",
+      opacity: 0,
+      transition: "opacity 0.3s ease, transform 0.3s ease",
+      zIndex: 0
+    });
+    charWrapper.appendChild(aura);
 
     const charImg = document.createElement("img");
     charImg.src = c.img;
@@ -251,6 +206,8 @@ window.startNewGame = async function() {
       border: "4px solid transparent",
       borderRadius: "12px",
       transition: "transform 0.6s ease, border-color 0.3s, opacity 0.6s ease",
+      zIndex: 1,
+      backfaceVisibility: "hidden"
     });
     charWrapper.appendChild(charImg);
 
@@ -265,13 +222,30 @@ window.startNewGame = async function() {
       transition: "opacity 0.6s ease"
     });
     charWrapper.appendChild(nameLabel);
+
     characterUI.appendChild(charWrapper);
 
-    charImg.addEventListener("click", () => {
-      if (selectedIndex !== null) return; // すでに選択済みなら無視
-      selectedIndex = i;
+    // --- ホバー時 ---
+    charWrapper.addEventListener("mouseenter", () => {
+      aura.style.opacity = 1;
+      aura.style.transform = "translate(-50%, -50%) scale(1.2)";
+      charImg.style.transform = "rotateY(15deg)";
+    });
+    charWrapper.addEventListener("mouseleave", () => {
+      if (selectedIndex !== i) {
+        aura.style.opacity = 0;
+        aura.style.transform = "translate(-50%, -50%) scale(1)";
+        charImg.style.transform = "rotateY(0deg)";
+      }
+    });
 
-      charWrapper.style.transform = "scale(1.2)";
+    // --- クリック時選択 ---
+    charImg.addEventListener("click", () => {
+      if (selectedIndex !== null) return;
+      selectedIndex = i;
+      aura.style.background = "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))";
+      aura.style.transform = "translate(-50%, -50%) scale(1.5)";
+      charImg.style.transform = "rotateY(0deg) scale(1.2)";
       charWrapper.style.zIndex = 2000;
 
       characterUI.children.forEach((sibling, j) => {
@@ -281,7 +255,7 @@ window.startNewGame = async function() {
         }
       });
 
-      // 名前入力欄
+      // 名前入力UI
       const nameBox = document.createElement("input");
       nameBox.type = "text";
       nameBox.placeholder = "名前を入力してください";
@@ -300,7 +274,6 @@ window.startNewGame = async function() {
       bgDiv.appendChild(nameBox);
       requestAnimationFrame(() => nameBox.style.opacity = 1);
 
-      // 決定ボタン
       const confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
       Object.assign(confirmBtn.style, {
@@ -330,17 +303,14 @@ window.startNewGame = async function() {
             nameBox.remove();
             confirmBtn.remove();
             telop.remove();
-            // 本編開始処理はここに追加
           },
           () => {
-            console.log("キャンセルされました");
-            // キャンセル時にキャラUIをリセット
             selectedIndex = null;
             characterUI.children.forEach((sibling) => {
               sibling.style.transform = "scale(1)";
               sibling.style.opacity = "1";
-              sibling.style.transition = "transform 0.6s ease, opacity 0.6s ease";
             });
+            aura.style.opacity = 0;
             nameBox.style.opacity = 0;
             confirmBtn.style.opacity = 0;
             setTimeout(() => {
@@ -354,7 +324,7 @@ window.startNewGame = async function() {
     });
   });
 
-  // --- ポップアップGIF/MP4（音量最大、動画音声有効） ---
+  // --- ポップアップGIF/MP4 ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
@@ -390,7 +360,6 @@ window.startNewGame = async function() {
       mediaEl.autoplay = true;
       mediaEl.loop = true;
       mediaEl.muted = false;
-      mediaEl.volume = 1.0;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
       mediaEl.play().catch(()=>{});
     }
