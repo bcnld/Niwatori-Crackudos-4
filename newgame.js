@@ -226,7 +226,6 @@ window.startNewGame = async function() {
       charImg.style.transform = `rotateZ(0deg)`;
     }
 
-    // --- マウス移動判定 ---
     charImg.addEventListener("mousemove", (e) => {
       const rect = charImg.getBoundingClientRect();
       const x = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -246,10 +245,8 @@ window.startNewGame = async function() {
       stopRotate();
     });
 
-    // --- キャラクリック ---
     charImg.addEventListener("click", () => {
       if (selectedIndex === i) {
-        // 他キャラを画面外にスライド
         characterUI.children.forEach((sibling, j) => {
           if (j !== i) {
             sibling.style.transition = "all 0.5s ease";
@@ -258,7 +255,6 @@ window.startNewGame = async function() {
           }
         });
 
-        // --- 名前入力UI ---
         const nameBox = document.createElement("input");
         nameBox.type = "text";
         nameBox.placeholder = "名前を入力してください";
@@ -295,8 +291,6 @@ window.startNewGame = async function() {
           const heroName = nameBox.value.trim() || c.name;
           console.log(`主人公: ${c.name}, 名前: ${heroName}`);
           // TODO: ゲーム本編開始処理
-
-          // UIを消す
           nameBox.remove();
           confirmBtn.remove();
           telop.remove();
@@ -305,7 +299,7 @@ window.startNewGame = async function() {
     });
   });
 
-  // --- ポップアップGIF/MP4 ---
+  // --- ポップアップGIF/MP4（音量最大、動画音声有効） ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
@@ -338,12 +332,13 @@ window.startNewGame = async function() {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = true;
+      mediaEl.muted = false;
+      mediaEl.volume = 1.0;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+      mediaEl.play().catch(()=>{});
     }
     popup.appendChild(mediaEl);
 
-    // ×ボタン
     const closeBtn = document.createElement("div");
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
@@ -364,7 +359,6 @@ window.startNewGame = async function() {
     });
     popup.appendChild(closeBtn);
 
-    // ランダム位置
     const maxLeft = window.innerWidth - parseInt(popup.style.width);
     const maxTop = window.innerHeight - parseInt(popup.style.height);
     popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
@@ -372,7 +366,6 @@ window.startNewGame = async function() {
 
     document.body.appendChild(popup);
 
-    // 出現音
     popupSound.currentTime = 0;
     popupSound.play().catch(()=>{});
   }
