@@ -158,7 +158,7 @@ window.startNewGame = async function () {
     { name: "うんこ", img: "images/hero2.png" },
   ];
 
-  // --- 状態管理 ---
+  // --- 状態 ---
   const wrappers = [];
   const imgs = [];
   const auras = [];
@@ -168,8 +168,9 @@ window.startNewGame = async function () {
   let rotationRAF = null;
   let nameBox = null;
   let confirmBtn = null;
+  let cancelBtn = null;
 
-  // --- 回転処理 ---
+  // --- 回転 ---
   function startRotation(img) {
     stopRotation();
     rotatingImg = img;
@@ -202,20 +203,23 @@ window.startNewGame = async function () {
     if (!w) return;
     const dir = selectedIdx === 0 ? 1 : -1;
     const dist = window.innerWidth + 400;
-    w.style.transition = "transform 0.7s ease, opacity 0.7s ease";
+    w.style.transition =
+      "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
     w.style.transform = `translateX(${dir * dist}px)`;
     w.style.opacity = "0";
+    w.dataset.offscreen = "1";
   }
   function flyIn(index) {
     const w = wrappers[index];
     if (!w) return;
-    w.style.transition = "transform 0.6s ease, opacity 0.4s ease";
+    w.style.transition =
+      "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
     w.style.transform = "translateX(0)";
     w.style.opacity = "1";
+    w.dataset.offscreen = "0";
   }
 
   function showNameInput(c) {
-    flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
@@ -238,7 +242,7 @@ window.startNewGame = async function () {
       Object.assign(confirmBtn.style, {
         position: "fixed",
         top: "65%",
-        left: "50%",
+        left: "45%",
         transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 20px",
@@ -248,25 +252,54 @@ window.startNewGame = async function () {
       });
       bgDiv.appendChild(confirmBtn);
     }
+    if (!cancelBtn) {
+      cancelBtn = document.createElement("button");
+      cancelBtn.textContent = "キャンセル";
+      Object.assign(cancelBtn.style, {
+        position: "fixed",
+        top: "65%",
+        left: "55%",
+        transform: "translate(-50%, -50%)",
+        zIndex: 2100,
+        padding: "10px 20px",
+        fontSize: "20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+      });
+      bgDiv.appendChild(cancelBtn);
+    }
+
     telop.textContent = "主人公の名前を決めてください";
 
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
         console.log(`確定: ${c.name}, 名前: ${heroName}`);
-        nameBox.remove(); confirmBtn.remove(); telop.remove(); characterUI.remove();
-      } else {
-        // キャンセル：戻す
-        stopRotation();
-        auras[selectedIndex].style.opacity = 0;
-        flyIn(selectedIndex === 0 ? 1 : 0);
-        selectedIndex = null;
-        telop.textContent = "主人公を選択してください";
+        [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
+        if (telop) telop.remove();
+        if (characterUI) characterUI.remove();
       }
+    };
+
+    cancelBtn.onclick = () => {
+      // --- キャンセル処理 ---
+      if (selectedIndex !== null) {
+        const sel = selectedIndex;
+        const other = sel === 0 ? 1 : 0;
+        stopRotation();
+        auras[sel].style.opacity = 0;
+        flyIn(other);
+      }
+      selectedIndex = null;
+      [nameBox, confirmBtn, cancelBtn].forEach((el) => {
+        if (el) el.remove();
+      });
+      nameBox = confirmBtn = cancelBtn = null;
+      telop.textContent = "主人公を選択してください";
     };
   }
 
-  // --- キャラ生成 ---
+  // --- キャラクター生成 ---
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -280,6 +313,7 @@ window.startNewGame = async function () {
     });
 
     const aura = document.createElement("div");
+    aura.className = "aura";
     Object.assign(aura.style, {
       position: "absolute",
       top: "50%",
@@ -292,7 +326,7 @@ window.startNewGame = async function () {
         "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
       filter: "blur(20px)",
       opacity: 0,
-      transition: "opacity 0.3s ease",
+      transition: "opacity 0.3s ease, transform 0.3s ease",
       zIndex: 0,
     });
     charWrapper.appendChild(aura);
@@ -303,7 +337,9 @@ window.startNewGame = async function () {
       width: "200px",
       height: "300px",
       objectFit: "contain",
+      border: "4px solid transparent",
       borderRadius: "12px",
+      transition: "opacity 0.3s ease, border-color 0.3s ease",
       zIndex: 1,
       backfaceVisibility: "visible",
       transformStyle: "preserve-3d",
@@ -327,20 +363,22 @@ window.startNewGame = async function () {
     imgs[i] = charImg;
     auras[i] = aura;
 
-    // クリック
+    // --- クリック ---
     charWrapper.addEventListener("click", () => {
       if (selectedIndex === i) {
         showNameInput(c);
         return;
       }
-      // 選択切替
-      if (selectedIndex !== null) {
+      const other = i === 0 ? 1 : 0;
+      if (selectedIndex !== null && selectedIndex !== i) {
         auras[selectedIndex].style.opacity = 0;
         stopRotation();
+        imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
       selectedIndex = i;
       auras[i].style.opacity = 1;
       startRotation(imgs[i]);
+      flyOut(other, i);
       telop.textContent = "主人公を選択中。もう一度クリックで決定。";
     });
   });
@@ -365,6 +403,7 @@ window.startNewGame = async function () {
       height: window.innerWidth < 768 ? "250px" : "300px",
       zIndex: 4000,
       overflow: "hidden",
+      pointerEvents: "auto",
       opacity: 0,
       transition: "opacity 0.6s ease",
     });
@@ -383,6 +422,7 @@ window.startNewGame = async function () {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
+      mediaEl.muted = false;
       mediaEl.volume = 1.0;
       Object.assign(mediaEl.style, {
         width: "100%",
