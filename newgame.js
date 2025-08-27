@@ -1,4 +1,4 @@
-window.startNewGame = async function() {
+window.startNewGame = async function () {
   const fadeOverlay = document.getElementById("fade-overlay");
   const bgm = document.getElementById("bgm");
   if (!fadeOverlay) return;
@@ -12,14 +12,14 @@ window.startNewGame = async function() {
   fadeOverlay.style.opacity = 0;
   fadeOverlay.style.zIndex = 5000;
   fadeOverlay.style.transition = `opacity 2s ease`;
-  requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+  requestAnimationFrame(() => (fadeOverlay.style.opacity = 1));
 
   // --- 既存BGMフェードアウト ---
   if (bgm && !bgm.paused) {
     const fadeSteps = 60;
     let step = 0;
     const interval = 2000 / fadeSteps;
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       const fadeOut = setInterval(() => {
         step++;
         bgm.volume = Math.max(0, bgm.volume * (1 - step / fadeSteps));
@@ -34,7 +34,7 @@ window.startNewGame = async function() {
   }
 
   // --- 画面クリア ---
-  document.body.querySelectorAll("div, img, video").forEach(el => {
+  document.body.querySelectorAll("div, img, video").forEach((el) => {
     if (!el.id || el.id === "fade-overlay") return;
     el.remove();
   });
@@ -43,8 +43,10 @@ window.startNewGame = async function() {
   const bgDiv = document.createElement("div");
   Object.assign(bgDiv.style, {
     position: "fixed",
-    top: 0, left: 0,
-    width: "100%", height: "100%",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
     backgroundColor: "#001022",
     backgroundImage: "url('images/character_select_bg.png')",
     backgroundSize: "cover",
@@ -75,14 +77,15 @@ window.startNewGame = async function() {
       el: snow,
       speed: Math.random() * 2 + 1,
       drift: (Math.random() - 0.5) * 1,
-      rotationSpeed: (Math.random() - 0.5) * 2
+      rotationSpeed: (Math.random() - 0.5) * 2,
     });
   }
   function animateSnow() {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-      let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
+      let rot =
+        parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
@@ -100,14 +103,14 @@ window.startNewGame = async function() {
   // --- フェード解除 ---
   fadeOverlay.style.transition = "opacity 1s ease";
   fadeOverlay.style.opacity = 0;
-  setTimeout(() => fadeOverlay.style.display = "none", 1000);
+  setTimeout(() => (fadeOverlay.style.display = "none"), 1000);
 
   // --- 新規BGM ---
   if (bgm) {
     bgm.src = "Sounds/newgame_bgm.mp3";
     bgm.loop = true;
     bgm.volume = 0;
-    bgm.play().catch(()=>{});
+    bgm.play().catch(() => {});
     let step = 0;
     const steps = 60;
     const interval = 50;
@@ -152,42 +155,40 @@ window.startNewGame = async function() {
 
   const characters = [
     { name: "犬", img: "images/hero1.png" },
-    { name: "うんこ", img: "images/hero2.png" }
+    { name: "うんこ", img: "images/hero2.png" },
   ];
 
   let selectedIndex = null;
+  let rotationTimer = null;
   let nameBox = null;
   let confirmBtn = null;
-  let rotationIntervals = [];
 
   function resetOtherChar(i) {
-    characterUI.children.forEach((sibling, j) => {
-      const siblingAura = sibling.querySelector("div");
+    [...characterUI.children].forEach((sibling, j) => {
+      const siblingAura = sibling.querySelector(".aura");
       const siblingImg = sibling.querySelector("img");
       if (j !== i) {
         sibling.style.transform = `scale(1)`;
-        sibling.style.opacity = "1";
         siblingAura.style.opacity = 0;
-        siblingAura.style.transform = "translate(-50%, -50%) scale(1)";
-        siblingImg.style.transform = "rotateY(0deg) scale(1)";
-        siblingImg.style.backfaceVisibility = "visible";
+        siblingImg.style.transform = "rotateY(0deg)";
       }
     });
   }
 
   function startRotation(img) {
-    clearInterval(rotationIntervals[img.src]);
+    stopRotation();
     let angle = 0;
-    rotationIntervals[img.src] = setInterval(() => {
-      angle += 2;
+    rotationTimer = setInterval(() => {
+      angle = (angle + 2) % 360;
       img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
-      img.style.backfaceVisibility = "visible";
     }, 16);
   }
 
-  function stopRotation(img) {
-    clearInterval(rotationIntervals[img.src]);
-    img.style.transform = "rotateY(0deg) scale(1)";
+  function stopRotation() {
+    if (rotationTimer) {
+      clearInterval(rotationTimer);
+      rotationTimer = null;
+    }
   }
 
   function showNameInput(c) {
@@ -204,11 +205,8 @@ window.startNewGame = async function() {
         padding: "10px 15px",
         fontSize: "20px",
         borderRadius: "8px",
-        opacity: 0,
-        transition: "opacity 0.6s ease"
       });
       bgDiv.appendChild(nameBox);
-      requestAnimationFrame(() => nameBox.style.opacity = 1);
     }
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
@@ -223,33 +221,29 @@ window.startNewGame = async function() {
         fontSize: "20px",
         borderRadius: "8px",
         cursor: "pointer",
-        opacity: 0,
-        transition: "opacity 0.6s ease"
       });
       bgDiv.appendChild(confirmBtn);
-      requestAnimationFrame(() => confirmBtn.style.opacity = 1);
     }
     telop.textContent = "主人公の名前を決めてください";
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
-      createConfirmDialog(
-        `主人公「${heroName}」でよろしいですか？`,
-        () => {
-          console.log(`確定: ${c.name}, 名前: ${heroName}`);
-          if (nameBox) { nameBox.remove(); nameBox=null; }
-          if (confirmBtn) { confirmBtn.remove(); confirmBtn=null; }
-          if (telop) telop.remove();
-          if (characterUI) characterUI.remove();
-        },
-        () => {
-          selectedIndex = null;
-          characterUI.children.forEach((sibling) => {
-            sibling.style.transform = "scale(1)";
-            sibling.style.opacity = "1";
-          });
-          telop.textContent = "主人公を選択してください";
+      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+        console.log(`確定: ${c.name}, 名前: ${heroName}`);
+        if (nameBox) {
+          nameBox.remove();
+          nameBox = null;
         }
-      );
+        if (confirmBtn) {
+          confirmBtn.remove();
+          confirmBtn = null;
+        }
+        if (telop) telop.remove();
+        if (characterUI) characterUI.remove();
+      } else {
+        selectedIndex = null;
+        resetOtherChar(-1);
+        telop.textContent = "主人公を選択してください";
+      }
     };
   }
 
@@ -263,10 +257,11 @@ window.startNewGame = async function() {
       cursor: "pointer",
       perspective: "600px",
       position: "relative",
-      transition: "transform 0.6s ease, opacity 0.6s ease"
+      transition: "transform 0.6s ease",
     });
 
     const aura = document.createElement("div");
+    aura.className = "aura";
     Object.assign(aura.style, {
       position: "absolute",
       top: "50%",
@@ -275,11 +270,12 @@ window.startNewGame = async function() {
       height: "320px",
       transform: "translate(-50%, -50%) scale(1)",
       borderRadius: "50%",
-      background: "radial-gradient(circle, rgba(255,255,0,0.4), rgba(255,255,0,0))",
+      background:
+        "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
       filter: "blur(20px)",
       opacity: 0,
       transition: "opacity 0.3s ease, transform 0.3s ease",
-      zIndex: 0
+      zIndex: 0,
     });
     charWrapper.appendChild(aura);
 
@@ -291,9 +287,8 @@ window.startNewGame = async function() {
       objectFit: "contain",
       border: "4px solid transparent",
       borderRadius: "12px",
-      transition: "transform 0.6s ease, border-color 0.3s, opacity 0.6s ease",
+      transition: "transform 0.6s ease, border-color 0.3s",
       zIndex: 1,
-      backfaceVisibility: "hidden" // 裏面も表示
     });
     charWrapper.appendChild(charImg);
 
@@ -305,46 +300,24 @@ window.startNewGame = async function() {
       fontWeight: "bold",
       color: "#fff",
       textShadow: "2px 2px 4px black",
-      transition: "opacity 0.6s ease"
     });
     charWrapper.appendChild(nameLabel);
 
     characterUI.appendChild(charWrapper);
 
-    charWrapper.addEventListener("mouseenter", () => {
-      if (selectedIndex !== i) {
-        aura.style.opacity = 1;
-        aura.style.transform = "translate(-50%, -50%) scale(1.2)";
-        charImg.style.transform = "rotateY(15deg)";
-      }
-    });
-    charWrapper.addEventListener("mouseleave", () => {
-      if (selectedIndex !== i) {
-        aura.style.opacity = 0;
-        aura.style.transform = "translate(-50%, -50%) scale(1)";
-        charImg.style.transform = "rotateY(0deg)";
-      }
-    });
-
     charWrapper.addEventListener("click", () => {
       if (selectedIndex === i) {
         showNameInput(c);
       } else {
-        // 前回の選択をリセット
         if (selectedIndex !== null) {
           const prevChar = characterUI.children[selectedIndex];
+          prevChar.querySelector(".aura").style.opacity = 0;
           stopRotation(prevChar.querySelector("img"));
-          prevChar.querySelector("div").style.opacity = 0; // オーラ消す
         }
         selectedIndex = i;
-        aura.style.background = "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))";
         aura.style.opacity = 1;
-        aura.style.transform = "translate(-50%, -50%) scale(1.5)";
-        charWrapper.style.zIndex = 2000;
         startRotation(charImg);
         resetOtherChar(i);
-        if (nameBox) { nameBox.style.opacity=0; setTimeout(()=>{nameBox.remove();nameBox=null;},600); }
-        if (confirmBtn) { confirmBtn.style.opacity=0; setTimeout(()=>{confirmBtn.remove();confirmBtn=null;},600); }
         telop.textContent = "主人公を選択してください";
       }
     });
@@ -356,7 +329,7 @@ window.startNewGame = async function() {
     { type: "img", src: "images/popup2.gif" },
     { type: "video", src: "videos/popup1.mp4" },
     { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" }
+    { type: "video", src: "videos/popup3.mp4" },
   ];
   const popupSound = new Audio("Sounds/popup.mp3");
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
@@ -372,22 +345,31 @@ window.startNewGame = async function() {
       overflow: "hidden",
       pointerEvents: "auto",
       opacity: 0,
-      transition: "opacity 0.6s ease"
+      transition: "opacity 0.6s ease",
     });
 
     let mediaEl;
     if (selected.type === "img") {
       mediaEl = document.createElement("img");
       mediaEl.src = selected.src;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    } else if (selected.type === "video") {
+      Object.assign(mediaEl.style, {
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+      });
+    } else {
       mediaEl = document.createElement("video");
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
       mediaEl.muted = false;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-      mediaEl.play().catch(()=>{});
+      mediaEl.volume = 1.0;
+      Object.assign(mediaEl.style, {
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+      });
+      mediaEl.play().catch(() => {});
     }
     popup.appendChild(mediaEl);
 
@@ -402,12 +384,12 @@ window.startNewGame = async function() {
       cursor: "pointer",
       fontSize: "28px",
       textShadow: "0 0 5px black",
-      zIndex: 5001
+      zIndex: 5001,
     });
     closeBtn.addEventListener("click", () => {
       popup.remove();
       popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(()=>{});
+      popupCloseSound.play().catch(() => {});
     });
     popup.appendChild(closeBtn);
 
@@ -417,10 +399,11 @@ window.startNewGame = async function() {
     popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
     document.body.appendChild(popup);
-    requestAnimationFrame(() => popup.style.opacity = 1);
+    requestAnimationFrame(() => (popup.style.opacity = 1));
 
     popupSound.currentTime = 0;
-    popupSound.play().catch(()=>{});
+    popupSound.volume = 1.0;
+    popupSound.play().catch(() => {});
   }
 
   createPopup();
