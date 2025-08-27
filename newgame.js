@@ -158,38 +158,36 @@ window.startNewGame = async function() {
   let selectedIndex = null;
   let nameBox = null;
   let confirmBtn = null;
-  let rotateRequest = null;
-  let rotateAngle = 0;
+  let rotationIntervals = [];
 
-  function startRotation(img) {
-    stopRotation();
-    function rotate() {
-      rotateAngle += 0.8;
-      img.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
-      rotateRequest = requestAnimationFrame(rotate);
-    }
-    rotate();
-  }
-
-  function stopRotation(img) {
-    if (rotateRequest) cancelAnimationFrame(rotateRequest);
-    rotateRequest = null;
-    rotateAngle = 0;
-    if (img) img.style.transform = "rotateY(0deg) scale(1)";
-  }
-
-  function resetOtherChar(exceptIndex) {
+  function resetOtherChar(i) {
     characterUI.children.forEach((sibling, j) => {
       const siblingAura = sibling.querySelector("div");
       const siblingImg = sibling.querySelector("img");
-      if (j !== exceptIndex) {
-        sibling.style.transform = `translateX(${j < exceptIndex ? "-200%" : "200%"}) scale(0.8)`;
-        sibling.style.opacity = "0";
+      if (j !== i) {
+        sibling.style.transform = `scale(1)`;
+        sibling.style.opacity = "1";
         siblingAura.style.opacity = 0;
         siblingAura.style.transform = "translate(-50%, -50%) scale(1)";
-        stopRotation(siblingImg);
+        siblingImg.style.transform = "rotateY(0deg) scale(1)";
+        siblingImg.style.backfaceVisibility = "visible";
       }
     });
+  }
+
+  function startRotation(img) {
+    clearInterval(rotationIntervals[img.src]);
+    let angle = 0;
+    rotationIntervals[img.src] = setInterval(() => {
+      angle += 2;
+      img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
+      img.style.backfaceVisibility = "visible";
+    }, 16);
+  }
+
+  function stopRotation(img) {
+    clearInterval(rotationIntervals[img.src]);
+    img.style.transform = "rotateY(0deg) scale(1)";
   }
 
   function showNameInput(c) {
@@ -248,9 +246,6 @@ window.startNewGame = async function() {
           characterUI.children.forEach((sibling) => {
             sibling.style.transform = "scale(1)";
             sibling.style.opacity = "1";
-            sibling.querySelector("div").style.opacity = 0;
-            sibling.querySelector("div").style.transform = "translate(-50%, -50%) scale(1)";
-            sibling.querySelector("img").style.transform = "rotateY(0deg) scale(1)";
           });
           telop.textContent = "主人公を選択してください";
         }
@@ -258,6 +253,7 @@ window.startNewGame = async function() {
     };
   }
 
+  // --- キャラクター生成 ---
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -297,7 +293,7 @@ window.startNewGame = async function() {
       borderRadius: "12px",
       transition: "transform 0.6s ease, border-color 0.3s, opacity 0.6s ease",
       zIndex: 1,
-      backfaceVisibility: "hidden"
+      backfaceVisibility: "hidden" // 裏面も表示
     });
     charWrapper.appendChild(charImg);
 
@@ -334,6 +330,12 @@ window.startNewGame = async function() {
       if (selectedIndex === i) {
         showNameInput(c);
       } else {
+        // 前回の選択をリセット
+        if (selectedIndex !== null) {
+          const prevChar = characterUI.children[selectedIndex];
+          stopRotation(prevChar.querySelector("img"));
+          prevChar.querySelector("div").style.opacity = 0; // オーラ消す
+        }
         selectedIndex = i;
         aura.style.background = "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))";
         aura.style.opacity = 1;
