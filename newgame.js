@@ -1,4 +1,4 @@
-// newgame.js（完全版）
+// newgame.js（整理・完全版）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -20,17 +20,15 @@ window.startNewGame = async function () {
   fadeOverlay.style.transition = "opacity 2s ease";
   requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-  // --- 既存BGMをフェードアウト ---
+  // --- 既存BGMフェードアウト ---
   if (bgm && !bgm.paused) {
     if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-    const fadeSteps = 60;
-    let step = 0;
-    const interval = 2000 / fadeSteps;
     await new Promise(resolve => {
+      let step = 0, steps = 60, interval = 2000 / steps;
       bgm._fadeOutInterval = setInterval(() => {
         step++;
-        bgm.volume = Math.max(0, 1 - step / fadeSteps);
-        if (step >= fadeSteps) {
+        bgm.volume = Math.max(0, 1 - step / steps);
+        if (step >= steps) {
           clearInterval(bgm._fadeOutInterval);
           bgm.pause();
           bgm.currentTime = 0;
@@ -44,7 +42,8 @@ window.startNewGame = async function () {
   const bgDiv = document.createElement("div");
   bgDiv.id = "newgame-bg-div";
   Object.assign(bgDiv.style, {
-    position: "fixed", top: 0, left: 0,
+    position: "fixed",
+    top: 0, left: 0,
     width: "100%", height: "100%",
     backgroundColor: "#001022",
     backgroundImage: "url('images/character_select_bg.png')",
@@ -79,7 +78,7 @@ window.startNewGame = async function () {
       rotationSpeed: (Math.random() - 0.5) * 2
     });
   }
-  function animateSnow() {
+  (function animateSnow() {
     snowflakes.forEach(flake => {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
@@ -95,8 +94,7 @@ window.startNewGame = async function () {
       flake.el.style.transform = `rotate(${rot}deg)`;
     });
     requestAnimationFrame(animateSnow);
-  }
-  animateSnow();
+  })();
 
   // --- フェード解除 ---
   fadeOverlay.style.transition = "opacity 1s ease";
@@ -110,12 +108,12 @@ window.startNewGame = async function () {
     bgm.volume = 0;
     bgm.play().catch(() => {});
     if (bgm._fadeInInterval) clearInterval(bgm._fadeInInterval);
-    let step = 0, steps = 60, interval = 50;
+    let step = 0, steps = 60;
     bgm._fadeInInterval = setInterval(() => {
       step++;
       bgm.volume = Math.min(1, step / steps);
       if (step >= steps) clearInterval(bgm._fadeInInterval);
-    }, interval);
+    }, 50);
   }
 
   // --- 効果音 ---
@@ -173,7 +171,7 @@ window.startNewGame = async function () {
   // --- キャラクター ---
   const characters = [
     { name: "犬", img: "images/hero1.png", selectSound: "Sounds/select_hero1.mp3" },
-    { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" } // hero1で統一
+    { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" }
   ];
   const wrappers = [];
   let selectedIndex = null, rotationRAF = null, rotatingImg = null;
@@ -183,13 +181,12 @@ window.startNewGame = async function () {
     stopRotation();
     rotatingImg = img;
     let angle = 0;
-    const step = () => {
+    (function step() {
       angle += 2;
       if (angle >= 360) angle -= 360;
       img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
       rotationRAF = requestAnimationFrame(step);
-    };
-    rotationRAF = requestAnimationFrame(step);
+    })();
   }
   function stopRotation() {
     if (rotationRAF) cancelAnimationFrame(rotationRAF);
@@ -226,22 +223,17 @@ window.startNewGame = async function () {
   function showNameInput(c) {
     stopRotation();
     flyOutOther(selectedIndex);
-
     const rect = wrappers[selectedIndex].getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
+    const centerX = rect.left + rect.width/2;
     const bottomY = rect.bottom + 20;
 
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
       Object.assign(nameBox.style, {
-        position: "fixed",
-        zIndex: 2300,
-        padding: "10px 15px",
-        borderRadius: "8px",
-        fontSize: "20px",
-        left: `${centerX}px`,
-        top: `${bottomY}px`,
+        position: "fixed", zIndex: 2300, padding: "10px 15px",
+        borderRadius: "8px", fontSize: "20px",
+        left: `${centerX}px`, top: `${bottomY}px`,
         transform: "translateX(-50%)"
       });
       document.body.appendChild(nameBox);
@@ -275,7 +267,7 @@ window.startNewGame = async function () {
       btnContainer.appendChild(confirmBtn);
     }
 
-    // --- 決定後のフェード処理（画面黒・BGMフェードアウト・文字フェードイン） ---
+    // --- 決定ボタン ---
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
@@ -295,7 +287,7 @@ window.startNewGame = async function () {
       // --- BGMフェードアウト ---
       if (bgm && !bgm.paused) {
         if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-        let step = 0, steps = 60, interval = 2000 / 60;
+        let step = 0, steps = 60, interval = 2000 / steps;
         bgm._fadeOutInterval = setInterval(() => {
           step++;
           bgm.volume = Math.max(0, 1 - step / steps);
@@ -322,11 +314,11 @@ window.startNewGame = async function () {
           transition: "opacity 3s ease"
         });
         document.body.appendChild(nfText);
-
         requestAnimationFrame(() => nfText.style.opacity = 1);
       }, 1500);
     };
 
+    // --- キャンセルボタン ---
     cancelBtn.onclick = () => {
       nameBox.style.display = "none";
       btnContainer.style.display = "none";
@@ -361,7 +353,18 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ポップアップ処理（フェードなし） ---
+  // --- ウィンドウリサイズ対応 ---
+  window.addEventListener("resize", () => {
+    if (nameBox && selectedIndex !== null) {
+      const rect = wrappers[selectedIndex].getBoundingClientRect();
+      nameBox.style.left = `${rect.left + rect.width / 2}px`;
+      nameBox.style.top = `${rect.bottom + 20}px`;
+      btnContainer.style.left = `${rect.left + rect.width / 2}px`;
+      btnContainer.style.top = `${rect.bottom + 70}px`;
+    }
+  });
+
+  // --- ポップアップ処理 ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "video", src: "videos/popup1.mp4" },
@@ -369,7 +372,6 @@ window.startNewGame = async function () {
     { type: "video", src: "videos/popup2.mp4" },
     { type: "video", src: "videos/popup3.mp4" }
   ];
-
   const popupSound = new Audio("Sounds/popup.mp3");
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
   const activePopups = [];
@@ -380,19 +382,16 @@ window.startNewGame = async function () {
     const popup = document.createElement("div");
     popup.className = "popup";
 
-    const popupWidth = 300;
-    const popupHeight = 250;
-    const maxLeft = Math.max(0, window.innerWidth - popupWidth);
-    const maxTop = Math.max(0, window.innerHeight - popupHeight);
-    const left = Math.floor(Math.random() * maxLeft);
-    const top = Math.floor(Math.random() * maxTop);
+    const popupWidth = 300, popupHeight = 250;
+    const left = Math.floor(Math.random() * Math.max(0, window.innerWidth - popupWidth));
+    const top = Math.floor(Math.random() * Math.max(0, window.innerHeight - popupHeight));
 
     Object.assign(popup.style, {
       position: "fixed",
-      width: popupWidth + "px",
-      height: popupHeight + "px",
-      left: left + "px",
-      top: top + "px",
+      width: `${popupWidth}px`,
+      height: `${popupHeight}px`,
+      left: `${left}px`,
+      top: `${top}px`,
       zIndex: 1800,
       backgroundColor: "rgba(0,0,0,0.5)",
       borderRadius: "10px",
@@ -439,16 +438,6 @@ window.startNewGame = async function () {
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
   }
-  setInterval(createPopup, 4500);
 
-  // --- リサイズ対応 ---
-  window.addEventListener("resize", () => {
-    if (nameBox && selectedIndex !== null) {
-      const rect = wrappers[selectedIndex].getBoundingClientRect();
-      nameBox.style.left = `${rect.left + rect.width / 2}px`;
-      nameBox.style.top = `${rect.bottom + 20}px`;
-      btnContainer.style.left = `${rect.left + rect.width / 2}px`;
-      btnContainer.style.top = `${rect.bottom + 70}px`;
-    }
-  });
+  setInterval(createPopup, 4500);
 };
