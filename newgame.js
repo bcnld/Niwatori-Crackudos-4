@@ -440,9 +440,10 @@ function createPopup() {
 setInterval(createPopup, 5000);
 
 // --- ウィンドウリサイズ対応（雪の位置補正） ---
-window.addEventListener("resize", () => {
-  snowflakes.forEach((flake) => {
-    flake.el.style.top = Math.min(parseFloat(flake.el.style.top), window.innerHeight) + "px";
-    flake.el.style.left = Math.min(parseFloat(flake.el.style.left), window.innerWidth) + "px";
+window.addEventListener("resize",()=>{
+    snowflakes.forEach(flake=>{
+      flake.el.style.top = Math.min(parseFloat(flake.el.style.top), window.innerHeight)+"px";
+      flake.el.style.left = Math.min(parseFloat(flake.el.style.left), window.innerWidth)+"px";
+    });
   });
-});
+};
