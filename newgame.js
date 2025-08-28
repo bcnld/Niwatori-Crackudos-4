@@ -314,36 +314,42 @@ window.startNewGame = async function () {
     nameBox.focus();
 
     confirmBtn.onclick = () => {
-      const heroName = nameBox.value.trim() || c.name;
-      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-        // 名前入力UIを消す
-        nameBox.style.display = "none";
-        btnContainer.style.display = "none";
-        stopRotation();
+  const heroName = nameBox.value.trim() || c.name;
+  if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+    // 名前入力UIを消す
+    nameBox.style.display = "none";
+    btnContainer.style.display = "none";
+    stopRotation();
 
-        // --- フェードアウト開始 ---
-        fadeOverlay.style.display = "block";
-        fadeOverlay.style.zIndex = 9999;
-        fadeOverlay.style.transition = "opacity 2s ease";
-        fadeOverlay.style.opacity = 0;
-        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+    // --- フェードアウト開始 ---
+    fadeOverlay.style.display = "block";
+    fadeOverlay.style.zIndex = 9999;
+    fadeOverlay.style.transition = "opacity 2s ease";
+    fadeOverlay.style.opacity = 0;
+    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-        // BGMもフェードアウト
-        if (bgm && !bgm.paused) {
-          if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-          let step = 0, steps = 60, interval = 2000 / steps;
-          bgm._fadeOutInterval = setInterval(() => {
-            step++;
-            bgm.volume = Math.max(0, 1 - step / steps);
-            if (step >= steps) {
-              clearInterval(bgm._fadeOutInterval);
-              bgm.pause();
-              bgm.currentTime = 0;
-            }
-          }, interval);
+    // BGMもフェードアウト
+    if (bgm && !bgm.paused) {
+      if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
+      let step = 0, steps = 60, interval = 2000 / steps;
+      bgm._fadeOutInterval = setInterval(() => {
+        step++;
+        bgm.volume = Math.max(0, 1 - step / steps);
+        if (step >= steps) {
+          clearInterval(bgm._fadeOutInterval);
+          bgm.pause();
+          bgm.currentTime = 0;
+
+          // --- 名前決定後にノンフィクション表示 ---
+          showNonFictionText(); // ←ここで呼ぶ
         }
-      }
-    };
+      }, interval);
+    } else {
+      // BGMがなければ即表示
+      showNonFictionText();
+    }
+  }
+};
 
     cancelBtn.onclick = () => {
       nameBox.style.display = "none";
