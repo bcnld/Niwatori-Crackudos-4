@@ -1,4 +1,4 @@
-// newgame.js（完全統合版・オーラなし・選択音付き）
+// newgame.js（完全統合版・オーラなし・選択音＋ポップアップ＋フェードアウト）
 window.startNewGame = async function () {
   // --- 古いゲームUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -87,8 +87,7 @@ window.startNewGame = async function () {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-      const match = flake.el.style.transform.match(/rotate([-\d.]+)deg/);
-      let rot = match ? parseFloat(match[1]) : 0;
+      let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
@@ -317,11 +316,32 @@ window.startNewGame = async function () {
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+        // 名前入力UIを消す
         nameBox.style.display = "none";
         btnContainer.style.display = "none";
         stopRotation();
-        selectedIndex = null;
-        flyInAll();
+
+        // --- フェードアウト開始 ---
+        fadeOverlay.style.display = "block";
+        fadeOverlay.style.zIndex = 9999;
+        fadeOverlay.style.transition = "opacity 2s ease";
+        fadeOverlay.style.opacity = 0;
+        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+
+        // BGMもフェードアウト
+        if (bgm && !bgm.paused) {
+          if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
+          let step = 0, steps = 60, interval = 2000 / steps;
+          bgm._fadeOutInterval = setInterval(() => {
+            step++;
+            bgm.volume = Math.max(0, 1 - step / steps);
+            if (step >= steps) {
+              clearInterval(bgm._fadeOutInterval);
+              bgm.pause();
+              bgm.currentTime = 0;
+            }
+          }, interval);
+        }
       }
     };
 
@@ -398,37 +418,112 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ウィンドウリサイズ対応 ---
-  window.addEventListener("resize", () => {
-    snowflakes.forEach(flake => {
-      let top = parseFloat(flake.el.style.top);
-      let left = parseFloat(flake.el.style.left);
-      if (top > window.innerHeight) flake.el.style.top = (window.innerHeight - 60) * Math.random() + "px";
-      if (left > window.innerWidth) flake.el.style.left = (window.innerWidth - 60) * Math.random() + "px";
+  // --- ポップアップ処理 ---
+  const popupMedia = [
+    { type: "img", src: "images/popup1.gif" },
+    { type: "img", src: "images/popup2.gif" },
+    { type: "video", src: "videos/popup1.mp4" },
+    { type: "video", src: "videos/popup2.mp4" },
+    { type: "video", src: "videos/popup3.mp4" }
+  ];
+  const popupSound = new Audio("Sounds/popup.mp3");
+  const popupCloseSound = new Audio("Sounds/popup_x.mp3");
+  const activePopups = [];
+
+  function createPopup() {
+    if (activePopups.length >= 50) return;
+
+    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
+    const popup = document.createElement("div");
+    popup.className = "popup";
+    const w = window.innerWidth < 768 ? 300 : 400;
+    const h = window.innerWidth < 768 ? 250 : 300;
+
+    Object.assign(popup.style, {
+      position: "fixed",
+      width: w + "px",
+      height: h + "px",
+      zIndex: 1800,
+      overflow: "hidden",
+      pointerEvents: "auto"
     });
 
-    if (characterUI) {
-      characterUI.style.left = "50%";
-      characterUI.style.top = "50%";
-      characterUI.style.transform = "translate(-50%, -50%)";
+    let mediaEl;
+    if (selected.type === "img") {
+      mediaEl = document.createElement("img");
+      mediaEl.src = selected.src;
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+    } else {
+      mediaEl = document.createElement("video");
+      mediaEl.src = selected.src;
+      mediaEl.autoplay = true;
+      mediaEl.loop = true;
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+      mediaEl.play().catch(()=>{});
     }
+    popup.appendChild(mediaEl);
 
-    if (nameBox && selectedIndex !== null) {
-      const rect = wrappers[selectedIndex].getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const bottomY = rect.bottom + 20;
-      nameBox.style.left = centerX + "px";
-      nameBox.style.top = bottomY + "px";
-      if (btnContainer) {
-        btnContainer.style.left = centerX + "px";
-        btnContainer.style.top = (bottomY + 50) + "px";
-      }
-    }
+    const closeBtn = document.createElement("div");
+    closeBtn.textContent = "×";
+    Object.assign(closeBtn.style, {
+      position: "absolute",
+      top: "5px",
+      right: "10px",
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#fff",
+      cursor: "pointer",
+      zIndex: 2000,
+      userSelect: "none"
+    });
+
+    closeBtn.addEventListener("click", () => {
+      popup.remove();
+      const idx = activePopups.indexOf(popup);
+      if (idx >= 0) activePopups.splice(idx, 1);
+      popupCloseSound.play().catch(() => {});
+    });
+
+    popup.appendChild(closeBtn);
+
+    // ランダム位置
+    const margin = 20;
+    popup.style.left =
+      Math.random() * (window.innerWidth - w - margin * 2) + margin + "px";
+    popup.style.top =
+      Math.random() * (window.innerHeight - h - margin * 2) + margin + "px";
+
+    document.body.appendChild(popup);
+    activePopups.push(popup);
+    popupSound.play().catch(() => {});
+  }
+
+  setInterval(createPopup, 5000);
+
+  // --- Fake Button ---
+  const fakeBtn = document.createElement("button");
+  fakeBtn.textContent = "メニューに戻る";
+  Object.assign(fakeBtn.style, {
+    position: "fixed",
+    bottom: "30px",
+    right: "30px",
+    zIndex: 2500,
+    padding: "15px 25px",
+    fontSize: "18px",
+    cursor: "pointer"
   });
+  fakeBtn.addEventListener("click", () => {
+    alert("…戻れないよー🤣");
+  });
+  bgDiv.appendChild(fakeBtn);
 
-  // --- ページ離脱時のアニメーション停止 ---
-  window.addEventListener("beforeunload", () => {
-    if (snowRAF) cancelAnimationFrame(snowRAF);
-    if (rotationRAF) cancelAnimationFrame(rotationRAF);
+  // --- リサイズ対応 ---
+  window.addEventListener("resize", () => {
+    snowflakes.forEach(f => {
+      f.el.style.top =
+        Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
+      f.el.style.left =
+        Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
+    });
   });
 };
