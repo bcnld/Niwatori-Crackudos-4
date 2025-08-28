@@ -22,7 +22,7 @@ window.startNewGame = async function () {
     await new Promise((resolve) => {
       const fadeOut = setInterval(() => {
         step++;
-        bgm.volume = Math.max(0, bgm.volume * (1 - step / fadeSteps));
+        bgm.volume = Math.max(0, 1 - step / fadeSteps);
         if (step >= fadeSteps) {
           clearInterval(fadeOut);
           bgm.pause();
@@ -85,13 +85,17 @@ window.startNewGame = async function () {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-      let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
+
+      let match = flake.el.style.transform.match(/rotate([-\d.]+)deg/);
+      let rot = match ? parseFloat(match[1]) : 0;
+
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
       if (top > window.innerHeight) top = -60;
       if (left < -60) left = window.innerWidth;
       if (left > window.innerWidth) left = -60;
+
       flake.el.style.top = top + "px";
       flake.el.style.left = left + "px";
       flake.el.style.transform = `rotate(${rot}deg)`;
@@ -317,13 +321,11 @@ window.startNewGame = async function () {
     };
 
     cancelBtn.onclick = () => {
-      if (selectedIndex !== null) {
-        const sel = selectedIndex;
-        const other = sel === 0 ? 1 : 0;
-        stopRotation();
-        auras[sel].style.opacity = 0;
-        flyIn(other);
-      }
+      // 選択解除時に全員を戻す
+      wrappers.forEach((w, idx) => flyIn(idx));
+      auras.forEach(a => a.style.opacity = 0);
+      stopRotation();
+
       selectedIndex = null;
       [nameBox, btnContainer].forEach((el) => el && el.remove());
       nameBox = btnContainer = confirmBtn = cancelBtn = null;
@@ -450,7 +452,7 @@ window.startNewGame = async function () {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = false;
+      mediaEl.muted = true; // 自動再生対応
       mediaEl.volume = 1.0;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
       mediaEl.play().catch(() => {});
@@ -488,46 +490,33 @@ window.startNewGame = async function () {
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
 
-    // ウィンドウリサイズ時に再配置
     const onResize = () => {
       const maxLeft = Math.max(0, window.innerWidth - w);
       const maxTop = Math.max(0, window.innerHeight - h);
-      popup.style.left = Math.min(parseFloat(popup.style.left), maxLeft) + "px";
-      popup.style.top = Math.min(parseFloat(popup.style.top), maxTop) + "px";
+      popup.style.left = Math.min(parseInt(popup.style.left), maxLeft) + "px";
+      popup.style.top = Math.min(parseInt(popup.style.top), maxTop) + "px";
     };
     window.addEventListener("resize", onResize);
-
-    // ポップアップ削除時にリスナーも解除
-    const observer = new MutationObserver(() => {
-      if (!document.body.contains(popup)) {
-        window.removeEventListener("resize", onResize);
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  // --- 初期ポップアップ表示 ---
-  setTimeout(() => createPopup(), 1000);
+  // --- 定期的にポップアップ表示 ---
+  setInterval(() => {
+    if (!document.getElementById("character-ui-wrapper")) return;
+    createPopup();
+  }, 10000); // 10秒ごと
 
-  // --- レスポンシブ調整 ---
+  // --- レイアウト調整関数 ---
   function adjustNewGameLayout() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    characterUI.style.top = `${vh / 2}px`;
-    characterUI.style.left = `${vw / 2}px`;
-
-    if (nameBox) {
-      nameBox.style.top = `${vh / 2 + 200}px`;
-      nameBox.style.left = `${vw / 2 - 100}px`;
-      nameBox.style.width = vw < 768 ? "200px" : "300px";
-    }
-    if (btnContainer) {
-      btnContainer.style.top = `${vh / 2 + 260}px`;
-      btnContainer.style.left = `${vw / 2 - (btnContainer.offsetWidth / 2)}px`;
-    }
+    if (!characterUI) return;
+    const rect = characterUI.getBoundingClientRect();
+    const midX = window.innerWidth / 2;
+    const midY = window.innerHeight / 2;
+    characterUI.style.top = midY + "px";
+    characterUI.style.left = midX + "px";
   }
-
   window.addEventListener("resize", adjustNewGameLayout);
   adjustNewGameLayout();
+
+  // --- 終了ログ ---
+  console.log("NewGame UI 完全版初期化完了");
 };
