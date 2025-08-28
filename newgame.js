@@ -459,7 +459,7 @@ window.startNewGame = async function () {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = true; // 自動再生対応
+      mediaEl.muted = false; // 自動再生対応
       mediaEl.volume = 1.0;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
       mediaEl.play().catch(() => {});
