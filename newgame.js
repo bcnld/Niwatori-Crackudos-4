@@ -221,60 +221,74 @@ window.startNewGame = async function () {
 
   // --- 名前入力 ---
   function showNameInput(c) {
+  stopRotation();
+  flyOutOther(selectedIndex);
+
+  const rect = wrappers[selectedIndex].getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const bottomY = rect.bottom + 20;
+
+  // --- 名前ボックス ---
+  if (!nameBox) {
+    nameBox = document.createElement("input");
+    nameBox.type = "text";
+    Object.assign(nameBox.style, {
+      position: "fixed",
+      zIndex: 2300,
+      padding: "10px 15px",
+      borderRadius: "8px",
+      fontSize: "20px",
+      transform: "translateX(-50%)"
+    });
+    document.body.appendChild(nameBox);
+  }
+  nameBox.style.display = "block";
+  nameBox.style.left = `${centerX}px`;  // ← 位置を更新
+  nameBox.style.top = `${bottomY}px`;   // ← 位置を更新
+  nameBox.value = "";                    // ← 前の入力値リセット
+  nameBox.placeholder = `${c.name} の名前を入力してください`;
+
+  // --- ボタンコンテナ ---
+  if (!btnContainer) {
+    btnContainer = document.createElement("div");
+    Object.assign(btnContainer.style, {
+      position: "fixed",
+      zIndex: 2300,
+      display: "flex",
+      gap: "40px",
+      transform: "translateX(-50%)"
+    });
+    document.body.appendChild(btnContainer);
+  }
+  btnContainer.style.display = "flex";
+  btnContainer.style.left = `${centerX}px`; // ← 位置更新
+  btnContainer.style.top = `${bottomY + 50}px`; // ← 位置更新
+
+  // --- ボタン ---
+  if (!cancelBtn) {
+    cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "キャンセル";
+    btnContainer.appendChild(cancelBtn);
+  }
+  if (!confirmBtn) {
+    confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "決定";
+    btnContainer.appendChild(confirmBtn);
+  }
+
+  cancelBtn.onclick = () => {
+    nameBox.style.display = "none";
+    btnContainer.style.display = "none";
+    selectedIndex = null;
+    flyInAll();
+  };
+
+  confirmBtn.onclick = () => {
+    const heroName = nameBox.value.trim() || c.name;
+    if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
+    nameBox.style.display = "none";
+    btnContainer.style.display = "none";
     stopRotation();
-    flyOutOther(selectedIndex);
-    const rect = wrappers[selectedIndex].getBoundingClientRect();
-    const centerX = rect.left + rect.width/2;
-    const bottomY = rect.bottom + 20;
-
-    if (!nameBox) {
-      nameBox = document.createElement("input");
-      nameBox.type = "text";
-      Object.assign(nameBox.style, {
-        position: "fixed", zIndex: 2300, padding: "10px 15px",
-        borderRadius: "8px", fontSize: "20px",
-        left: `${centerX}px`, top: `${bottomY}px`,
-        transform: "translateX(-50%)"
-      });
-      document.body.appendChild(nameBox);
-    }
-    nameBox.style.display = "block";
-    nameBox.placeholder = `${c.name} の名前を入力してください`;
-
-    if (!btnContainer) {
-      btnContainer = document.createElement("div");
-      Object.assign(btnContainer.style, {
-        position: "fixed",
-        zIndex: 2300,
-        display: "flex",
-        gap: "40px",
-        left: `${centerX}px`,
-        top: `${bottomY + 50}px`,
-        transform: "translateX(-50%)"
-      });
-      document.body.appendChild(btnContainer);
-    }
-    btnContainer.style.display = "flex";
-
-    if (!cancelBtn) {
-      cancelBtn = document.createElement("button");
-      cancelBtn.textContent = "キャンセル";
-      btnContainer.appendChild(cancelBtn);
-    }
-    if (!confirmBtn) {
-      confirmBtn = document.createElement("button");
-      confirmBtn.textContent = "決定";
-      btnContainer.appendChild(confirmBtn);
-    }
-
-    // --- 決定ボタン ---
-    confirmBtn.onclick = () => {
-      const heroName = nameBox.value.trim() || c.name;
-      if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
-
-      nameBox.style.display = "none";
-      btnContainer.style.display = "none";
-      stopRotation();
 
       // --- 画面フェードアウト ---
       fadeOverlay.style.display = "block";
