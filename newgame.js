@@ -445,74 +445,74 @@ window.startNewGame = async function () {
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 
   function createPopup() {
-    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
-    const popup = document.createElement("div");
-    popup.className = "popup";
-    const w = window.innerWidth < 768 ? 300 : 400;
-    const h = window.innerWidth < 768 ? 250 : 300;
-    Object.assign(popup.style, {
-      position: "fixed",
-      width: w + "px",
-      height: h + "px",
-      zIndex: 1800,
-      overflow: "hidden",
-      pointerEvents: "auto",
-      opacity: 0,
-      transition: "opacity 0.6s ease",
-    });
+  const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  const w = window.innerWidth < 768 ? 300 : 400;
+  const h = window.innerWidth < 768 ? 250 : 300;
+  Object.assign(popup.style, {
+    position: "fixed",
+    width: w + "px",
+    height: h + "px",
+    zIndex: 1800,
+    overflow: "visible", // ← 修正
+    pointerEvents: "auto",
+    opacity: 0,
+    transition: "opacity 0.6s ease",
+    backgroundColor: "rgba(0,0,0,0.8)", // 画像が見やすいように少し背景
+  });
 
-    let mediaEl;
-    if (selected.type === "img") {
-      mediaEl = document.createElement("img");
-      mediaEl.src = selected.src;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    } else {
-      mediaEl = document.createElement("video");
-      mediaEl.src = selected.src;
-      mediaEl.autoplay = true;
-      mediaEl.loop = true;
-      mediaEl.muted = false;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-      mediaEl.play().catch(() => {});
-    }
-    popup.appendChild(mediaEl);
-
-    const closeBtn = document.createElement("div");
-    closeBtn.textContent = "×";
-    Object.assign(closeBtn.style, {
-      top: "5px",
-      right: "10px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      cursor: "pointer",
-      zIndex: 2000,
-      userSelect: "none",
-    });
-    popup.appendChild(closeBtn);
-
-    closeBtn.addEventListener("click", () => {
-      popup.style.opacity = 0;
-      setTimeout(() => popup.remove(), 500);
-      popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(() => {});
-    });
-
-    // --- ポップアップのランダム位置 ---
-    const margin = 20;
-    const posX = Math.random() * (window.innerWidth - w - margin * 2) + margin;
-    const posY = Math.random() * (window.innerHeight - h - margin * 2) + margin;
-    popup.style.left = posX + "px";
-    popup.style.top = posY + "px";
-
-    document.body.appendChild(popup);
-    setTimeout(() => (popup.style.opacity = 1), 10);
-    popupSound.currentTime = 0;
-    popupSound.play().catch(() => {});
+  popup.style.position = "relative"; // ここも追加
+  // --- メディア ---
+  let mediaEl;
+  if (selected.type === "img") {
+    mediaEl = document.createElement("img");
+    mediaEl.src = selected.src;
+  } else {
+    mediaEl = document.createElement("video");
+    mediaEl.src = selected.src;
+    mediaEl.autoplay = true;
+    mediaEl.loop = true;
   }
+  Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+  popup.appendChild(mediaEl);
 
-  // --- 画面初期化後に1～2秒でポップアップ出現 ---
-  setTimeout(() => createPopup(), 1200);
+  // --- 閉じるボタン ---
+  const closeBtn = document.createElement("div");
+  closeBtn.textContent = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "5px",
+    right: "5px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    cursor: "pointer",
+    zIndex: 2000,
+  });
+  popup.appendChild(closeBtn);
+  closeBtn.addEventListener("click", () => {
+    popup.style.opacity = 0;
+    setTimeout(() => popup.remove(), 300);
+    popupCloseSound.currentTime = 0;
+    popupCloseSound.play().catch(() => {});
+  });
+
+  // ランダム位置
+  const margin = 20;
+  popup.style.left = `${Math.random() * (window.innerWidth - w - margin * 2) + margin}px`;
+  popup.style.top = `${Math.random() * (window.innerHeight - h - margin * 2) + margin}px`;
+
+  document.body.appendChild(popup);
+  setTimeout(() => (popup.style.opacity = 1), 10);
+  popupSound.currentTime = 0;
+  popupSound.play().catch(() => {});
+}
+
+// 複数回ポップアップを出す
+for (let i = 0; i < 3; i++) {
+  setTimeout(createPopup, 1200 + i * 800);
+}
 
   // --- キャンバスや背景雪なども含めて完全版なので resize対応 ---
   window.addEventListener("resize", () => {
