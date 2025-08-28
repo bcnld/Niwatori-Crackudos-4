@@ -1,6 +1,6 @@
-// newgame.js（完全統合版）
+// newgame.js（完全版）
 window.startNewGame = async function () {
-  // --- 古いゲームUI削除 ---
+  // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
   document.getElementById("title-img2")?.remove();
   document.querySelectorAll(".popup")?.forEach(p => p.remove());
@@ -13,14 +13,14 @@ window.startNewGame = async function () {
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
-  // --- フェードイン ---
+  // --- フェードイン開始 ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
   fadeOverlay.style.zIndex = 5000;
   fadeOverlay.style.transition = "opacity 2s ease";
   requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-  // --- 既存BGMフェードアウト ---
+  // --- 既存BGMをフェードアウト ---
   if (bgm && !bgm.paused) {
     if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
     const fadeSteps = 60;
@@ -55,7 +55,7 @@ window.startNewGame = async function () {
   });
   document.body.appendChild(bgDiv);
 
-  // --- 雪アニメ ---
+  // --- 雪アニメーション ---
   const snowCount = 20;
   const snowflakes = [];
   for (let i = 0; i < snowCount; i++) {
@@ -68,7 +68,7 @@ window.startNewGame = async function () {
       width: "60px",
       height: "60px",
       pointerEvents: "none",
-      transform: `rotate(${Math.random()*360}deg)`,
+      transform: `rotate(${Math.random() * 360}deg)`,
       zIndex: 2
     });
     bgDiv.appendChild(snow);
@@ -79,10 +79,8 @@ window.startNewGame = async function () {
       rotationSpeed: (Math.random() - 0.5) * 2
     });
   }
-
-  let snowRAF = null;
   function animateSnow() {
-    for (let flake of snowflakes) {
+    snowflakes.forEach(flake => {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
       let rot = parseFloat(flake.el.style.transform.replace(/[^\d.-]/g, "")) || 0;
@@ -95,8 +93,8 @@ window.startNewGame = async function () {
       flake.el.style.top = top + "px";
       flake.el.style.left = left + "px";
       flake.el.style.transform = `rotate(${rot}deg)`;
-    }
-    snowRAF = requestAnimationFrame(animateSnow);
+    });
+    requestAnimationFrame(animateSnow);
   }
   animateSnow();
 
@@ -138,14 +136,12 @@ window.startNewGame = async function () {
     fontSize: "28px",
     fontWeight: "bold",
     textAlign: "center",
-    zIndex: 2200,
-    pointerEvents: "auto"
+    zIndex: 2200
   });
   telop.textContent = "キャラクターを選択してください";
   bgDiv.appendChild(telop);
 
   const modalDim = document.createElement("div");
-  modalDim.id = "newgame-modal-dim";
   Object.assign(modalDim.style, {
     position: "fixed",
     top: 0, left: 0,
@@ -157,7 +153,6 @@ window.startNewGame = async function () {
   bgDiv.appendChild(modalDim);
 
   const characterUI = document.createElement("div");
-  characterUI.id = "character-ui-wrapper";
   Object.assign(characterUI.style, {
     position: "fixed",
     top: "50%", left: "50%",
@@ -165,7 +160,6 @@ window.startNewGame = async function () {
     zIndex: 2000,
     display: "flex",
     gap: "60px",
-    pointerEvents: "auto",
     visibility: "hidden"
   });
   bgDiv.appendChild(characterUI);
@@ -176,30 +170,27 @@ window.startNewGame = async function () {
     characterUI.style.visibility = "visible";
   });
 
-  // --- キャラクター情報 ---
+  // --- キャラクター ---
   const characters = [
     { name: "犬", img: "images/hero1.png", selectSound: "Sounds/select_hero1.mp3" },
     { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" }
   ];
-
-  const wrappers = [], imgs = [];
-  let selectedIndex = null, rotatingImg = null, rotationRAF = null;
-  let nameBox = null, btnContainer = null, confirmBtn = null, cancelBtn = null;
+  const wrappers = [];
+  let selectedIndex = null, rotationRAF = null, rotatingImg = null;
+  let nameBox = null, confirmBtn = null, cancelBtn = null, btnContainer = null;
 
   function startRotation(img) {
     stopRotation();
     rotatingImg = img;
-    let rotateAngle = 0;
-    rotatingImg.style.willChange = "transform";
+    let angle = 0;
     const step = () => {
-      rotateAngle += 2;
-      if (rotateAngle >= 360) rotateAngle -= 360;
-      rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+      angle += 2;
+      if (angle >= 360) angle -= 360;
+      img.style.transform = `rotateY(${angle}deg) scale(1.2)`;
       rotationRAF = requestAnimationFrame(step);
     };
     rotationRAF = requestAnimationFrame(step);
   }
-
   function stopRotation() {
     if (rotationRAF) cancelAnimationFrame(rotationRAF);
     rotationRAF = null;
@@ -209,24 +200,21 @@ window.startNewGame = async function () {
       rotatingImg = null;
     }
   }
-
   function flyOutOther(idx) {
     wrappers.forEach((w, i) => {
       if (i !== idx) {
         const dir = i < idx ? -1 : 1;
-        const dist = window.innerWidth + 400;
-        w.style.transition = "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
-        w.style.transform = `translateX(${dir*dist}px)`;
+        w.style.transition = "transform 0.7s ease, opacity 0.7s ease";
+        w.style.transform = `translateX(${dir * (window.innerWidth + 400)}px)`;
         w.style.opacity = "0";
         flyOutSound.currentTime = 0;
         flyOutSound.play().catch(()=>{});
       }
     });
   }
-
   function flyInAll() {
     wrappers.forEach(w => {
-      w.style.transition = "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
+      w.style.transition = "transform 0.6s ease, opacity 0.4s ease";
       w.style.transform = "translateX(0)";
       w.style.opacity = "1";
       flyInSound.currentTime = 0;
@@ -234,6 +222,7 @@ window.startNewGame = async function () {
     });
   }
 
+  // --- 名前入力 ---
   function showNameInput(c) {
     stopRotation();
     flyOutOther(selectedIndex);
@@ -251,7 +240,6 @@ window.startNewGame = async function () {
         padding: "10px 15px",
         borderRadius: "8px",
         fontSize: "20px",
-        outline: "none",
         left: `${centerX}px`,
         top: `${bottomY}px`,
         transform: "translateX(-50%)"
@@ -259,10 +247,7 @@ window.startNewGame = async function () {
       document.body.appendChild(nameBox);
     }
     nameBox.style.display = "block";
-    nameBox.value = "";
     nameBox.placeholder = `${c.name} の名前を入力してください`;
-    nameBox.style.left = `${centerX}px`;
-    nameBox.style.top = `${bottomY}px`;
 
     if (!btnContainer) {
       btnContainer = document.createElement("div");
@@ -271,7 +256,6 @@ window.startNewGame = async function () {
         zIndex: 2300,
         display: "flex",
         gap: "40px",
-        justifyContent: "center",
         left: `${centerX}px`,
         top: `${bottomY + 50}px`,
         transform: "translateX(-50%)"
@@ -279,24 +263,17 @@ window.startNewGame = async function () {
       document.body.appendChild(btnContainer);
     }
     btnContainer.style.display = "flex";
-    btnContainer.style.left = `${centerX}px`;
-    btnContainer.style.top = `${bottomY + 50}px`;
 
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
-      Object.assign(cancelBtn.style, { padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer" });
       btnContainer.appendChild(cancelBtn);
-    } else cancelBtn.style.display = "inline-block";
-
+    }
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
-      Object.assign(confirmBtn.style, { padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer" });
       btnContainer.appendChild(confirmBtn);
-    } else confirmBtn.style.display = "inline-block";
-
-    nameBox.focus();
+    }
 
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
@@ -305,25 +282,16 @@ window.startNewGame = async function () {
         btnContainer.style.display = "none";
         stopRotation();
 
+        // --- フェードアウト後にノンフィクション ---
         fadeOverlay.style.display = "block";
         fadeOverlay.style.zIndex = 9999;
         fadeOverlay.style.transition = "opacity 2s ease";
         fadeOverlay.style.opacity = 0;
         requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-        if (bgm && !bgm.paused) {
-          if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-          let step = 0, steps = 60, interval = 2000 / steps;
-          bgm._fadeOutInterval = setInterval(() => {
-            step++;
-            bgm.volume = Math.max(0, 1 - step / steps);
-            if (step >= steps) {
-              clearInterval(bgm._fadeOutInterval);
-              bgm.pause();
-              bgm.currentTime = 0;
-            }
-          }, interval);
-        }
+        setTimeout(() => {
+          showNonFictionText();
+        }, 2000);
       }
     };
 
@@ -336,150 +304,148 @@ window.startNewGame = async function () {
   }
 
   // --- キャラクター生成 ---
-  characters.forEach((c,i)=>{
+  characters.forEach((c, i) => {
     const wrapper = document.createElement("div");
-    Object.assign(wrapper.style,{ display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer", perspective:"600px", position:"relative", transition:"transform 0.6s ease, opacity 0.6s ease" });
-
+    Object.assign(wrapper.style, { display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer" });
     const img = document.createElement("img");
     img.src = c.img;
-    Object.assign(img.style,{ width:"200px", height:"300px", objectFit:"contain", border:"4px solid transparent", borderRadius:"12px", transition:"opacity 0.3s ease, border-color 0.3s ease", zIndex:1, backfaceVisibility:"visible", transformStyle:"preserve-3d", willChange:"transform" });
+    img.style.width = "200px";
     wrapper.appendChild(img);
-
-    const nameLabel = document.createElement("div");
-    nameLabel.textContent = c.name;
-    Object.assign(nameLabel.style,{ marginTop:"10px", fontSize:"24px", fontWeight:"bold", color:"#fff", textShadow:"2px 2px 4px black" });
-    wrapper.appendChild(nameLabel);
+    const label = document.createElement("div");
+    label.textContent = c.name;
+    label.style.color = "#fff";
+    wrapper.appendChild(label);
 
     characterUI.appendChild(wrapper);
-    wrappers[i]=wrapper;
-    imgs[i]=img;
+    wrappers[i] = wrapper;
 
-    wrapper.addEventListener("click",()=>{
-      if(selectedIndex===i){ showNameInput(c); return; }
-      if(selectedIndex!==null && selectedIndex!==i){ stopRotation(); imgs[selectedIndex].style.transform="rotateY(0deg) scale(1)"; }
-      selectedIndex=i;
-      startRotation(imgs[i]);
-      const selectSound=new Audio(c.selectSound);
-      selectSound.currentTime=0; selectSound.play().catch(()=>{});
-      telop.textContent="もう一度クリックで決定。";
+    wrapper.addEventListener("click", () => {
+      if (selectedIndex === i) { showNameInput(c); return; }
+      if (selectedIndex !== null) stopRotation();
+      selectedIndex = i;
+      startRotation(img);
+      new Audio(c.selectSound).play().catch(()=>{});
+      telop.textContent = "もう一度クリックで決定。";
     });
   });
 
-  // --- ポップアップ処理 ---
+  // --- ポップアップ処理（省略なし） ---
   const popupMedia = [
-    { type: "img", src: "images/popup1.gif" },
-    { type: "img", src: "images/popup2.gif" },
-    { type: "video", src: "videos/popup1.mp4" },
-    { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" }
-  ];
-  const popupSound = new Audio("Sounds/popup.mp3");
-  const popupCloseSound = new Audio("Sounds/popup_x.mp3");
-  const activePopups = [];
+  { type: "img", src: "images/popup1.gif" },
+  { type: "video", src: "videos/popup1.mp4" },
+  { type: "img", src: "images/popup2.gif" },
+  { type: "video", src: "videos/popup2.mp4" },
+  { type: "img", src: "images/popup3.gif" }
+];
 
-  function createPopup() {
-    if(activePopups.length>=50) return;
-    const selected=popupMedia[Math.floor(Math.random()*popupMedia.length)];
-    const popup=document.createElement("div");
-    popup.className="popup";
-    const w=window.innerWidth<768?300:400;
-    const h=window.innerWidth<768?250:300;
-    Object.assign(popup.style,{ position:"fixed", width:w+"px", height:h+"px", zIndex:1800, overflow:"hidden", pointerEvents:"auto" });
+const popupSound = new Audio("Sounds/popup.mp3");
+const popupCloseSound = new Audio("Sounds/popup_x.mp3");
+const activePopups = [];
 
-    let mediaEl;
-    if(selected.type==="img"){ mediaEl=document.createElement("img"); mediaEl.src=selected.src; Object.assign(mediaEl.style,{ width:"100%", height:"100%", objectFit:"contain" }); }
-    else{ mediaEl=document.createElement("video"); mediaEl.src=selected.src; mediaEl.autoplay=true; mediaEl.loop=true; Object.assign(mediaEl.style,{ width:"100%", height:"100%", objectFit:"contain" }); mediaEl.play().catch(()=>{}); }
-    popup.appendChild(mediaEl);
+function createPopup() {
+  if (activePopups.length >= 50) return; // 最大50個
 
-    const closeBtn=document.createElement("div");
-    closeBtn.textContent="×";
-    Object.assign(closeBtn.style,{ position:"absolute", top:"5px", right:"10px", fontSize:"24px", fontWeight:"bold", color:"#fff", cursor:"pointer", zIndex:2000, userSelect:"none" });
-    closeBtn.addEventListener("click",()=>{
-      popup.remove();
-      const idx=activePopups.indexOf(popup); if(idx>=0) activePopups.splice(idx,1);
-      popupCloseSound.play().catch(()=>{});
-    });
-    popup.appendChild(closeBtn);
+  const sel = popupMedia[Math.floor(Math.random() * popupMedia.length)];
+  const popup = document.createElement("div");
+  popup.className = "popup";
 
-    const margin=20;
-    popup.style.left=Math.random()*(window.innerWidth-w-margin*2)+margin+"px";
-    popup.style.top=Math.random()*(window.innerHeight-h-margin*2)+margin+"px";
+  // ランダム座標
+  const popupWidth = 300;
+  const popupHeight = 250;
+  const maxLeft = window.innerWidth - popupWidth;
+  const maxTop = window.innerHeight - popupHeight;
 
-    document.body.appendChild(popup);
-    activePopups.push(popup);
-    popupSound.play().catch(()=>{});
+  const left = Math.random() * maxLeft;
+  const top = Math.random() * maxTop;
+
+  Object.assign(popup.style, {
+    position: "fixed",
+    width: popupWidth + "px",
+    height: popupHeight + "px",
+    left: left + "px",
+    top: top + "px",
+    zIndex: 1800,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "0 0 10px rgba(0,0,0,0.5)"
+  });
+
+  let mediaEl;
+  if (sel.type === "img") {
+    mediaEl = document.createElement("img");
+    mediaEl.src = sel.src;
+    mediaEl.style.width = "100%";
+    mediaEl.style.height = "100%";
+    mediaEl.style.objectFit = "cover";
+  } else {
+    mediaEl = document.createElement("video");
+    mediaEl.src = sel.src;
+    mediaEl.autoplay = true;
+    mediaEl.loop = true;
+    mediaEl.muted = true;
+    mediaEl.style.width = "100%";
+    mediaEl.style.height = "100%";
+    mediaEl.style.objectFit = "cover";
+    mediaEl.play().catch(() => {});
   }
-  setInterval(createPopup,5000);
+  popup.appendChild(mediaEl);
 
-  // --- ノンフィクション表示 ---
+  const closeBtn = document.createElement("div");
+  closeBtn.textContent = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "5px", right: "10px",
+    cursor: "pointer",
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: "20px"
+  });
+  closeBtn.onclick = () => {
+    popup.remove();
+    activePopups.splice(activePopups.indexOf(popup), 1);
+    popupCloseSound.play().catch(() => {});
+  };
+  popup.appendChild(closeBtn);
+
+  document.body.appendChild(popup);
+  activePopups.push(popup);
+
+  popupSound.play().catch(() => {});
+}
+
+// 2秒ごとにポップアップ生成
+setInterval(createPopup, 2000);
+  
+  // --- ノンフィクション ---
   function showNonFictionText() {
-    const fadeOverlay = document.getElementById("fade-overlay");
-    if (!fadeOverlay) return;
-
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.opacity = 1;
-    fadeOverlay.style.zIndex = 6000;
-
     const nfText = document.createElement("div");
     nfText.textContent = "この物語はノンフィクションです。";
     Object.assign(nfText.style, {
-      position: "fixed",
-      top: "50%", left: "50%",
-      transform: "translate(-50%, -50%)",
-      fontSize: "36px",
-      fontWeight: "bold",
-      color: "#fff",
-      textAlign: "center",
-      zIndex: 6001,
-      opacity: 0,
-      pointerEvents: "auto",
+      position: "fixed", top: "50%", left: "50%",
+      transform: "translate(-50%,-50%)",
+      fontSize: "36px", color: "#fff",
+      zIndex: 6001, opacity: 0,
       transition: "opacity 2s ease"
     });
     document.body.appendChild(nfText);
+    requestAnimationFrame(() => nfText.style.opacity = 1);
 
-    // フェードイン
-    requestAnimationFrame(() => {
-      nfText.style.opacity = 1;
-    });
-
-    // 3秒後にフェードアウトして削除
-    setTimeout(() => {
+    nfText.addEventListener("click", () => {
+      new Audio("Sounds/select.mp3").play().catch(()=>{});
       nfText.style.opacity = 0;
-      fadeOverlay.style.opacity = 0;
-      setTimeout(() => {
-        nfText.remove();
-        fadeOverlay.style.display = "none";
-      }, 2000);
-    }, 3000);
+      setTimeout(() => nfText.remove(), 2000);
+    });
   }
-
-  // 最初にノンフィクション表示
-  showNonFictionText();
 
   // --- リサイズ対応 ---
   window.addEventListener("resize", () => {
-    snowflakes.forEach(flake => {
-      flake.el.style.top = Math.min(parseFloat(flake.el.style.top), window.innerHeight) + "px";
-      flake.el.style.left = Math.min(parseFloat(flake.el.style.left), window.innerWidth) + "px";
-    });
-
-    wrappers.forEach(w => {
-      w.style.transform = "translateX(0)"; // 再調整
-    });
-
-    if (nameBox) {
-      const rect = wrappers[selectedIndex]?.getBoundingClientRect();
-      if (rect) {
-        nameBox.style.left = `${rect.left + rect.width / 2}px`;
-        nameBox.style.top = `${rect.bottom + 20}px`;
-      }
-    }
-    if (btnContainer && selectedIndex !== null) {
-      const rect = wrappers[selectedIndex]?.getBoundingClientRect();
-      if (rect) {
-        btnContainer.style.left = `${rect.left + rect.width / 2}px`;
-        btnContainer.style.top = `${rect.bottom + 70}px`;
-      }
+    if (nameBox && selectedIndex !== null) {
+      const rect = wrappers[selectedIndex].getBoundingClientRect();
+      nameBox.style.left = `${rect.left + rect.width / 2}px`;
+      nameBox.style.top = `${rect.bottom + 20}px`;
+      btnContainer.style.left = `${rect.left + rect.width / 2}px`;
+      btnContainer.style.top = `${rect.bottom + 70}px`;
     }
   });
 };
