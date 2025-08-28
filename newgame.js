@@ -434,17 +434,22 @@ window.startNewGame = async function () {
   });
 
   // --- ポップアップ ---
-  const popupMedia = [
-    { type: "img", src: "images/popup1.gif" },
-    { type: "img", src: "images/popup2.gif" },
-    { type: "video", src: "videos/popup1.mp4" },
-    { type: "video", src: "videos/popup2.mp4" },
-    { type: "video", src: "videos/popup3.mp4" },
-  ];
-  const popupSound = new Audio("Sounds/popup.mp3");
-  const popupCloseSound = new Audio("Sounds/popup_x.mp3");
+  // --- ポップアップ ---
+const popupMedia = [
+  { type: "img", src: "images/popup1.gif" },
+  { type: "img", src: "images/popup2.gif" },
+  { type: "video", src: "videos/popup1.mp4" },
+  { type: "video", src: "videos/popup2.mp4" },
+  { type: "video", src: "videos/popup3.mp4" },
+];
+const popupSound = new Audio("Sounds/popup.mp3");
+const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 
-  function createPopup() {
+// 最大50個まで
+const activePopups = [];
+function createPopup() {
+  if (activePopups.length >= 1000) return; // 最大50個まで
+
   const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
   const popup = document.createElement("div");
   popup.className = "popup";
@@ -455,63 +460,73 @@ window.startNewGame = async function () {
     width: w + "px",
     height: h + "px",
     zIndex: 1800,
-    overflow: "visible", // ← 修正
+    overflow: "hidden",
     pointerEvents: "auto",
     opacity: 0,
     transition: "opacity 0.6s ease",
-    backgroundColor: "rgba(0,0,0,0.8)", // 画像が見やすいように少し背景
   });
 
-  popup.style.position = "relative"; // ここも追加
-  // --- メディア ---
   let mediaEl;
   if (selected.type === "img") {
     mediaEl = document.createElement("img");
     mediaEl.src = selected.src;
+    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
   } else {
     mediaEl = document.createElement("video");
     mediaEl.src = selected.src;
     mediaEl.autoplay = true;
     mediaEl.loop = true;
+    mediaEl.muted = false;
+    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+    mediaEl.play().catch(() => {});
   }
-  Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
   popup.appendChild(mediaEl);
 
-  // --- 閉じるボタン ---
   const closeBtn = document.createElement("div");
   closeBtn.textContent = "×";
   Object.assign(closeBtn.style, {
     position: "absolute",
     top: "5px",
-    right: "5px",
+    right: "10px",
     fontSize: "24px",
     fontWeight: "bold",
     color: "#fff",
     cursor: "pointer",
     zIndex: 2000,
+    userSelect: "none",
   });
   popup.appendChild(closeBtn);
+
   closeBtn.addEventListener("click", () => {
     popup.style.opacity = 0;
-    setTimeout(() => popup.remove(), 300);
+    setTimeout(() => {
+      popup.remove();
+      const idx = activePopups.indexOf(popup);
+      if (idx >= 0) activePopups.splice(idx, 1);
+    }, 500);
     popupCloseSound.currentTime = 0;
     popupCloseSound.play().catch(() => {});
   });
 
   // ランダム位置
   const margin = 20;
-  popup.style.left = `${Math.random() * (window.innerWidth - w - margin * 2) + margin}px`;
-  popup.style.top = `${Math.random() * (window.innerHeight - h - margin * 2) + margin}px`;
+  const posX = Math.random() * (window.innerWidth - w - margin * 2) + margin;
+  const posY = Math.random() * (window.innerHeight - h - margin * 2) + margin;
+  popup.style.left = posX + "px";
+  popup.style.top = posY + "px";
 
   document.body.appendChild(popup);
   setTimeout(() => (popup.style.opacity = 1), 10);
+
+  activePopups.push(popup);
+
+  // ポップアップ音
   popupSound.currentTime = 0;
   popupSound.play().catch(() => {});
 }
 
-// 複数回ポップアップを出す
-for (let i = 0; i < 3; i++) {
-  setTimeout(createPopup, 1200 + i * 800);
+// --- 無限にポップアップを生成（最大50個まで） ---
+setInterval(createPopup, 5000); // 5秒ごと
 }
 
   // --- キャンバスや背景雪なども含めて完全版なので resize対応 ---
