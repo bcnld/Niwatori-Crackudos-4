@@ -122,6 +122,8 @@ window.startNewGame = async function () {
 
   // --- テロップ ---
   const telop = document.createElement("div");
+  telop.id = "telop";
+  telop.dataset.telop = "1";
   Object.assign(telop.style, {
     position: "fixed",
     top: "10%",
@@ -141,6 +143,7 @@ window.startNewGame = async function () {
 
   // --- キャラクターUI ---
   const characterUI = document.createElement("div");
+  characterUI.id = "character-ui-wrapper";
   Object.assign(characterUI.style, {
     position: "fixed",
     top: "50%",
@@ -224,13 +227,10 @@ window.startNewGame = async function () {
       nameBox.placeholder = "鶏の餌食の名前を決めてください";
       Object.assign(nameBox.style, {
         position: "fixed",
-        top: "55%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 15px",
-        fontSize: "20px",
         borderRadius: "8px",
+        fontSize: "20px",
       });
       bgDiv.appendChild(nameBox);
     }
@@ -238,11 +238,9 @@ window.startNewGame = async function () {
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
+      confirmBtn.className = "confirm-btn";
       Object.assign(confirmBtn.style, {
         position: "fixed",
-        top: "65%",
-        left: "55%", // 右側に配置
-        transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 20px",
         fontSize: "20px",
@@ -255,11 +253,9 @@ window.startNewGame = async function () {
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
+      cancelBtn.className = "cancel-btn";
       Object.assign(cancelBtn.style, {
         position: "fixed",
-        top: "65%",
-        left: "45%", // 左側に配置
-        transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 20px",
         fontSize: "20px",
@@ -277,10 +273,8 @@ window.startNewGame = async function () {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
         console.log(`確定: ${c.name}, 名前: ${heroName}`);
-        // 名前入力UIを削除
         [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
         nameBox = confirmBtn = cancelBtn = null;
-        // テロップとキャラクターUIを削除
         if (telop) telop.remove();
         if (characterUI) characterUI.remove();
         selectedIndex = null;
@@ -293,13 +287,15 @@ window.startNewGame = async function () {
         const other = sel === 0 ? 1 : 0;
         stopRotation();
         auras[sel].style.opacity = 0;
-        flyIn(other); // キャンセルで未選択キャラ戻す
+        flyIn(other);
       }
       selectedIndex = null;
       [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
       nameBox = confirmBtn = cancelBtn = null;
       telop.textContent = "鶏の餌食を選択してください";
     };
+
+    adjustNewGameLayout(); // 初期配置
   }
 
   // --- キャラクター生成 ---
@@ -369,7 +365,6 @@ window.startNewGame = async function () {
       const other = i === 0 ? 1 : 0;
 
       if (selectedIndex === i) {
-        // 2回目クリック → 名前入力表示
         showNameInput(c);
         return;
       }
@@ -401,6 +396,7 @@ window.startNewGame = async function () {
   function createPopup() {
     const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
     const popup = document.createElement("div");
+    popup.className = "popup";
     Object.assign(popup.style, {
       position: "fixed",
       width: window.innerWidth < 768 ? "300px" : "400px",
@@ -464,4 +460,77 @@ window.startNewGame = async function () {
 
   createPopup();
   setInterval(() => createPopup(), 4000 + Math.random() * 4000);
-};
+
+  // --- レイアウト調整 ---
+  // ========================
+// レイアウト調整関数
+// ========================
+function adjustNewGameLayout() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const isPortrait = h > w;
+
+  // --- キャラクターUI ---
+  if (characterUI) {
+    characterUI.style.top = "50%";
+    characterUI.style.left = "50%";
+    characterUI.style.transform = "translate(-50%, -50%)";
+    characterUI.style.flexDirection = isPortrait ? "column" : "row";
+    characterUI.style.gap = isPortrait ? "40px" : "60px";
+  }
+
+  // --- 回転中のキャラクターサイズ調整 ---
+  if (imgs) {
+    imgs.forEach((img) => {
+      img.style.width = isPortrait ? "180px" : "200px";
+      img.style.height = isPortrait ? "270px" : "300px";
+    });
+  }
+
+  // --- オーラサイズ調整 ---
+  if (auras) {
+    auras.forEach((aura) => {
+      aura.style.width = isPortrait ? "200px" : "220px";
+      aura.style.height = isPortrait ? "300px" : "320px";
+    });
+  }
+
+  // --- 名前入力ボックスとボタン ---
+  if (nameBox) {
+    nameBox.style.top = isPortrait ? "55%" : "50%";
+    nameBox.style.left = "50%";
+    nameBox.style.transform = "translate(-50%, -50%)";
+    nameBox.style.width = isPortrait ? "250px" : "200px";
+  }
+  if (confirmBtn) {
+    confirmBtn.style.top = isPortrait ? "65%" : "55%";
+    confirmBtn.style.left = "55%";
+  }
+  if (cancelBtn) {
+    cancelBtn.style.top = isPortrait ? "65%" : "55%";
+    cancelBtn.style.left = "45%";
+  }
+
+  // --- テロップ ---
+  if (telop) {
+    telop.style.top = isPortrait ? "10%" : "5%";
+    telop.style.fontSize = isPortrait ? "28px" : "24px";
+    telop.style.padding = isPortrait ? "20px 40px" : "15px 30px";
+  }
+
+  // --- ポップアップ再配置 ---
+  const popups = document.querySelectorAll(".popup");
+  popups.forEach((popup) => {
+    const maxLeft = window.innerWidth - parseInt(popup.style.width);
+    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
+    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
+  });
+}
+
+// --- ウィンドウリサイズ・向き変更で再調整 ---
+window.addEventListener("resize", adjustNewGameLayout);
+window.addEventListener("orientationchange", adjustNewGameLayout);
+
+// --- startNewGame 内で呼ぶ ---
+adjustNewGameLayout();
