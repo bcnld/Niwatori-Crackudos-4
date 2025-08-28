@@ -314,24 +314,36 @@ window.startNewGame = async function () {
       }
 
       // --- 1.5秒後に文字フェードイン ---
-      setTimeout(() => {
-        const nfText = document.createElement("div");
-        nfText.textContent = "この物語はノンフィクションです。";
-        Object.assign(nfText.style, {
-          position: "fixed",
-          top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-          fontSize: "36px",
-          color: "#fff",
-          zIndex: 10000,
-          opacity: 0,
-          transition: "opacity 3s ease"
-        });
-        document.body.appendChild(nfText);
-        requestAnimationFrame(() => nfText.style.opacity = 1);
-      }, 1500);
-    };
+setTimeout(() => {
+  const nfText = document.createElement("div");
+  nfText.textContent = "この物語はノンフィクションです。";
+  Object.assign(nfText.style, {
+    position: "fixed",
+    top: "50%", left: "50%",
+    transform: "translate(-50%,-50%)",
+    fontSize: "36px",
+    color: "#fff",
+    zIndex: 10000,
+    opacity: 0,
+    transition: "opacity 3s ease",
+    cursor: "pointer" // ←クリック可能にする
+  });
+  document.body.appendChild(nfText);
+  requestAnimationFrame(() => nfText.style.opacity = 1);
 
+  // --- クリックで次に進む処理 ---
+  function proceed() {
+    nfText.remove();
+    document.removeEventListener("click", proceed); // 一度だけ
+    // ここに次の処理を追加
+    // 例: キャラクター選択画面やゲーム開始など
+    startCharacterSelection(); // 仮関数
+  }
+
+  // クリックイベントを追加（どこでもOK）
+  document.addEventListener("click", proceed);
+}, 1500);
+    
     // --- キャンセルボタン ---
     cancelBtn.onclick = () => {
       nameBox.style.display = "none";
