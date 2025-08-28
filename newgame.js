@@ -1,4 +1,4 @@
-// newgame.js（完全統合版・エラー対策済み）
+// newgame.js（完全統合版）
 window.startNewGame = async function () {
   // --- 古いゲームUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -412,84 +412,74 @@ window.startNewGame = async function () {
   setInterval(createPopup,5000);
 
   // --- ノンフィクション表示 ---
-function showNonFictionText() {
-  const fadeOverlay = document.getElementById("fade-overlay");
-  if (!fadeOverlay) return;
+  function showNonFictionText() {
+    const fadeOverlay = document.getElementById("fade-overlay");
+    if (!fadeOverlay) return;
 
-  fadeOverlay.style.display = "block";
-  fadeOverlay.style.opacity = 1;
-  fadeOverlay.style.zIndex = 6000;
+    fadeOverlay.style.display = "block";
+    fadeOverlay.style.opacity = 1;
+    fadeOverlay.style.zIndex = 6000;
 
-  const nfText = document.createElement("div");
-  nfText.textContent = "この物語はノンフィクションです。";
-  Object.assign(nfText.style, {
-    position: "fixed",
-    top: "50%", left: "50%",
-    transform: "translate(-50%, -50%)",
-    fontSize: "36px",
-    fontWeight: "bold",
-    color: "#fff",
-    textAlign: "center",
-    zIndex: 6001,
-    opacity: 0,
-    pointerEvents: "auto",
-    transition: "opacity 2s ease"
-  });
-  document.body.appendChild(nfText);
+    const nfText = document.createElement("div");
+    nfText.textContent = "この物語はノンフィクションです。";
+    Object.assign(nfText.style, {
+      position: "fixed",
+      top: "50%", left: "50%",
+      transform: "translate(-50%, -50%)",
+      fontSize: "36px",
+      fontWeight: "bold",
+      color: "#fff",
+      textAlign: "center",
+      zIndex: 6001,
+      opacity: 0,
+      pointerEvents: "auto",
+      transition: "opacity 2s ease"
+    });
+    document.body.appendChild(nfText);
 
-  requestAnimationFrame(() => nfText.style.opacity = 1);
+    // フェードイン
+    requestAnimationFrame(() => {
+      nfText.style.opacity = 1;
+    });
 
-  const selectSound = new Audio("Sounds/select.mp3");
-  const removeText = () => {
-    nfText.style.transition = "opacity 1s ease";
-    nfText.style.opacity = 0;
-    selectSound.currentTime = 0;
-    selectSound.play().catch(()=>{});
+    // 3秒後にフェードアウトして削除
     setTimeout(() => {
-      nfText.remove();
-      fadeOverlay.style.display = "none";
-
-      // --- ノンフィクション後、キャラクターUI表示 ---
-      const characterUI = document.getElementById("character-ui-wrapper");
-      const telop = document.getElementById("telop");
-      if (characterUI) characterUI.style.visibility = "visible";
-      if (telop) telop.style.display = "block";
-    }, 1000);
-
-    document.removeEventListener("click", removeText);
-  };
-
-  document.addEventListener("click", removeText);
-}
-
-// --- フェード解除後にノンフィクション表示 ---
-setTimeout(showNonFictionText, 2000);
-
-// --- ウィンドウリサイズ対応 ---
-window.addEventListener("resize", () => {
-  // 雪の位置調整
-  snowflakes.forEach(f => {
-    f.el.style.top = Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
-    f.el.style.left = Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
-  });
-
-  // ポップアップ位置調整
-  document.querySelectorAll(".popup").forEach(popup => {
-    const w = popup.offsetWidth;
-    const h = popup.offsetHeight;
-    const margin = 20;
-    popup.style.left = Math.min(parseFloat(popup.style.left), window.innerWidth - w - margin) + "px";
-    popup.style.top = Math.min(parseFloat(popup.style.top), window.innerHeight - h - margin) + "px";
-  });
-
-  // キャラクター名入力ボックス・ボタンの位置再調整
-  if (nameBox && selectedIndex !== null) {
-    const rect = wrappers[selectedIndex].getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const bottomY = rect.bottom + 20;
-    nameBox.style.left = `${centerX}px`;
-    nameBox.style.top = `${bottomY}px`;
-    if (btnContainer) btnContainer.style.left = `${centerX}px`;
-    if (btnContainer) btnContainer.style.top = `${bottomY + 50}px`;
+      nfText.style.opacity = 0;
+      fadeOverlay.style.opacity = 0;
+      setTimeout(() => {
+        nfText.remove();
+        fadeOverlay.style.display = "none";
+      }, 2000);
+    }, 3000);
   }
-});
+
+  // 最初にノンフィクション表示
+  showNonFictionText();
+
+  // --- リサイズ対応 ---
+  window.addEventListener("resize", () => {
+    snowflakes.forEach(flake => {
+      flake.el.style.top = Math.min(parseFloat(flake.el.style.top), window.innerHeight) + "px";
+      flake.el.style.left = Math.min(parseFloat(flake.el.style.left), window.innerWidth) + "px";
+    });
+
+    wrappers.forEach(w => {
+      w.style.transform = "translateX(0)"; // 再調整
+    });
+
+    if (nameBox) {
+      const rect = wrappers[selectedIndex]?.getBoundingClientRect();
+      if (rect) {
+        nameBox.style.left = `${rect.left + rect.width / 2}px`;
+        nameBox.style.top = `${rect.bottom + 20}px`;
+      }
+    }
+    if (btnContainer && selectedIndex !== null) {
+      const rect = wrappers[selectedIndex]?.getBoundingClientRect();
+      if (rect) {
+        btnContainer.style.left = `${rect.left + rect.width / 2}px`;
+        btnContainer.style.top = `${rect.bottom + 70}px`;
+      }
+    }
+  });
+};
