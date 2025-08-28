@@ -432,9 +432,8 @@ function createPopup() {
         height: h + "px",
         zIndex: 1800,
         overflow: "hidden",
-        pointerEvents: "auto",
-        opacity: 0,
-        transition: "opacity 0.6s ease"
+        pointerEvents: "auto"
+        // opacity と transition は削除
     });
 
     let mediaEl;
@@ -467,12 +466,9 @@ function createPopup() {
         userSelect: "none"
     });
     closeBtn.addEventListener("click", () => {
-        popup.style.opacity = 0;
-        setTimeout(() => {
-            popup.remove();
-            const idx = activePopups.indexOf(popup);
-            if (idx >= 0) activePopups.splice(idx, 1);
-        }, 500);
+        popup.remove();
+        const idx = activePopups.indexOf(popup);
+        if (idx >= 0) activePopups.splice(idx, 1);
         popupCloseSound.currentTime = 0;
         popupCloseSound.play().catch(() => { });
     });
@@ -483,7 +479,6 @@ function createPopup() {
     popup.style.top = Math.random() * (window.innerHeight - h - margin * 2) + margin + "px";
 
     document.body.appendChild(popup);
-    setTimeout(() => popup.style.opacity = 1, 10);
     activePopups.push(popup);
 
     popupSound.currentTime = 0;
