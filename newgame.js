@@ -1,8 +1,9 @@
 window.startNewGame = async function () {
     // --- 古いゲームUI削除 ---
-    document.getElementById("newgame-bg-div")?.remove();
-    document.querySelectorAll(".popup")?.forEach(p => p.remove());
-
+  document.getElementById("newgame-bg-div")?.remove();
+  document.getElementById("title-img2")?.remove();   // 追加してTitle2も削除
+  document.querySelectorAll(".popup")?.forEach(p => p.remove());
+    
     const fadeOverlay = document.getElementById("fade-overlay");
     const bgm = document.getElementById("bgm");
     if (!fadeOverlay) return;
