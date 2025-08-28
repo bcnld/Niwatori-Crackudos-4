@@ -466,5 +466,5 @@ window.startNewGame = async function () {
     popupSound.play().catch(() => {});
   }
 
-  window._popupInterval = setInterval(createPopup, 4500);
+  window._popupInterval = setInterval(createPopup, 1000);
 };
