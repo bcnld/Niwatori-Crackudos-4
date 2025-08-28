@@ -7,7 +7,7 @@ window.startNewGame = async function () {
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
-  // --- フェードオーバーレイ ---
+  // --- フェードオーバーレイ（導入） ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
   fadeOverlay.style.zIndex = 5000;
@@ -33,13 +33,15 @@ window.startNewGame = async function () {
     });
   }
 
-  // --- 画面クリア ---
-  document.body.querySelectorAll("div, img, video").forEach((el) => {
-    if (!el.id || el.id === "fade-overlay") return;
-    el.remove();
+  // --- 画面クリア（重要）---
+  // body の直下にある要素を一掃。ただし fade-overlay と bgm は残す
+  const preserveIds = new Set(["fade-overlay", "bgm"]);
+  Array.from(document.body.children).forEach((child) => {
+    if (child.id && preserveIds.has(child.id)) return;
+    child.remove();
   });
 
-  // --- 背景 ---
+  // --- 背景コンテナ ---
   const bgDiv = document.createElement("div");
   Object.assign(bgDiv.style, {
     position: "fixed",
@@ -56,7 +58,7 @@ window.startNewGame = async function () {
   });
   document.body.appendChild(bgDiv);
 
-  // --- 雪 ---
+  // --- 雪（デコレーション） ---
   const snowCount = 20;
   const snowflakes = [];
   for (let i = 0; i < snowCount; i++) {
@@ -99,7 +101,7 @@ window.startNewGame = async function () {
   }
   animateSnow();
 
-  // --- フェード解除 ---
+  // --- フェード解除（導入側のオーバーレイを戻す） ---
   fadeOverlay.style.transition = "opacity 1s ease";
   fadeOverlay.style.opacity = 0;
   setTimeout(() => (fadeOverlay.style.display = "none"), 1000);
@@ -120,28 +122,47 @@ window.startNewGame = async function () {
     }, interval);
   }
 
-  // --- テロップ ---
+  // -----------------------
+  // UI 要素（telop / characterUI など）
+  // -----------------------
+  // telop（中央表示）
   const telop = document.createElement("div");
   telop.id = "telop";
   telop.dataset.telop = "1";
   Object.assign(telop.style, {
     position: "fixed",
-    top: "10%",
+    top: "50%",
     left: "50%",
-    transform: "translateX(-50%)",
-    backgroundColor: "rgba(0,0,0,0.6)",
+    transform: "translate(-50%, -50%)",
+    backgroundColor: "rgba(0,0,0,0.7)",
     padding: "20px 40px",
     borderRadius: "10px",
     color: "#fff",
     fontSize: "28px",
     fontWeight: "bold",
     textAlign: "center",
-    zIndex: 1200,
+    zIndex: 2200,
+    pointerEvents: "auto",
   });
   telop.textContent = "鶏の餌食を選択してください";
-  document.body.appendChild(telop);
+  bgDiv.appendChild(telop);
 
-  // --- キャラクターUI ---
+  // modal dim（画面全体を薄暗くして押したら解除）
+  const modalDim = document.createElement("div");
+  modalDim.id = "newgame-modal-dim";
+  Object.assign(modalDim.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    zIndex: 2100,
+    cursor: "pointer",
+  });
+  bgDiv.appendChild(modalDim);
+
+  // --- キャラクターUI（最初は非表示。modal を押すと表示） ---
   const characterUI = document.createElement("div");
   characterUI.id = "character-ui-wrapper";
   Object.assign(characterUI.style, {
@@ -149,11 +170,21 @@ window.startNewGame = async function () {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    zIndex: 1000,
+    zIndex: 2000,
     display: "flex",
     gap: "60px",
+    pointerEvents: "auto",
   });
+  // 最初は見せない（モーダルが消えたら表示）
+  characterUI.style.visibility = "hidden";
   bgDiv.appendChild(characterUI);
+
+  // モーダルをクリックしたら非表示にして先に進める
+  modalDim.addEventListener("click", () => {
+    modalDim.remove();
+    if (telop) telop.remove();
+    characterUI.style.visibility = "visible";
+  });
 
   const characters = [
     { name: "犬", img: "images/hero1.png" },
@@ -168,6 +199,7 @@ window.startNewGame = async function () {
   let rotatingImg = null;
   let rotationRAF = null;
   let nameBox = null;
+  let btnContainer = null; // ボタンコンテナ（キャンセル・決定）
   let confirmBtn = null;
   let cancelBtn = null;
 
@@ -220,60 +252,94 @@ window.startNewGame = async function () {
     w.dataset.offscreen = "0";
   }
 
-  // --- 名前入力 ---
+  // --- 名前入力（ボタンは btnContainer に入れる）---
   function showNameInput(c) {
+    // reset other UI (auras と回転をクリア)
+    wrappers.forEach((w, idx) => {
+      auras[idx].style.opacity = 0;
+      w.style.transform = "translateX(0)";
+      w.style.opacity = "1";
+    });
+    stopRotation();
+
+    // 名前入力
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
-      nameBox.placeholder = "鶏の餌食の名前を決めてください";
+      nameBox.placeholder = `${c.name} の名前を入力してください`;
       Object.assign(nameBox.style, {
         position: "fixed",
-        zIndex: 2100,
+        zIndex: 2300,
         padding: "10px 15px",
         borderRadius: "8px",
         fontSize: "20px",
+        outline: "none",
       });
       bgDiv.appendChild(nameBox);
     }
 
-    if (!confirmBtn) {
-      confirmBtn = document.createElement("button");
-      confirmBtn.textContent = "決定";
-      Object.assign(confirmBtn.style, {
+    // ボタンコンテナ
+    if (!btnContainer) {
+      btnContainer = document.createElement("div");
+      btnContainer.className = "name-btn-container";
+      Object.assign(btnContainer.style, {
         position: "fixed",
-        zIndex: 2100,
-        padding: "10px 20px",
-        fontSize: "20px",
-        borderRadius: "8px",
-        cursor: "pointer",
+        zIndex: 2300,
+        display: "flex",
+        gap: "40px",
+        justifyContent: "center",
+        alignItems: "center",
       });
-      bgDiv.appendChild(confirmBtn);
+      bgDiv.appendChild(btnContainer);
     }
 
+    // キャンセル（左）
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
+      cancelBtn.className = "cancel-btn";
       Object.assign(cancelBtn.style, {
-        position: "fixed",
-        zIndex: 2100,
         padding: "10px 20px",
         fontSize: "20px",
         borderRadius: "8px",
         cursor: "pointer",
       });
-      bgDiv.appendChild(cancelBtn);
+      // append to container to keep layout consistent
+      btnContainer.appendChild(cancelBtn);
     }
 
-    telop.textContent = "鶏の餌食の名前を入力してください";
-    flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
+    // 決定（右）
+    if (!confirmBtn) {
+      confirmBtn = document.createElement("button");
+      confirmBtn.textContent = "決定";
+      confirmBtn.className = "confirm-btn";
+      Object.assign(confirmBtn.style, {
+        padding: "10px 20px",
+        fontSize: "20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+      });
+      btnContainer.appendChild(confirmBtn);
+    }
 
+    // テロップを説明文に
+    telop.textContent = "鶏の餌食の名前を入力してください";
+
+    // 未選択キャラを飛ばす（UX）
+    if (selectedIndex !== null) {
+      flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
+    }
+
+    // イベント
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-        [nameBox, confirmBtn, cancelBtn].forEach((el) => el?.remove());
-        nameBox = confirmBtn = cancelBtn = null;
-        telop.remove();
-        characterUI.remove();
+        [nameBox, btnContainer].forEach((el) => el && el.remove());
+        nameBox = null;
+        btnContainer = null;
+        confirmBtn = cancelBtn = null;
+        if (telop) telop.remove();
+        if (characterUI) characterUI.remove();
         selectedIndex = null;
       }
     };
@@ -287,12 +353,17 @@ window.startNewGame = async function () {
         flyIn(other);
       }
       selectedIndex = null;
-      [nameBox, confirmBtn, cancelBtn].forEach((el) => el?.remove());
-      nameBox = confirmBtn = cancelBtn = null;
+      [nameBox, btnContainer].forEach((el) => el && el.remove());
+      nameBox = null;
+      btnContainer = null;
+      confirmBtn = cancelBtn = null;
       telop.textContent = "鶏の餌食を選択してください";
     };
 
+    // 最初の配置を行う
     adjustNewGameLayout();
+    // フォーカス
+    nameBox.focus();
   }
 
   // --- キャラクター生成 ---
@@ -359,7 +430,6 @@ window.startNewGame = async function () {
     auras[i] = aura;
 
     charWrapper.addEventListener("click", () => {
-      const other = i === 0 ? 1 : 0;
       if (selectedIndex === i) {
         showNameInput(c);
         return;
@@ -376,7 +446,7 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ポップアップ ---
+  // --- ポップアップ（任意） ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
@@ -391,11 +461,13 @@ window.startNewGame = async function () {
     const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
     const popup = document.createElement("div");
     popup.className = "popup";
+    const w = window.innerWidth < 768 ? 300 : 400;
+    const h = window.innerWidth < 768 ? 250 : 300;
     Object.assign(popup.style, {
       position: "fixed",
-      width: window.innerWidth < 768 ? "300px" : "400px",
-      height: window.innerWidth < 768 ? "250px" : "300px",
-      zIndex: 4000,
+      width: w + "px",
+      height: h + "px",
+      zIndex: 1800,
       overflow: "hidden",
       pointerEvents: "auto",
       opacity: 0,
@@ -439,8 +511,8 @@ window.startNewGame = async function () {
     });
     popup.appendChild(closeBtn);
 
-    const maxLeft = window.innerWidth - parseInt(popup.style.width);
-    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    const maxLeft = Math.max(0, window.innerWidth - w);
+    const maxTop = Math.max(0, window.innerHeight - h);
     popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
     popup.style.top = Math.floor(Math.random() * maxTop) + "px";
 
@@ -456,82 +528,88 @@ window.startNewGame = async function () {
   setInterval(() => createPopup(), 4000 + Math.random() * 4000);
 
   // ========================
-// レイアウト調整関数（完全版）
-// ========================
-function adjustNewGameLayout() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const isPortrait = h > w;
+  // レイアウト調整関数（完全版）
+  // ========================
+  function adjustNewGameLayout() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isPortrait = h > w;
 
-  // --- キャラクターUI ---
-  if (characterUI) {
-    characterUI.style.top = "50%";
-    characterUI.style.left = "50%";
-    characterUI.style.transform = "translate(-50%, -50%)";
-    // 縦画面でもキャラは横並びにする
-    characterUI.style.flexDirection = "row";
-    characterUI.style.gap = isPortrait ? "30px" : "60px";
-  }
+    // --- キャラクターUI ---
+    if (characterUI) {
+      characterUI.style.top = "50%";
+      characterUI.style.left = "50%";
+      characterUI.style.transform = "translate(-50%, -50%)";
+      // 縦でも横でも横並びにする（要望）
+      characterUI.style.flexDirection = "row";
+      characterUI.style.gap = isPortrait ? "30px" : "60px";
+    }
 
-  // --- キャラクター画像サイズ ---
-  if (imgs) {
-    imgs.forEach((img) => {
-      img.style.width = isPortrait ? "160px" : "200px";
-      img.style.height = isPortrait ? "240px" : "300px";
+    // --- キャラクター画像サイズ ---
+    if (imgs) {
+      imgs.forEach((img) => {
+        img.style.width = isPortrait ? "160px" : "200px";
+        img.style.height = isPortrait ? "240px" : "300px";
+      });
+    }
+
+    // --- オーラサイズ ---
+    if (auras) {
+      auras.forEach((aura) => {
+        aura.style.width = isPortrait ? "180px" : "220px";
+        aura.style.height = isPortrait ? "270px" : "320px";
+      });
+    }
+
+    // --- 名前入力ボックス配置（存在する場合） ---
+    if (nameBox) {
+      nameBox.style.top = isPortrait ? "55%" : "50%";
+      nameBox.style.left = "50%";
+      nameBox.style.transform = "translate(-50%, -50%)";
+      nameBox.style.width = isPortrait ? "260px" : "220px";
+    }
+
+    // --- 決定 & キャンセル ボタンを横並びで中央下に配置（存在する場合）---
+    if (btnContainer) {
+      btnContainer.style.display = "flex";
+      btnContainer.style.justifyContent = "center";
+      btnContainer.style.gap = "40px"; // ボタン間の余白
+      btnContainer.style.position = "fixed";
+      btnContainer.style.top = isPortrait ? "68%" : "60%";
+      btnContainer.style.left = "50%";
+      btnContainer.style.transform = "translateX(-50%)";
+    }
+
+    // --- テロップ位置（中央） ---
+    if (telop) {
+      telop.style.top = "50%";
+      telop.style.left = "50%";
+      telop.style.transform = "translate(-50%, -50%)";
+      telop.style.fontSize = isPortrait ? "28px" : "24px";
+      telop.style.padding = isPortrait ? "20px 40px" : "15px 30px";
+    }
+
+    // --- ポップアップ再配置（ウィンドウサイズに合わせる）---
+    const popups = document.querySelectorAll(".popup");
+    popups.forEach((popup) => {
+      const width = parseInt(popup.style.width || "300");
+      const height = parseInt(popup.style.height || "200");
+      const maxLeft = Math.max(0, window.innerWidth - width);
+      const maxTop = Math.max(0, window.innerHeight - height);
+      // 既に画面外の場合だけ再配置する（軽微なランダム）
+      const curLeft = parseInt(popup.style.left || "0");
+      const curTop = parseInt(popup.style.top || "0");
+      if (curLeft > maxLeft || curTop > maxTop) {
+        popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
+        popup.style.top = Math.floor(Math.random() * maxTop) + "px";
+      }
     });
   }
 
-  // --- オーラサイズ ---
-  if (auras) {
-    auras.forEach((aura) => {
-      aura.style.width = isPortrait ? "180px" : "220px";
-      aura.style.height = isPortrait ? "270px" : "320px";
-    });
-  }
+  // --- ウィンドウリサイズ・向き変更で再調整 ---
+  window.addEventListener("resize", adjustNewGameLayout);
+  window.addEventListener("orientationchange", adjustNewGameLayout);
 
-  // --- 名前入力ボックス ---
-  if (nameBox) {
-    nameBox.style.top = isPortrait ? "55%" : "50%";
-    nameBox.style.left = "50%";
-    nameBox.style.transform = "translate(-50%, -50%)";
-    nameBox.style.width = isPortrait ? "260px" : "220px";
-  }
-
-  // --- 決定 & キャンセル ボタンを横並びで中央下配置 ---
-  if (confirmBtn && cancelBtn) {
-    const btnContainer = confirmBtn.parentElement;
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "center";
-    btnContainer.style.gap = "40px"; // ボタン間の余白
-    btnContainer.style.position = "absolute";
-    btnContainer.style.top = isPortrait ? "68%" : "60%";
-    btnContainer.style.left = "50%";
-    btnContainer.style.transform = "translateX(-50%)";
-  }
-
-  // --- テロップ ---
-  if (telop) {
-    telop.style.top = "50%";
-    telop.style.left = "50%";
-    telop.style.transform = "translate(-50%, -50%)";
-    telop.style.fontSize = isPortrait ? "28px" : "24px";
-    telop.style.padding = isPortrait ? "20px 40px" : "15px 30px";
-  }
-
-  // --- ポップアップ再配置 ---
-  const popups = document.querySelectorAll(".popup");
-  popups.forEach((popup) => {
-    const maxLeft = window.innerWidth - parseInt(popup.style.width || "300");
-    const maxTop = window.innerHeight - parseInt(popup.style.height || "200");
-    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
-    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
-  });
-}
-
-// --- ウィンドウリサイズ・向き変更で再調整 ---
-window.addEventListener("resize", adjustNewGameLayout);
-window.addEventListener("orientationchange", adjustNewGameLayout);
-
-// --- startNewGame 内で呼ぶ ---
-adjustNewGameLayout();
-}
+  // --- startNewGame 内で初回呼び出し ---
+  adjustNewGameLayout();
+}; // ← end startNewGame
