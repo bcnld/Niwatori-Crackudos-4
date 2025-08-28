@@ -1,4 +1,4 @@
-// newgame.js
+// newgame.js（オーラなし完全版）
 window.startNewGame = async function () {
   // --- 古いゲームUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -185,7 +185,7 @@ window.startNewGame = async function () {
     { name: "うんこ", img: "images/hero2.png" }
   ];
 
-  const wrappers = [], imgs = [], auras = [];
+  const wrappers = [], imgs = [];
   let selectedIndex = null, rotatingImg = null, rotationRAF = null;
   let nameBox = null, btnContainer = null, confirmBtn = null, cancelBtn = null;
 
@@ -320,7 +320,6 @@ window.startNewGame = async function () {
         nameBox.style.display = "none";
         btnContainer.style.display = "none";
         stopRotation();
-        auras.forEach(a => a.style.opacity = 0);
         selectedIndex = null;
         flyInAll();
       }
@@ -346,23 +345,6 @@ window.startNewGame = async function () {
       position: "relative",
       transition: "transform 0.6s ease, opacity 0.6s ease"
     });
-
-    const aura = document.createElement("div");
-    Object.assign(aura.style, {
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      width: "220px",
-      height: "320px",
-      transform: "translate(-50%,-50%) scale(1)",
-      borderRadius: "50%",
-      background: "radial-gradient(circle, rgba(0,255,255,0.6), rgba(0,255,255,0))",
-      filter: "blur(20px)",
-      opacity: 0,
-      transition: "opacity 0.3s ease, transform 0.3s ease",
-      zIndex: 0
-    });
-    wrapper.appendChild(aura);
 
     const img = document.createElement("img");
     img.src = c.img;
@@ -394,7 +376,6 @@ window.startNewGame = async function () {
     characterUI.appendChild(wrapper);
     wrappers[i] = wrapper;
     imgs[i] = img;
-    auras[i] = aura;
 
     wrapper.addEventListener("click", () => {
       if (selectedIndex === i) {
@@ -402,12 +383,10 @@ window.startNewGame = async function () {
         return;
       }
       if (selectedIndex !== null && selectedIndex !== i) {
-        auras[selectedIndex].style.opacity = 0;
         stopRotation();
         imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
       selectedIndex = i;
-      auras[i].style.opacity = 1;
       startRotation(imgs[i]);
       telop.textContent = "もう一度クリックで決定。";
     });
@@ -425,7 +404,6 @@ window.startNewGame = async function () {
   const popupCloseSound = new Audio("Sounds/popup_x.mp3");
   const activePopups = [];
 
-  // --- ポップアップ生成 ---
   function createPopup() {
     if (activePopups.length >= 50) return;
     const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
@@ -490,16 +468,13 @@ window.startNewGame = async function () {
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
 
-    // 次回ポップアップをランダム間隔で生成
     setTimeout(createPopup, 3000 + Math.random() * 5000);
   }
 
-  // 最初のポップアップ生成
   createPopup();
 
   // --- ウィンドウリサイズ対応 ---
   window.addEventListener("resize", () => {
-    // 雪の再配置
     snowflakes.forEach(flake => {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
@@ -512,6 +487,11 @@ window.startNewGame = async function () {
       characterUI.style.left = "50%";
       characterUI.style.top = "50%";
       characterUI.style.transform = "translate(-50%, -50%)";
+      
+      // オーラを消す
+      auras.forEach(aura => {
+        aura.style.opacity = 0;
+      });
     }
 
     // 名前入力ボックスとボタン位置調整
