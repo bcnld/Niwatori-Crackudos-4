@@ -500,6 +500,56 @@ window.startNewGame = async function () {
 
   setInterval(createPopup, 5000);
 
+  // --- ノンフィクション表示（画面真っ黒） ---
+function showNonFictionText() {
+  const fadeOverlay = document.getElementById("fade-overlay");
+  if (!fadeOverlay) return;
+
+  // 完全に黒くする
+  fadeOverlay.style.display = "block";
+  fadeOverlay.style.opacity = 1;
+  fadeOverlay.style.zIndex = 6000; // UIより前面
+
+  // 表示用テキスト
+  const nfText = document.createElement("div");
+  nfText.textContent = "この物語はノンフィクションです。";
+  Object.assign(nfText.style, {
+    position: "fixed",
+    top: "50%", left: "50%",
+    transform: "translate(-50%, -50%)",
+    fontSize: "36px",
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    zIndex: 6001,
+    opacity: 0,
+    pointerEvents: "auto",
+    transition: "opacity 2s ease"
+  });
+  document.body.appendChild(nfText);
+
+  // フェードイン
+  requestAnimationFrame(() => nfText.style.opacity = 1);
+
+  // クリックでフェードアウト＆効果音
+  const selectSound = new Audio("Sounds/select.mp3");
+  const removeText = () => {
+    nfText.style.transition = "opacity 1s ease";
+    nfText.style.opacity = 0;
+    selectSound.currentTime = 0;
+    selectSound.play().catch(() => {});
+    setTimeout(() => {
+      nfText.remove();
+      fadeOverlay.style.display = "none";
+    }, 1000);
+    document.removeEventListener("click", removeText);
+  };
+  document.addEventListener("click", removeText);
+}
+
+// --- フェード解除後に表示 ---
+setTimeout(showNonFictionText, 2000); // 既存のフェード解除後に表示
+
   // --- Fake Button ---
   const fakeBtn = document.createElement("button");
   fakeBtn.textContent = "メニューに戻る";
