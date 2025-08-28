@@ -241,7 +241,7 @@ window.startNewGame = async function () {
       Object.assign(confirmBtn.style, {
         position: "fixed",
         top: "65%",
-        left: "45%",
+        left: "55%", // 右側に配置
         transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 20px",
@@ -258,7 +258,7 @@ window.startNewGame = async function () {
       Object.assign(cancelBtn.style, {
         position: "fixed",
         top: "65%",
-        left: "55%",
+        left: "45%", // 左側に配置
         transform: "translate(-50%, -50%)",
         zIndex: 2100,
         padding: "10px 20px",
@@ -277,7 +277,10 @@ window.startNewGame = async function () {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
         console.log(`確定: ${c.name}, 名前: ${heroName}`);
+        // 名前入力UIを削除
         [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
+        nameBox = confirmBtn = cancelBtn = null;
+        // テロップとキャラクターUIを削除
         if (telop) telop.remove();
         if (characterUI) characterUI.remove();
         selectedIndex = null;
@@ -362,7 +365,6 @@ window.startNewGame = async function () {
     imgs[i] = charImg;
     auras[i] = aura;
 
-    // --- クリック ---
     charWrapper.addEventListener("click", () => {
       const other = i === 0 ? 1 : 0;
 
