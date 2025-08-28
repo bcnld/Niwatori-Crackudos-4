@@ -220,6 +220,7 @@ window.startNewGame = async function () {
     w.dataset.offscreen = "0";
   }
 
+  // --- 名前入力 ---
   function showNameInput(c) {
     if (!nameBox) {
       nameBox = document.createElement("input");
@@ -238,7 +239,6 @@ window.startNewGame = async function () {
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
-      confirmBtn.className = "confirm-btn";
       Object.assign(confirmBtn.style, {
         position: "fixed",
         zIndex: 2100,
@@ -253,7 +253,6 @@ window.startNewGame = async function () {
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
-      cancelBtn.className = "cancel-btn";
       Object.assign(cancelBtn.style, {
         position: "fixed",
         zIndex: 2100,
@@ -266,17 +265,15 @@ window.startNewGame = async function () {
     }
 
     telop.textContent = "鶏の餌食の名前を入力してください";
-
-    flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex); // 名前入力時に未選択キャラを飛ばす
+    flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
 
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-        console.log(`確定: ${c.name}, 名前: ${heroName}`);
-        [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
+        [nameBox, confirmBtn, cancelBtn].forEach((el) => el?.remove());
         nameBox = confirmBtn = cancelBtn = null;
-        if (telop) telop.remove();
-        if (characterUI) characterUI.remove();
+        telop.remove();
+        characterUI.remove();
         selectedIndex = null;
       }
     };
@@ -290,12 +287,12 @@ window.startNewGame = async function () {
         flyIn(other);
       }
       selectedIndex = null;
-      [nameBox, confirmBtn, cancelBtn].forEach((el) => el && el.remove());
+      [nameBox, confirmBtn, cancelBtn].forEach((el) => el?.remove());
       nameBox = confirmBtn = cancelBtn = null;
       telop.textContent = "鶏の餌食を選択してください";
     };
 
-    adjustNewGameLayout(); // 初期配置
+    adjustNewGameLayout();
   }
 
   // --- キャラクター生成 ---
@@ -363,18 +360,15 @@ window.startNewGame = async function () {
 
     charWrapper.addEventListener("click", () => {
       const other = i === 0 ? 1 : 0;
-
       if (selectedIndex === i) {
         showNameInput(c);
         return;
       }
-
       if (selectedIndex !== null && selectedIndex !== i) {
         auras[selectedIndex].style.opacity = 0;
         stopRotation();
         imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
       }
-
       selectedIndex = i;
       auras[i].style.opacity = 1;
       startRotation(imgs[i]);
@@ -461,9 +455,8 @@ window.startNewGame = async function () {
   createPopup();
   setInterval(() => createPopup(), 4000 + Math.random() * 4000);
 
-  // --- レイアウト調整 ---
   // ========================
-// レイアウト調整関数
+// レイアウト調整関数（完全版）
 // ========================
 function adjustNewGameLayout() {
   const w = window.innerWidth;
@@ -475,45 +468,52 @@ function adjustNewGameLayout() {
     characterUI.style.top = "50%";
     characterUI.style.left = "50%";
     characterUI.style.transform = "translate(-50%, -50%)";
-    characterUI.style.flexDirection = isPortrait ? "column" : "row";
-    characterUI.style.gap = isPortrait ? "40px" : "60px";
+    // 縦画面でもキャラは横並びにする
+    characterUI.style.flexDirection = "row";
+    characterUI.style.gap = isPortrait ? "30px" : "60px";
   }
 
-  // --- 回転中のキャラクターサイズ調整 ---
+  // --- キャラクター画像サイズ ---
   if (imgs) {
     imgs.forEach((img) => {
-      img.style.width = isPortrait ? "180px" : "200px";
-      img.style.height = isPortrait ? "270px" : "300px";
+      img.style.width = isPortrait ? "160px" : "200px";
+      img.style.height = isPortrait ? "240px" : "300px";
     });
   }
 
-  // --- オーラサイズ調整 ---
+  // --- オーラサイズ ---
   if (auras) {
     auras.forEach((aura) => {
-      aura.style.width = isPortrait ? "200px" : "220px";
-      aura.style.height = isPortrait ? "300px" : "320px";
+      aura.style.width = isPortrait ? "180px" : "220px";
+      aura.style.height = isPortrait ? "270px" : "320px";
     });
   }
 
-  // --- 名前入力ボックスとボタン ---
+  // --- 名前入力ボックス ---
   if (nameBox) {
     nameBox.style.top = isPortrait ? "55%" : "50%";
     nameBox.style.left = "50%";
     nameBox.style.transform = "translate(-50%, -50%)";
-    nameBox.style.width = isPortrait ? "250px" : "200px";
+    nameBox.style.width = isPortrait ? "260px" : "220px";
   }
-  if (confirmBtn) {
-    confirmBtn.style.top = isPortrait ? "65%" : "55%";
-    confirmBtn.style.left = "55%";
-  }
-  if (cancelBtn) {
-    cancelBtn.style.top = isPortrait ? "65%" : "55%";
-    cancelBtn.style.left = "45%";
+
+  // --- 決定 & キャンセル ボタンを横並びで中央下配置 ---
+  if (confirmBtn && cancelBtn) {
+    const btnContainer = confirmBtn.parentElement;
+    btnContainer.style.display = "flex";
+    btnContainer.style.justifyContent = "center";
+    btnContainer.style.gap = "40px"; // ボタン間の余白
+    btnContainer.style.position = "absolute";
+    btnContainer.style.top = isPortrait ? "68%" : "60%";
+    btnContainer.style.left = "50%";
+    btnContainer.style.transform = "translateX(-50%)";
   }
 
   // --- テロップ ---
   if (telop) {
-    telop.style.top = isPortrait ? "10%" : "5%";
+    telop.style.top = "50%";
+    telop.style.left = "50%";
+    telop.style.transform = "translate(-50%, -50%)";
     telop.style.fontSize = isPortrait ? "28px" : "24px";
     telop.style.padding = isPortrait ? "20px 40px" : "15px 30px";
   }
@@ -521,8 +521,8 @@ function adjustNewGameLayout() {
   // --- ポップアップ再配置 ---
   const popups = document.querySelectorAll(".popup");
   popups.forEach((popup) => {
-    const maxLeft = window.innerWidth - parseInt(popup.style.width);
-    const maxTop = window.innerHeight - parseInt(popup.style.height);
+    const maxLeft = window.innerWidth - parseInt(popup.style.width || "300");
+    const maxTop = window.innerHeight - parseInt(popup.style.height || "200");
     popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
     popup.style.top = Math.floor(Math.random() * maxTop) + "px";
   });
