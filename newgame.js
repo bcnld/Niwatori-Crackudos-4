@@ -331,74 +331,89 @@ characters.forEach((c, i) => {
   // --- ポップアップ処理 ---
   const popupMedia=[
     {type:"img", src:"images/popup1.gif"},
-    {type:"img", src:"images/popup2.gif"},
-    {type:"video", src:"videos/popup1.mp4"},
-    {type:"video", src:"videos/popup2.mp4"},
-    {type:"video", src:"videos/popup3.mp4"}
-  ];
-  const popupSound=new Audio("Sounds/popup.mp3");
-  const popupCloseSound=new Audio("Sounds/popup_x.mp3");
-  const activePopups=[];
+  // --- タイトル画像2削除 ---
+const titleImg2 = document.getElementById("title-img2");
+if (titleImg2) titleImg2.remove();
 
-  function createPopup(){
-    if(activePopups.length>=50) return;
-    const selected=popupMedia[Math.floor(Math.random()*popupMedia.length)];
-    const popup=document.createElement("div");
-    popup.className="popup";
-    const w=window.innerWidth<768?300:400;
-    const h=window.innerWidth<768?250:300;
-    Object.assign(popup.style,{
-      position:"fixed", width:w+"px", height:h+"px",
-      zIndex:1800, overflow:"hidden", pointerEvents:"auto",
-      opacity:0, transition:"opacity 0.6s ease"
-    });
+// --- ポップアップ処理 ---
+const popupMedia = [
+  { type: "img", src: "images/popup1.gif" },
+  { type: "img", src: "images/popup2.gif" },
+  { type: "video", src: "videos/popup1.mp4" },
+  { type: "video", src: "videos/popup2.mp4" },
+  { type: "video", src: "videos/popup3.mp4" },
+];
+const popupSound = new Audio("Sounds/popup.mp3");
+const popupCloseSound = new Audio("Sounds/popup_x.mp3");
+const activePopups = [];
 
-    let mediaEl;
-    if(selected.type==="img"){
-      mediaEl=document.createElement("img");
-      mediaEl.src=selected.src;
-      Object.assign(mediaEl.style,{width:"100%", height:"100%", objectFit:"contain"});
-    } else {
-      mediaEl=document.createElement("video");
-      mediaEl.src=selected.src;
-      mediaEl.autoplay=true; mediaEl.loop=true; mediaEl.muted=false;
-      Object.assign(mediaEl.style,{width:"100%", height:"100%", objectFit:"contain"});
-      mediaEl.play().catch(()=>{});
-    }
-    popup.appendChild(mediaEl);
+function createPopup() {
+  if (activePopups.length >= 50) return;
+  const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
+  const popup = document.createElement("div");
+  popup.className = "popup";
 
-    const closeBtn=document.createElement("div");
-    closeBtn.textContent="×";
-    Object.assign(closeBtn.style,{
-      position:"absolute", top:"5px", right:"10px",
-      fontSize:"24px", fontWeight:"bold", color:"#fff",
-      cursor:"pointer", zIndex:2000, userSelect:"none"
-    });
-    closeBtn.addEventListener("click",()=>{
-      popup.style.opacity=0;
-      setTimeout(()=>{
-        popup.remove();
-        const idx=activePopups.indexOf(popup);
-        if(idx>=0) activePopups.splice(idx,1);
-      },500);
-      popupCloseSound.currentTime=0;
-      popupCloseSound.play().catch(()=>{});
-    });
-    popup.appendChild(closeBtn);
+  const w = window.innerWidth < 768 ? 300 : 400;
+  const h = window.innerWidth < 768 ? 250 : 300;
+  Object.assign(popup.style, {
+    position: "fixed",
+    width: w + "px",
+    height: h + "px",
+    zIndex: 1800,
+    overflow: "hidden",
+    pointerEvents: "auto",
+  });
 
-    const margin=20;
-    popup.style.left=Math.random()*(window.innerWidth-w-margin*2)+margin+"px";
-    popup.style.top=Math.random()*(window.innerHeight-h-margin*2)+margin+"px";
-
-    document.body.appendChild(popup);
-    setTimeout(()=>popup.style.opacity=1,10);
-    activePopups.push(popup);
-
-    popupSound.currentTime=0;
-    popupSound.play().catch(()=>{});
+  let mediaEl;
+  if (selected.type === "img") {
+    mediaEl = document.createElement("img");
+    mediaEl.src = selected.src;
+    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+  } else {
+    mediaEl = document.createElement("video");
+    mediaEl.src = selected.src;
+    mediaEl.autoplay = true;
+    mediaEl.loop = true;
+    mediaEl.muted = false;
+    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+    mediaEl.play().catch(() => {});
   }
+  popup.appendChild(mediaEl);
 
-  setInterval(createPopup,5000);
+  const closeBtn = document.createElement("div");
+  closeBtn.textContent = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "5px",
+    right: "10px",
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#fff",
+    cursor: "pointer",
+    zIndex: 2000,
+    userSelect: "none",
+  });
+  closeBtn.addEventListener("click", () => {
+    popup.remove(); // フェードなしで即削除
+    const idx = activePopups.indexOf(popup);
+    if (idx >= 0) activePopups.splice(idx, 1);
+    popupCloseSound.currentTime = 0;
+    popupCloseSound.play().catch(() => {});
+  });
+  popup.appendChild(closeBtn);
+
+  const margin = 20;
+  popup.style.left = Math.random() * (window.innerWidth - w - margin * 2) + margin + "px";
+  popup.style.top = Math.random() * (window.innerHeight - h - margin * 2) + margin + "px";
+
+  document.body.appendChild(popup);
+  activePopups.push(popup);
+
+  popupSound.currentTime = 0;
+  popupSound.play().catch(() => {});
+}
+
+setInterval(createPopup, 5000);
 
   // --- ウィンドウリサイズ対応（雪の位置補正） ---
   window.addEventListener("resize",()=>{
