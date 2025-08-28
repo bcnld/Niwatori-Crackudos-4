@@ -326,21 +326,32 @@ setTimeout(() => {
     zIndex: 10000,
     opacity: 0,
     transition: "opacity 3s ease",
-    cursor: "pointer" // ←クリック可能にする
+    cursor: "pointer"
   });
   document.body.appendChild(nfText);
   requestAnimationFrame(() => nfText.style.opacity = 1);
 
   // --- クリックで次に進む処理 ---
   function proceed() {
-    nfText.remove();
-    document.removeEventListener("click", proceed); // 一度だけ
-    // ここに次の処理を追加
-    // 例: キャラクター選択画面やゲーム開始など
-    startCharacterSelection(); // 仮関数
+    // 文字フェードアウト
+    nfText.style.transition = "opacity 1.5s ease";
+    nfText.style.opacity = 0;
+
+    setTimeout(() => {
+      nfText.remove();
+      // 古いUIをまとめて削除
+      nameBox?.remove();
+      btnContainer?.remove();
+      telop?.remove();
+      modalDim?.remove();
+
+      document.removeEventListener("click", proceed);
+
+      // 次の処理へ
+      startCharacterSelection(); // 仮関数
+    }, 1500);
   }
 
-  // クリックイベントを追加（どこでもOK）
   document.addEventListener("click", proceed);
 }, 1500);
     
