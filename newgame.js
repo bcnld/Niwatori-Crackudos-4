@@ -1,4 +1,4 @@
-// newgame.js（完全統合版）
+// newgame.js（完全統合版・エラー対策済み）
 window.startNewGame = async function () {
   // --- 古いゲームUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -411,17 +411,15 @@ window.startNewGame = async function () {
   }
   setInterval(createPopup,5000);
 
-  // --- ノンフィクション表示（画面真っ黒） ---
+  // --- ノンフィクション表示 ---
 function showNonFictionText() {
   const fadeOverlay = document.getElementById("fade-overlay");
   if (!fadeOverlay) return;
 
-  // 完全に黒くする
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 1;
-  fadeOverlay.style.zIndex = 6000; // UIより前面
+  fadeOverlay.style.zIndex = 6000;
 
-  // 表示用テキスト
   const nfText = document.createElement("div");
   nfText.textContent = "この物語はノンフィクションです。";
   Object.assign(nfText.style, {
@@ -439,61 +437,59 @@ function showNonFictionText() {
   });
   document.body.appendChild(nfText);
 
-  // フェードイン
   requestAnimationFrame(() => nfText.style.opacity = 1);
 
-  // クリックでフェードアウト＆効果音
   const selectSound = new Audio("Sounds/select.mp3");
   const removeText = () => {
     nfText.style.transition = "opacity 1s ease";
     nfText.style.opacity = 0;
     selectSound.currentTime = 0;
-    selectSound.play().catch(() => {});
+    selectSound.play().catch(()=>{});
     setTimeout(() => {
       nfText.remove();
       fadeOverlay.style.display = "none";
+
+      // --- ノンフィクション後、キャラクターUI表示 ---
+      const characterUI = document.getElementById("character-ui-wrapper");
+      const telop = document.getElementById("telop");
+      if (characterUI) characterUI.style.visibility = "visible";
+      if (telop) telop.style.display = "block";
     }, 1000);
+
     document.removeEventListener("click", removeText);
   };
+
   document.addEventListener("click", removeText);
 }
 
-// --- フェード解除後に表示 ---
-setTimeout(showNonFictionText, 2000); // 既存のフェード解除後に表示
+// --- フェード解除後にノンフィクション表示 ---
+setTimeout(showNonFictionText, 2000);
 
-// --- Fake Button ---
-const fakeBtn = document.createElement("button");
-fakeBtn.textContent = "メニューに戻る";
-Object.assign(fakeBtn.style, {
-  position: "fixed",
-  bottom: "30px",
-  right: "30px",
-  zIndex: 2500,
-  padding: "15px 25px",
-  fontSize: "18px",
-  cursor: "pointer"
-});
-fakeBtn.addEventListener("click", () => {
-  alert("…戻れないよー🤣");
-});
-bgDiv.appendChild(fakeBtn);
-
-// --- リサイズ対応 ---
+// --- ウィンドウリサイズ対応 ---
 window.addEventListener("resize", () => {
+  // 雪の位置調整
   snowflakes.forEach(f => {
-    f.el.style.top =
-      Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
-    f.el.style.left =
-      Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
+    f.el.style.top = Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
+    f.el.style.left = Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
   });
 
-  // ポップアップ位置も再調整（必要なら）
+  // ポップアップ位置調整
   document.querySelectorAll(".popup").forEach(popup => {
-    const w = popup.offsetWidth, h = popup.offsetHeight;
+    const w = popup.offsetWidth;
+    const h = popup.offsetHeight;
     const margin = 20;
-    popup.style.left =
-      Math.min(parseFloat(popup.style.left), window.innerWidth - w - margin) + "px";
-    popup.style.top =
-      Math.min(parseFloat(popup.style.top), window.innerHeight - h - margin) + "px";
+    popup.style.left = Math.min(parseFloat(popup.style.left), window.innerWidth - w - margin) + "px";
+    popup.style.top = Math.min(parseFloat(popup.style.top), window.innerHeight - h - margin) + "px";
   });
+
+  // キャラクター名入力ボックス・ボタンの位置再調整
+  if (nameBox && selectedIndex !== null) {
+    const rect = wrappers[selectedIndex].getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const bottomY = rect.bottom + 20;
+    nameBox.style.left = `${centerX}px`;
+    nameBox.style.top = `${bottomY}px`;
+    if (btnContainer) btnContainer.style.left = `${centerX}px`;
+    if (btnContainer) btnContainer.style.top = `${bottomY + 50}px`;
+  }
 });
