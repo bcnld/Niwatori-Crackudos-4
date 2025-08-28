@@ -439,7 +439,7 @@ window.startNewGame = async function () {
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
   }
-  setInterval(createPopup, 2000);
+  setInterval(createPopup, 4500);
 
   // --- リサイズ対応 ---
   window.addEventListener("resize", () => {
