@@ -337,8 +337,7 @@ window.startNewGame = async function () {
             console.log("キャラクター選択フェードアウト完了");
         }, 600);
     }
-};
-        
+
     characters.forEach((c, i) => {
         const wrapper = document.createElement("div");
         Object.assign(wrapper.style, {
