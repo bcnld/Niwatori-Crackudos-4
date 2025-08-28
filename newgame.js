@@ -85,17 +85,14 @@ window.startNewGame = async function () {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-
       let match = flake.el.style.transform.match(/rotate([-\d.]+)deg/);
       let rot = match ? parseFloat(match[1]) : 0;
-
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
       if (top > window.innerHeight) top = -60;
       if (left < -60) left = window.innerWidth;
       if (left > window.innerWidth) left = -60;
-
       flake.el.style.top = top + "px";
       flake.el.style.left = left + "px";
       flake.el.style.transform = `rotate(${rot}deg)`;
@@ -199,6 +196,10 @@ window.startNewGame = async function () {
   let confirmBtn = null;
   let cancelBtn = null;
 
+  // --- 飛ぶ/戻る音 ---
+  const flyOutSound = new Audio("Sounds/fly_out.mp3");
+  const flyInSound = new Audio("Sounds/fly_in.mp3");
+
   function startRotation(img) {
     stopRotation();
     rotatingImg = img;
@@ -235,6 +236,9 @@ window.startNewGame = async function () {
     w.style.transform = `translateX(${dir * dist}px)`;
     w.style.opacity = "0";
     w.dataset.offscreen = "1";
+
+    flyOutSound.currentTime = 0;
+    flyOutSound.play().catch(() => {});
   }
 
   function flyIn(index) {
@@ -244,105 +248,109 @@ window.startNewGame = async function () {
     w.style.transform = "translateX(0)";
     w.style.opacity = "1";
     w.dataset.offscreen = "0";
+
+    flyInSound.currentTime = 0;
+    flyInSound.play().catch(() => {});
   }
 
   function showNameInput(c) {
-  wrappers.forEach((w, idx) => {
-    auras[idx].style.opacity = 0;
-    w.style.transform = "translateX(0)";
-    w.style.opacity = "1";
-  });
-  stopRotation();
-
-  const charWrapper = wrappers[selectedIndex];
-  const rect = charWrapper.getBoundingClientRect(); // 選択中キャラの座標取得
-  const centerX = rect.left + rect.width / 2;
-  const bottomY = rect.bottom + 20; // キャラ画像の下に20px空ける
-
-  if (!nameBox) {
-    nameBox = document.createElement("input");
-    nameBox.type = "text";
-    nameBox.placeholder = `${c.name} の名前を入力してください`;
-    Object.assign(nameBox.style, {
-      position: "fixed",
-      zIndex: 2300,
-      padding: "10px 15px",
-      borderRadius: "8px",
-      fontSize: "20px",
-      outline: "none",
-      left: `${centerX}px`,
-      top: `${bottomY}px`,
-      transform: "translateX(-50%)",
+    wrappers.forEach((w, idx) => {
+      auras[idx].style.opacity = 0;
+      w.style.transform = "translateX(0)";
+      w.style.opacity = "1";
     });
-    bgDiv.appendChild(nameBox);
-  }
+    stopRotation();
 
-  if (!btnContainer) {
-    btnContainer = document.createElement("div");
-    Object.assign(btnContainer.style, {
-      position: "fixed",
-      zIndex: 2300,
-      display: "flex",
-      gap: "40px",
-      justifyContent: "center",
-      left: `${centerX}px`,
-      top: `${bottomY + 50}px`, // 名前入力欄の下に50px
-      transform: "translateX(-50%)",
-    });
-    bgDiv.appendChild(btnContainer);
-  }
+    const charWrapper = wrappers[selectedIndex];
+    const rect = charWrapper.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const bottomY = rect.bottom + 20;
 
-  if (!cancelBtn) {
-    cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "キャンセル";
-    Object.assign(cancelBtn.style, {
-      padding: "10px 20px",
-      fontSize: "20px",
-      borderRadius: "8px",
-      cursor: "pointer",
-    });
-    btnContainer.appendChild(cancelBtn);
-  }
+    if (!nameBox) {
+      nameBox = document.createElement("input");
+      nameBox.type = "text";
+      nameBox.placeholder = `${c.name} の名前を入力してください`;
+      Object.assign(nameBox.style, {
+        position: "fixed",
+        zIndex: 2300,
+        padding: "10px 15px",
+        borderRadius: "8px",
+        fontSize: "20px",
+        outline: "none",
+        left: `${centerX}px`,
+        top: `${bottomY}px`,
+        transform: "translateX(-50%)",
+      });
+      bgDiv.appendChild(nameBox);
+    }
 
-  if (!confirmBtn) {
-    confirmBtn = document.createElement("button");
-    confirmBtn.textContent = "決定";
-    Object.assign(confirmBtn.style, {
-      padding: "10px 20px",
-      fontSize: "20px",
-      borderRadius: "8px",
-      cursor: "pointer",
-    });
-    btnContainer.appendChild(confirmBtn);
-  }
+    if (!btnContainer) {
+      btnContainer = document.createElement("div");
+      Object.assign(btnContainer.style, {
+        position: "fixed",
+        zIndex: 2300,
+        display: "flex",
+        gap: "40px",
+        justifyContent: "center",
+        left: `${centerX}px`,
+        top: `${bottomY + 50}px`,
+        transform: "translateX(-50%)",
+      });
+      bgDiv.appendChild(btnContainer);
+    }
 
-  telop.textContent = "鶏の餌食の名前を入力してください";
-  if (selectedIndex !== null) flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
+    if (!cancelBtn) {
+      cancelBtn = document.createElement("button");
+      cancelBtn.textContent = "キャンセル";
+      Object.assign(cancelBtn.style, {
+        padding: "10px 20px",
+        fontSize: "20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+      });
+      btnContainer.appendChild(cancelBtn);
+    }
 
-  confirmBtn.onclick = () => {
-    const heroName = nameBox.value.trim() || c.name;
-    if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+    if (!confirmBtn) {
+      confirmBtn = document.createElement("button");
+      confirmBtn.textContent = "決定";
+      Object.assign(confirmBtn.style, {
+        padding: "10px 20px",
+        fontSize: "20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+      });
+      btnContainer.appendChild(confirmBtn);
+    }
+
+    telop.textContent = "鶏の餌食の名前を入力してください";
+    if (selectedIndex !== null) flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
+
+    confirmBtn.onclick = () => {
+      const heroName = nameBox.value.trim() || c.name;
+      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+        [nameBox, btnContainer].forEach((el) => el && el.remove());
+        nameBox = btnContainer = confirmBtn = cancelBtn = null;
+        if (telop) telop.remove();
+        if (characterUI) characterUI.remove();
+        selectedIndex = null;
+      }
+    };
+
+    cancelBtn.onclick = () => {
+      wrappers.forEach((w, idx) => flyIn(idx));
+      auras.forEach((a) => (a.style.opacity = 0));
+      stopRotation();
+      selectedIndex = null;
       [nameBox, btnContainer].forEach((el) => el && el.remove());
       nameBox = btnContainer = confirmBtn = cancelBtn = null;
-      if (telop) telop.remove();
-      if (characterUI) characterUI.remove();
-      selectedIndex = null;
-    }
-  };
+      telop.textContent = "鶏の餌食を選択してください";
+    };
 
-  cancelBtn.onclick = () => {
-    wrappers.forEach((w, idx) => flyIn(idx));
-    auras.forEach(a => a.style.opacity = 0);
-    stopRotation();
-    selectedIndex = null;
-    [nameBox, btnContainer].forEach((el) => el && el.remove());
-    nameBox = btnContainer = confirmBtn = cancelBtn = null;
-    telop.textContent = "鶏の餌食を選択してください";
-  };
+    nameBox.focus();
+  }
 
-  nameBox.focus();
-}
-
+  // --- キャラクター表示 ---
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
     Object.assign(charWrapper.style, {
@@ -405,6 +413,10 @@ window.startNewGame = async function () {
     auras[i] = aura;
 
     charWrapper.addEventListener("click", () => {
+      // hero選択音
+      if (i === 0) new Audio("Sounds/select_hero1.mp3").play().catch(() => {});
+      if (i === 1) new Audio("Sounds/select_hero2.mp3").play().catch(() => {});
+
       if (selectedIndex === i) {
         showNameInput(c);
         return;
@@ -421,7 +433,7 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ポップアップ生成 ---
+  // --- ポップアップ ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "img", src: "images/popup2.gif" },
@@ -459,8 +471,7 @@ window.startNewGame = async function () {
       mediaEl.src = selected.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = false; // 自動再生対応
-      mediaEl.volume = 1.0;
+      mediaEl.muted = false;
       Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
       mediaEl.play().catch(() => {});
     }
@@ -469,61 +480,45 @@ window.startNewGame = async function () {
     const closeBtn = document.createElement("div");
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
-      position: "absolute",
       top: "5px",
-      right: "8px",
-      color: "#fff",
+      right: "10px",
+      fontSize: "24px",
       fontWeight: "bold",
+      color: "#fff",
       cursor: "pointer",
-      fontSize: "28px",
-      textShadow: "0 0 5px black",
-      zIndex: 5001,
-    });
-    closeBtn.addEventListener("click", () => {
-      popup.remove();
-      popupCloseSound.currentTime = 0;
-      popupCloseSound.play().catch(() => {});
+      zIndex: 2000,
+      userSelect: "none",
     });
     popup.appendChild(closeBtn);
 
-    const maxLeft = Math.max(0, window.innerWidth - w);
-    const maxTop = Math.max(0, window.innerHeight - h);
-    popup.style.left = Math.floor(Math.random() * maxLeft) + "px";
-    popup.style.top = Math.floor(Math.random() * maxTop) + "px";
+    closeBtn.addEventListener("click", () => {
+      popup.style.opacity = 0;
+      setTimeout(() => popup.remove(), 500);
+      popupCloseSound.currentTime = 0;
+      popupCloseSound.play().catch(() => {});
+    });
+
+    // --- ポップアップのランダム位置 ---
+    const margin = 20;
+    const posX = Math.random() * (window.innerWidth - w - margin * 2) + margin;
+    const posY = Math.random() * (window.innerHeight - h - margin * 2) + margin;
+    popup.style.left = posX + "px";
+    popup.style.top = posY + "px";
 
     document.body.appendChild(popup);
-    requestAnimationFrame(() => (popup.style.opacity = 1));
-
+    setTimeout(() => (popup.style.opacity = 1), 10);
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
-
-    const onResize = () => {
-      const maxLeft = Math.max(0, window.innerWidth - w);
-      const maxTop = Math.max(0, window.innerHeight - h);
-      popup.style.left = Math.min(parseInt(popup.style.left), maxLeft) + "px";
-      popup.style.top = Math.min(parseInt(popup.style.top), maxTop) + "px";
-    };
-    window.addEventListener("resize", onResize);
   }
 
-  // --- 定期的にポップアップ表示 ---
-  setInterval(() => {
-    if (!document.getElementById("character-ui-wrapper")) return;
-    createPopup();
-  }, 10000); // 10秒ごと
+  // --- 画面初期化後に1～2秒でポップアップ出現 ---
+  setTimeout(() => createPopup(), 1200);
 
-  // --- レイアウト調整関数 ---
-  function adjustNewGameLayout() {
-    if (!characterUI) return;
-    const rect = characterUI.getBoundingClientRect();
-    const midX = window.innerWidth / 2;
-    const midY = window.innerHeight / 2;
-    characterUI.style.top = midY + "px";
-    characterUI.style.left = midX + "px";
-  }
-  window.addEventListener("resize", adjustNewGameLayout);
-  adjustNewGameLayout();
-
-  // --- 終了ログ ---
-  console.log("NewGame UI 完全版初期化完了");
+  // --- キャンバスや背景雪なども含めて完全版なので resize対応 ---
+  window.addEventListener("resize", () => {
+    snowflakes.forEach((flake) => {
+      flake.el.style.top = Math.min(parseFloat(flake.el.style.top), window.innerHeight) + "px";
+      flake.el.style.left = Math.min(parseFloat(flake.el.style.left), window.innerWidth) + "px";
+    });
+  });
 };
