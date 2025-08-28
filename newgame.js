@@ -1,50 +1,27 @@
 window.startNewGame = async function () {
-  // --- 古いゲームUI削除 ---
-  const oldBgDiv = document.getElementById("newgame-bg-div");
-  if (oldBgDiv) oldBgDiv.remove();
-  document.querySelectorAll(".popup").forEach(p => p.remove());
-
-  const fadeOverlay = document.getElementById("fade-overlay");
-  const bgm = document.getElementById("bgm");
-  if (!fadeOverlay) return;
+  // --- 古いUI削除 ---
+  document.getElementById("newgame-bg-div")?.remove();
+  document.querySelectorAll(".popup")?.forEach(p => p.remove());
+  document.querySelector("#title-img2")?.remove();
 
   // --- メニュー非表示 ---
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
-  // --- フェードオーバーレイ ---
-  fadeOverlay.style.display = "block";
-  fadeOverlay.style.opacity = 0;
-  fadeOverlay.style.zIndex = 5000;
-  fadeOverlay.style.transition = `opacity 2s ease`;
-  requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
-
-  // --- 既存BGMフェードアウト ---
+  // --- BGM ---
+  const bgm = document.getElementById("bgm");
   if (bgm && !bgm.paused) {
     if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-    const fadeSteps = 60;
-    let step = 0;
-    const interval = 2000 / fadeSteps;
-    await new Promise(resolve => {
-      bgm._fadeOutInterval = setInterval(() => {
-        step++;
-        bgm.volume = Math.max(0, 1 - step / fadeSteps);
-        if (step >= fadeSteps) {
-          clearInterval(bgm._fadeOutInterval);
-          bgm.pause();
-          bgm.currentTime = 0;
-          resolve();
-        }
-      }, interval);
-    });
+    bgm.pause();
+    bgm.currentTime = 0;
+    bgm.volume = 1;
   }
 
   // --- 背景 ---
   const bgDiv = document.createElement("div");
   bgDiv.id = "newgame-bg-div";
   Object.assign(bgDiv.style, {
-    position: "fixed",
-    top: 0, left: 0,
+    position: "fixed", top: 0, left: 0,
     width: "100%", height: "100%",
     backgroundColor: "#001022",
     backgroundImage: "url('images/character_select_bg.png')",
@@ -84,8 +61,7 @@ window.startNewGame = async function () {
     for (let flake of snowflakes) {
       let top = parseFloat(flake.el.style.top);
       let left = parseFloat(flake.el.style.left);
-      let match = flake.el.style.transform.match(/rotate([-\d.]+)deg/);
-      let rot = match ? parseFloat(match[1]) : 0;
+      let rot = parseFloat(flake.el.style.transform.replace(/[^-?\d.]/g,"")) || 0;
       top += flake.speed;
       left += flake.drift;
       rot += flake.rotationSpeed;
@@ -100,26 +76,17 @@ window.startNewGame = async function () {
   }
   animateSnow();
 
-  // --- フェード解除 ---
-  fadeOverlay.style.transition = "opacity 1s ease";
-  fadeOverlay.style.opacity = 0;
-  setTimeout(()=> fadeOverlay.style.display="none",1000);
-
   // --- 新規BGM ---
   if (bgm) {
     bgm.src = "Sounds/newgame_bgm.mp3";
     bgm.loop = true;
-    bgm.volume = 0;
+    bgm.volume = 1;
     bgm.play().catch(()=>{});
-    if (bgm._fadeInInterval) clearInterval(bgm._fadeInInterval);
-    let step=0;
-    const steps=60, interval=50;
-    bgm._fadeInInterval = setInterval(()=>{
-      step++;
-      bgm.volume = Math.min(1, step/steps);
-      if(step>=steps) clearInterval(bgm._fadeInInterval);
-    }, interval);
   }
+
+  // --- 飛ぶ/戻る音 ---
+  const flyOutSound = new Audio("Sounds/fly_out.mp3");
+  const flyInSound = new Audio("Sounds/fly_in.mp3");
 
   // --- キャラクターUI ---
   const telop = document.createElement("div");
@@ -134,7 +101,6 @@ window.startNewGame = async function () {
   bgDiv.appendChild(telop);
 
   const modalDim = document.createElement("div");
-  modalDim.id = "newgame-modal-dim";
   Object.assign(modalDim.style,{
     position:"fixed", top:"0", left:"0", width:"100%", height:"100%",
     backgroundColor:"rgba(0,0,0,0.45)", zIndex:2100, cursor:"pointer"
@@ -151,129 +117,75 @@ window.startNewGame = async function () {
 
   modalDim.addEventListener("click", ()=>{
     modalDim.remove();
-    if(telop) telop.remove();
+    telop.remove();
     characterUI.style.visibility="visible";
   });
 
-  // --- キャラクターUI生成 ---
-const characters = [
-  {name:"犬", img:"images/hero1.png"},
-  {name:"うんこ", img:"images/hero2.png"}
-];
+  // --- キャラクター選択 ---
+  const characters = [
+    {name:"犬", img:"images/hero1.png"},
+    {name:"うんこ", img:"images/hero2.png"}
+  ];
 
-const wrappers = [], imgs = [], auras = [];
-let selectedIndex = null, rotatingImg = null, rotationRAF = null;
-let nameBox = null, btnContainer = null, confirmBtn = null, cancelBtn = null;
+  const wrappers = [], imgs = [], auras = [];
+  let selectedIndex = null, rotatingImg = null, rotationRAF = null;
 
-function startRotation(img){
-  stopRotation();
-  rotatingImg = img;
-  let rotateAngle = 0;
-  rotatingImg.style.willChange = "transform";
-  const step = () => {
-    rotateAngle += 2;
-    if(rotateAngle >= 360) rotateAngle -= 360;
-    rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+  function startRotation(img){
+    stopRotation();
+    rotatingImg = img;
+    let rotateAngle = 0;
+    const step = () => {
+      rotateAngle += 2;
+      if(rotateAngle >= 360) rotateAngle -= 360;
+      rotatingImg.style.transform = `rotateY(${rotateAngle}deg) scale(1.2)`;
+      rotationRAF = requestAnimationFrame(step);
+    };
     rotationRAF = requestAnimationFrame(step);
-  };
-  rotationRAF = requestAnimationFrame(step);
-}
-
-function stopRotation(){
-  if(rotationRAF) cancelAnimationFrame(rotationRAF);
-  rotationRAF = null;
-  if(rotatingImg){
-    rotatingImg.style.transition = "transform 0.3s ease";
-    rotatingImg.style.transform = "rotateY(0deg) scale(1)";
-    rotatingImg = null;
-  }
-}
-
-function showNameInput(c){
-  stopRotation();
-  const rect = wrappers[selectedIndex].getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const bottomY = rect.bottom + 20;
-
-  // 名前入力ボックス
-  if(!nameBox){
-    nameBox = document.createElement("input");
-    nameBox.type = "text";
-    nameBox.placeholder = `${c.name} の名前を入力してください`;
-    Object.assign(nameBox.style,{
-      position:"fixed", zIndex:2300, padding:"10px 15px",
-      borderRadius:"8px", fontSize:"20px", outline:"none",
-      left:`${centerX}px`, top:`${bottomY}px`, transform:"translateX(-50%)"
-    });
-    document.body.appendChild(nameBox);
   }
 
-  // ボタンコンテナ
-  if(!btnContainer){
-    btnContainer = document.createElement("div");
-    Object.assign(btnContainer.style,{
-      position:"fixed", zIndex:2300, display:"flex", gap:"40px",
-      justifyContent:"center", left:`${centerX}px`, top:`${bottomY+50}px`,
-      transform:"translateX(-50%)"
-    });
-    document.body.appendChild(btnContainer);
-  }
-
-  // キャンセルボタン
-  if(!cancelBtn){
-    cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "キャンセル";
-    Object.assign(cancelBtn.style,{
-      padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer"
-    });
-    btnContainer.appendChild(cancelBtn);
-  }
-
-  // 決定ボタン
-  if(!confirmBtn){
-    confirmBtn = document.createElement("button");
-    confirmBtn.textContent = "決定";
-    Object.assign(confirmBtn.style,{
-      padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer"
-    });
-    btnContainer.appendChild(confirmBtn);
-  }
-
-  nameBox.focus();
-
-  confirmBtn.onclick = () => {
-    const heroName = nameBox.value.trim() || c.name;
-    if(confirm(`主人公「${heroName}」でよろしいですか？`)){
-      [nameBox, btnContainer, confirmBtn, cancelBtn].forEach(el => el && el.remove());
-      nameBox = btnContainer = confirmBtn = cancelBtn = null;
-      wrappers.forEach(w => w.style.opacity = "1");
-      auras.forEach(a => a.style.opacity = 0);
-      selectedIndex = null;
+  function stopRotation(){
+    if(rotationRAF) cancelAnimationFrame(rotationRAF);
+    rotationRAF = null;
+    if(rotatingImg){
+      rotatingImg.style.transition = "transform 0.3s ease";
+      rotatingImg.style.transform = "rotateY(0deg) scale(1)";
+      rotatingImg = null;
     }
-  };
+  }
 
-  cancelBtn.onclick = () => {
-    [nameBox, btnContainer, confirmBtn, cancelBtn].forEach(el => el && el.remove());
-    nameBox = btnContainer = confirmBtn = cancelBtn = null;
-    wrappers.forEach((w, i) => {
-      w.style.transform = "translateX(0)";
-      w.style.opacity = "1";
+  function flyOut(otherIndex, selectedIdx){
+    const w = wrappers[otherIndex];
+    if(!w) return;
+    const dir = selectedIdx === 0 ? 1 : -1;
+    const dist = window.innerWidth + 400;
+    w.style.transition = "transform 0.7s cubic-bezier(.2,.7,.2,1), opacity 0.7s ease";
+    w.style.transform = `translateX(${dir*dist}px)`;
+    w.style.opacity="0";
+    w.dataset.offscreen="1";
+    flyOutSound.currentTime=0;
+    flyOutSound.play().catch(()=>{});
+  }
+
+  function flyIn(index){
+    const w = wrappers[index];
+    if(!w) return;
+    w.style.transition = "transform 0.6s cubic-bezier(.2,.7,.2,1), opacity 0.4s ease";
+    w.style.transform = "translateX(0)";
+    w.style.opacity="1";
+    w.dataset.offscreen="0";
+    flyInSound.currentTime=0;
+    flyInSound.play().catch(()=>{});
+  }
+
+  characters.forEach((c,i)=>{
+    const wrapper = document.createElement("div");
+    Object.assign(wrapper.style,{
+      display:"flex", flexDirection:"column", alignItems:"center",
+      cursor:"pointer", perspective:"600px", position:"relative",
+      transition:"transform 0.6s ease, opacity 0.6s ease"
     });
-    auras.forEach(a => a.style.opacity = 0);
-    selectedIndex = null;
-  };
-}
 
-// --- UIクリック処理 ---
-characters.forEach((c, i) => {
-  const wrapper = document.createElement("div");
-  Object.assign(wrapper.style,{
-    display:"flex", flexDirection:"column", alignItems:"center",
-    cursor:"pointer", perspective:"600px", position:"relative",
-    transition:"transform 0.6s ease, opacity 0.6s ease"
-  });
-
-  const aura = document.createElement("div");
+    const aura = document.createElement("div");
     Object.assign(aura.style,{
       position:"absolute", top:"50%", left:"50%",
       width:"220px", height:"320px",
@@ -306,120 +218,122 @@ characters.forEach((c, i) => {
     wrapper.appendChild(nameLabel);
 
     characterUI.appendChild(wrapper);
-    wrappers[i] = wrapper;
-    imgs[i] = img;
-    auras[i] = aura;
+    wrappers[i]=wrapper;
+    imgs[i]=img;
+    auras[i]=aura;
 
     wrapper.addEventListener("click", ()=>{
-      new Audio(i===0?"Sounds/select_hero1.mp3":"Sounds/select_hero2.mp3").play().catch(()=>{});
+      // 選択音
+      if(i===0) new Audio("Sounds/select_hero1.mp3").play().catch(()=>{});
+      if(i===1) new Audio("Sounds/select_hero2.mp3").play().catch(()=>{});
+
       if(selectedIndex===i){
-        showNameInput(c);
+        alert(`主人公「${c.name}」で決定`);
         return;
       }
-      if(selectedIndex!==null && selectedIndex!==i){
+      if(selectedIndex!==null){
         auras[selectedIndex].style.opacity=0;
         stopRotation();
         imgs[selectedIndex].style.transform="rotateY(0deg) scale(1)";
+        flyIn(selectedIndex);
       }
       selectedIndex=i;
       auras[i].style.opacity=1;
       startRotation(imgs[i]);
+      flyOut(selectedIndex===0?1:0, selectedIndex);
       telop.textContent="もう一度クリックで決定。";
     });
   });
 
-  // --- ポップアップ処理 ---
+  // --- ポップアップ ---
   const popupMedia=[
     {type:"img", src:"images/popup1.gif"},
-  // --- タイトル画像2削除 ---
-const titleImg2 = document.getElementById("title-img2");
-if (titleImg2) titleImg2.remove();
+    {type:"img", src:"images/popup2.gif"},
+    {type:"video", src:"videos/popup1.mp4"},
+    {type:"video", src:"videos/popup2.mp4"},
+    {type:"video", src:"videos/popup3.mp4"}
+  ];
+  const popupSound=new Audio("Sounds/popup.mp3");
+  const popupCloseSound=new Audio("Sounds/popup_x.mp3");
+  const activePopups=[];
 
-// --- ポップアップ処理 ---
-const popupMedia = [
-  { type: "img", src: "images/popup1.gif" },
-  { type: "img", src: "images/popup2.gif" },
-  { type: "video", src: "videos/popup1.mp4" },
-  { type: "video", src: "videos/popup2.mp4" },
-  { type: "video", src: "videos/popup3.mp4" },
-];
-const popupSound = new Audio("Sounds/popup.mp3");
-const popupCloseSound = new Audio("Sounds/popup_x.mp3");
-const activePopups = [];
+  function createPopup(){
+    if(activePopups.length>=50) return;
+    const selected=popupMedia[Math.floor(Math.random()*popupMedia.length)];
+    const popup=document.createElement("div");
+    popup.className="popup";
+    const w=window.innerWidth<768?300:400;
+    const h=window.innerWidth<768?250:300;
+    Object.assign(popup.style,{
+      position:"fixed", width:w+"px", height:h+"px",
+      zIndex:1800,
+      overflow:"hidden",
+      pointerEvents:"auto",
+      opacity:1
+    });
 
-function createPopup() {
-  if (activePopups.length >= 50) return;
-  const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
-  const popup = document.createElement("div");
-  popup.className = "popup";
+    let mediaEl;
+    if(selected.type === "img") {
+      mediaEl = document.createElement("img");
+      mediaEl.src = selected.src;
+      Object.assign(mediaEl.style, { width:"100%", height:"100%", objectFit:"contain" });
+    } else {
+      mediaEl = document.createElement("video");
+      mediaEl.src = selected.src;
+      mediaEl.autoplay = true;
+      mediaEl.loop = true;
+      mediaEl.muted = false;
+      Object.assign(mediaEl.style, { width:"100%", height:"100%", objectFit:"contain" });
+      mediaEl.play().catch(()=>{});
+    }
+    popup.appendChild(mediaEl);
 
-  const w = window.innerWidth < 768 ? 300 : 400;
-  const h = window.innerWidth < 768 ? 250 : 300;
-  Object.assign(popup.style, {
-    position: "fixed",
-    width: w + "px",
-    height: h + "px",
-    zIndex: 1800,
-    overflow: "hidden",
-    pointerEvents: "auto",
-  });
+    const closeBtn = document.createElement("div");
+    closeBtn.textContent = "×";
+    Object.assign(closeBtn.style, {
+      position: "absolute", top: "5px", right: "10px",
+      fontSize: "24px", fontWeight: "bold", color: "#fff",
+      cursor: "pointer", zIndex: 2000, userSelect: "none"
+    });
+    closeBtn.addEventListener("click", () => {
+      popup.remove();
+      const idx = activePopups.indexOf(popup);
+      if(idx >= 0) activePopups.splice(idx, 1);
+      popupCloseSound.play().catch(()=>{});
+    });
+    popup.appendChild(closeBtn);
 
-  let mediaEl;
-  if (selected.type === "img") {
-    mediaEl = document.createElement("img");
-    mediaEl.src = selected.src;
-    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-  } else {
-    mediaEl = document.createElement("video");
-    mediaEl.src = selected.src;
-    mediaEl.autoplay = true;
-    mediaEl.loop = true;
-    mediaEl.muted = false;
-    Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    mediaEl.play().catch(() => {});
+    const margin = 20;
+    popup.style.left = Math.random() * (window.innerWidth - w - margin*2) + margin + "px";
+    popup.style.top  = Math.random() * (window.innerHeight - h - margin*2) + margin + "px";
+
+    document.body.appendChild(popup);
+    activePopups.push(popup);
+    popupSound.currentTime = 0;
+    popupSound.play().catch(()=>{});
   }
-  popup.appendChild(mediaEl);
 
-  const closeBtn = document.createElement("div");
-  closeBtn.textContent = "×";
-  Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "5px",
-    right: "10px",
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#fff",
-    cursor: "pointer",
-    zIndex: 2000,
-    userSelect: "none",
+  // ポップアップを5秒ごとに生成
+  setInterval(createPopup, 5000);
+
+  // --- メニュー戻る用のダミーボタン ---
+  const fakeBtn = document.createElement("button");
+  fakeBtn.textContent = "メニューに戻る";
+  Object.assign(fakeBtn.style, {
+    position:"fixed", bottom:"30px", right:"30px", zIndex:2500,
+    padding:"15px 25px", fontSize:"18px", cursor:"pointer"
   });
-  closeBtn.addEventListener("click", () => {
-    popup.remove(); // フェードなしで即削除
-    const idx = activePopups.indexOf(popup);
-    if (idx >= 0) activePopups.splice(idx, 1);
-    popupCloseSound.currentTime = 0;
-    popupCloseSound.play().catch(() => {});
+  fakeBtn.addEventListener("click", ()=>{
+    alert("…戻れません！");
   });
-  popup.appendChild(closeBtn);
+  bgDiv.appendChild(fakeBtn);
 
-  const margin = 20;
-  popup.style.left = Math.random() * (window.innerWidth - w - margin * 2) + margin + "px";
-  popup.style.top = Math.random() * (window.innerHeight - h - margin * 2) + margin + "px";
-
-  document.body.appendChild(popup);
-  activePopups.push(popup);
-
-  popupSound.currentTime = 0;
-  popupSound.play().catch(() => {});
-}
-
-setInterval(createPopup, 5000);
-
-  // --- ウィンドウリサイズ対応（雪の位置補正） ---
-  window.addEventListener("resize",()=>{
-    snowflakes.forEach(flake=>{
-      flake.el.style.top=Math.min(parseFloat(flake.el.style.top), window.innerHeight)+"px";
-      flake.el.style.left=Math.min(parseFloat(flake.el.style.left), window.innerWidth)+"px";
+  // --- リサイズ対応 ---
+  window.addEventListener("resize", ()=>{
+    snowflakes.forEach(f=>{
+      f.el.style.top = Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
+      f.el.style.left = Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
     });
   });
+
 };
