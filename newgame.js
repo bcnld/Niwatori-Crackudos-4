@@ -310,25 +310,35 @@ window.startNewGame = async function () {
         nameBox.focus();
 
         confirmBtn.onclick = () => {
-            const heroName = nameBox.value.trim() || c.name;
-            if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-                [nameBox, btnContainer, confirmBtn, cancelBtn].forEach(el => el?.remove());
-                nameBox = btnContainer = confirmBtn = cancelBtn = null;
-                wrappers.forEach(w => w.style.opacity = "1");
-                auras.forEach(a => a.style.opacity = 0);
-                selectedIndex = null;
-            }
-        };
+    const heroName = nameBox.value.trim() || c.name;
+    if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
 
-        cancelBtn.onclick = () => {
-            [nameBox, btnContainer, confirmBtn, cancelBtn].forEach(el => el?.remove());
-            nameBox = btnContainer = confirmBtn = cancelBtn = null;
-            flyInAll();
-            auras.forEach(a => a.style.opacity = 0);
-            selectedIndex = null;
-        };
+        // フェードアウト関数
+        function fadeOutAndRemove(el, duration = 600) {
+            if (!el) return;
+            el.style.transition = `opacity ${duration}ms ease`;
+            el.style.opacity = 0;
+            setTimeout(() => el.remove(), duration);
+        }
+
+        // 対象のUIをフェードアウト
+        [nameBox, btnContainer, confirmBtn, cancelBtn].forEach(el => fadeOutAndRemove(el, 600));
+        fadeOutAndRemove(characterUI, 600);
+        fadeOutAndRemove(telop, 600);
+
+        // 回転停止・オーラリセット
+        stopRotation();
+        auras.forEach(a => a.style.opacity = 0);
+        selectedIndex = null;
+
+        // もし必要なら、フェードアウト後に別処理を実行
+        setTimeout(() => {
+            // 例：次のシーン開始処理
+            console.log("キャラクター選択フェードアウト完了");
+        }, 600);
     }
-
+};
+        
     characters.forEach((c, i) => {
         const wrapper = document.createElement("div");
         Object.assign(wrapper.style, {
