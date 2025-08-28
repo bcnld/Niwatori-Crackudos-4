@@ -275,25 +275,32 @@ window.startNewGame = async function () {
       btnContainer.appendChild(confirmBtn);
     }
 
-    confirmBtn.onclick = () => {
-      const heroName = nameBox.value.trim() || c.name;
-      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-        nameBox.style.display = "none";
-        btnContainer.style.display = "none";
-        stopRotation();
+    // --- 決定後のフェード処理修正 ---
+confirmBtn.onclick = () => {
+  const heroName = nameBox.value.trim() || c.name;
+  if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+    nameBox.style.display = "none";
+    btnContainer.style.display = "none";
+    stopRotation();
 
-        // --- フェードアウト後にノンフィクション ---
-        fadeOverlay.style.display = "block";
-        fadeOverlay.style.zIndex = 9999;
-        fadeOverlay.style.transition = "opacity 2s ease";
-        fadeOverlay.style.opacity = 0;
-        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+    // フェードアウト
+    fadeOverlay.style.display = "block";
+    fadeOverlay.style.zIndex = 9999;
+    fadeOverlay.style.transition = "opacity 2s ease";
+    fadeOverlay.style.opacity = 0;
+    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-        setTimeout(() => {
-          showNonFictionText();
-        }, 2000);
-      }
-    };
+    // フェードアウト完了後 → フェードインしてノンフィクション表示
+    setTimeout(() => {
+      fadeOverlay.style.transition = "opacity 2s ease";
+      fadeOverlay.style.opacity = 0;
+      setTimeout(() => {
+        fadeOverlay.style.display = "none";
+        showNonFictionText();
+      }, 2000);
+    }, 2000);
+  }
+};
 
     cancelBtn.onclick = () => {
       nameBox.style.display = "none";
@@ -329,8 +336,8 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ポップアップ処理（省略なし） ---
-  const popupMedia = [
+  // --- ポップアップ処理 ---
+const popupMedia = [
   { type: "img", src: "images/popup1.gif" },
   { type: "video", src: "videos/popup1.mp4" },
   { type: "img", src: "images/popup2.gif" },
@@ -343,20 +350,21 @@ const popupCloseSound = new Audio("Sounds/popup_x.mp3");
 const activePopups = [];
 
 function createPopup() {
-  if (activePopups.length >= 50) return; // 最大50個
+  if (activePopups.length >= 50) return;
 
   const sel = popupMedia[Math.floor(Math.random() * popupMedia.length)];
   const popup = document.createElement("div");
   popup.className = "popup";
 
-  // ランダム座標
+  // ポップアップサイズ（固定 or 動的に調整可）
   const popupWidth = 300;
   const popupHeight = 250;
-  const maxLeft = window.innerWidth - popupWidth;
-  const maxTop = window.innerHeight - popupHeight;
 
-  const left = Math.random() * maxLeft;
-  const top = Math.random() * maxTop;
+  // はみ出し防止（全て画面内に収める）
+  const maxLeft = Math.max(0, window.innerWidth - popupWidth);
+  const maxTop = Math.max(0, window.innerHeight - popupHeight);
+  const left = Math.floor(Math.random() * maxLeft);
+  const top = Math.floor(Math.random() * maxTop);
 
   Object.assign(popup.style, {
     position: "fixed",
@@ -375,18 +383,22 @@ function createPopup() {
   if (sel.type === "img") {
     mediaEl = document.createElement("img");
     mediaEl.src = sel.src;
-    mediaEl.style.width = "100%";
-    mediaEl.style.height = "100%";
-    mediaEl.style.objectFit = "cover";
+    Object.assign(mediaEl.style, {
+      width: "100%",
+      height: "100%",
+      objectFit: "contain"   // ← coverからcontainに変更して見切れ防止
+    });
   } else {
     mediaEl = document.createElement("video");
     mediaEl.src = sel.src;
     mediaEl.autoplay = true;
     mediaEl.loop = true;
-    mediaEl.muted = true;
-    mediaEl.style.width = "100%";
-    mediaEl.style.height = "100%";
-    mediaEl.style.objectFit = "cover";
+    mediaEl.muted = false; // ← 音が出るように変更
+    Object.assign(mediaEl.style, {
+      width: "100%",
+      height: "100%",
+      objectFit: "contain"  // cover→containに変更
+    });
     mediaEl.play().catch(() => {});
   }
   popup.appendChild(mediaEl);
@@ -411,32 +423,35 @@ function createPopup() {
   document.body.appendChild(popup);
   activePopups.push(popup);
 
+  popupSound.currentTime = 0;
   popupSound.play().catch(() => {});
 }
 
 // 2秒ごとにポップアップ生成
 setInterval(createPopup, 2000);
-  
-  // --- ノンフィクション ---
-  function showNonFictionText() {
-    const nfText = document.createElement("div");
-    nfText.textContent = "この物語はノンフィクションです。";
-    Object.assign(nfText.style, {
-      position: "fixed", top: "50%", left: "50%",
-      transform: "translate(-50%,-50%)",
-      fontSize: "36px", color: "#fff",
-      zIndex: 6001, opacity: 0,
-      transition: "opacity 2s ease"
-    });
-    document.body.appendChild(nfText);
-    requestAnimationFrame(() => nfText.style.opacity = 1);
 
-    nfText.addEventListener("click", () => {
-      new Audio("Sounds/select.mp3").play().catch(()=>{});
-      nfText.style.opacity = 0;
-      setTimeout(() => nfText.remove(), 2000);
-    });
-  }
+// --- ノンフィクション ---
+function showNonFictionText() {
+  const nfText = document.createElement("div");
+  nfText.textContent = "この物語はノンフィクションです。";
+  Object.assign(nfText.style, {
+    position: "fixed", top: "50%", left: "50%",
+    transform: "translate(-50%,-50%)",
+    fontSize: "36px", color: "#fff",
+    zIndex: 6001, opacity: 0,
+    transition: "opacity 2s ease"
+  });
+  document.body.appendChild(nfText);
+
+  // フェードイン
+  requestAnimationFrame(() => nfText.style.opacity = 1);
+
+  nfText.addEventListener("click", () => {
+    new Audio("Sounds/select.mp3").play().catch(()=>{});
+    nfText.style.opacity = 0;
+    setTimeout(() => nfText.remove(), 2000);
+  });
+}
 
   // --- リサイズ対応 ---
   window.addEventListener("resize", () => {
