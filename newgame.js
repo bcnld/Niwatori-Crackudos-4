@@ -1,4 +1,4 @@
-// newgame.js（整理・完全版）
+// newgame.js（整理・完全版・文字フェードイン対応）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -221,74 +221,70 @@ window.startNewGame = async function () {
 
   // --- 名前入力 ---
   function showNameInput(c) {
-  stopRotation();
-  flyOutOther(selectedIndex);
-
-  const rect = wrappers[selectedIndex].getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const bottomY = rect.bottom + 20;
-
-  // --- 名前ボックス ---
-  if (!nameBox) {
-    nameBox = document.createElement("input");
-    nameBox.type = "text";
-    Object.assign(nameBox.style, {
-      position: "fixed",
-      zIndex: 2300,
-      padding: "10px 15px",
-      borderRadius: "8px",
-      fontSize: "20px",
-      transform: "translateX(-50%)"
-    });
-    document.body.appendChild(nameBox);
-  }
-  nameBox.style.display = "block";
-  nameBox.style.left = `${centerX}px`;  // ← 位置を更新
-  nameBox.style.top = `${bottomY}px`;   // ← 位置を更新
-  nameBox.value = "";                    // ← 前の入力値リセット
-  nameBox.placeholder = `${c.name} の名前を入力してください`;
-
-  // --- ボタンコンテナ ---
-  if (!btnContainer) {
-    btnContainer = document.createElement("div");
-    Object.assign(btnContainer.style, {
-      position: "fixed",
-      zIndex: 2300,
-      display: "flex",
-      gap: "40px",
-      transform: "translateX(-50%)"
-    });
-    document.body.appendChild(btnContainer);
-  }
-  btnContainer.style.display = "flex";
-  btnContainer.style.left = `${centerX}px`; // ← 位置更新
-  btnContainer.style.top = `${bottomY + 50}px`; // ← 位置更新
-
-  // --- ボタン ---
-  if (!cancelBtn) {
-    cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "キャンセル";
-    btnContainer.appendChild(cancelBtn);
-  }
-  if (!confirmBtn) {
-    confirmBtn = document.createElement("button");
-    confirmBtn.textContent = "決定";
-    btnContainer.appendChild(confirmBtn);
-  }
-
-  cancelBtn.onclick = () => {
-    nameBox.style.display = "none";
-    btnContainer.style.display = "none";
-    selectedIndex = null;
-    flyInAll();
-  };
-
-  confirmBtn.onclick = () => {
-    const heroName = nameBox.value.trim() || c.name;
-    if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
-    nameBox.style.display = "none";
-    btnContainer.style.display = "none";
     stopRotation();
+    flyOutOther(selectedIndex);
+
+    const rect = wrappers[selectedIndex].getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const bottomY = rect.bottom + 20;
+
+    // --- 名前ボックス ---
+    if (!nameBox) {
+      nameBox = document.createElement("input");
+      nameBox.type = "text";
+      Object.assign(nameBox.style, {
+        position: "fixed",
+        zIndex: 2300,
+        padding: "10px 15px",
+        borderRadius: "8px",
+        fontSize: "20px",
+        transform: "translateX(-50%)"
+      });
+      document.body.appendChild(nameBox);
+    }
+    nameBox.style.display = "block";
+    nameBox.style.left = `${centerX}px`;
+    nameBox.style.top = `${bottomY}px`;
+    nameBox.value = "";
+    nameBox.placeholder = `${c.name} の名前を入力してください`;
+
+    // --- ボタンコンテナ ---
+    if (!btnContainer) {
+      btnContainer = document.createElement("div");
+      Object.assign(btnContainer.style, {
+        position: "fixed",
+        zIndex: 2300,
+        display: "flex",
+        gap: "40px",
+        transform: "translateX(-50%)"
+      });
+      document.body.appendChild(btnContainer);
+    }
+    btnContainer.style.display = "flex";
+    btnContainer.style.left = `${centerX}px`;
+    btnContainer.style.top = `${bottomY + 50}px`;
+
+    // --- ボタン ---
+    if (!cancelBtn) { cancelBtn = document.createElement("button"); btnContainer.appendChild(cancelBtn); }
+    cancelBtn.textContent = "キャンセル";
+    if (!confirmBtn) { confirmBtn = document.createElement("button"); btnContainer.appendChild(confirmBtn); }
+    confirmBtn.textContent = "決定";
+
+    cancelBtn.onclick = () => {
+      nameBox.style.display = "none";
+      btnContainer.style.display = "none";
+      selectedIndex = null;
+      flyInAll();
+    };
+
+    confirmBtn.onclick = () => {
+      const heroName = nameBox.value.trim() || c.name;
+      if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
+
+      // --- 古いUI非表示 ---
+      nameBox.style.display = "none";
+      btnContainer.style.display = "none";
+      stopRotation();
 
       // --- 画面フェードアウト ---
       fadeOverlay.style.display = "block";
@@ -314,53 +310,42 @@ window.startNewGame = async function () {
       }
 
       // --- 1.5秒後に文字フェードイン ---
-setTimeout(() => {
-  const nfText = document.createElement("div");
-  nfText.textContent = "この物語はノンフィクションです。";
-  Object.assign(nfText.style, {
-    position: "fixed",
-    top: "50%", left: "50%",
-    transform: "translate(-50%,-50%)",
-    fontSize: "36px",
-    color: "#fff",
-    zIndex: 10000,
-    opacity: 0,
-    transition: "opacity 3s ease",
-    cursor: "pointer"
-  });
-  document.body.appendChild(nfText);
-  requestAnimationFrame(() => nfText.style.opacity = 1);
+      setTimeout(() => {
+        const nfText = document.createElement("div");
+        nfText.textContent = "この物語はノンフィクションです。";
+        Object.assign(nfText.style, {
+          position: "fixed",
+          top: "50%", left: "50%",
+          transform: "translate(-50%,-50%)",
+          fontSize: "36px",
+          color: "#fff",
+          zIndex: 10000,
+          opacity: 0,
+          transition: "opacity 3s ease",
+          cursor: "pointer"
+        });
+        document.body.appendChild(nfText);
+        requestAnimationFrame(() => nfText.style.opacity = 1);
 
-  // --- クリックで次に進む処理 ---
-  function proceed() {
-    // 文字フェードアウト
-    nfText.style.transition = "opacity 1.5s ease";
-    nfText.style.opacity = 0;
+        function proceed() {
+          nfText.style.transition = "opacity 1.5s ease";
+          nfText.style.opacity = 0;
+          setTimeout(() => {
+            nfText.remove();
+            // --- 古いUIまとめて削除 ---
+            nameBox?.remove();
+            btnContainer?.remove();
+            telop?.remove();
+            modalDim?.remove();
 
-    setTimeout(() => {
-      nfText.remove();
-      // 古いUIをまとめて削除
-      nameBox?.remove();
-      btnContainer?.remove();
-      telop?.remove();
-      modalDim?.remove();
+            document.removeEventListener("click", proceed);
+            // 次の処理へ
+            startCharacterSelection(); // 仮関数
+          }, 1500);
+        }
 
-      document.removeEventListener("click", proceed);
-
-      // 次の処理へ
-      startCharacterSelection(); // 仮関数
-    }, 1500);
-  }
-
-  document.addEventListener("click", proceed);
-}, 1500);
-    
-    // --- キャンセルボタン ---
-    cancelBtn.onclick = () => {
-      nameBox.style.display = "none";
-      btnContainer.style.display = "none";
-      selectedIndex = null;
-      flyInAll();
+        document.addEventListener("click", proceed);
+      }, 1500);
     };
   }
 
