@@ -247,94 +247,101 @@ window.startNewGame = async function () {
   }
 
   function showNameInput(c) {
-    wrappers.forEach((w, idx) => {
-      auras[idx].style.opacity = 0;
-      w.style.transform = "translateX(0)";
-      w.style.opacity = "1";
+  wrappers.forEach((w, idx) => {
+    auras[idx].style.opacity = 0;
+    w.style.transform = "translateX(0)";
+    w.style.opacity = "1";
+  });
+  stopRotation();
+
+  const charWrapper = wrappers[selectedIndex];
+  const rect = charWrapper.getBoundingClientRect(); // 選択中キャラの座標取得
+  const centerX = rect.left + rect.width / 2;
+  const bottomY = rect.bottom + 20; // キャラ画像の下に20px空ける
+
+  if (!nameBox) {
+    nameBox = document.createElement("input");
+    nameBox.type = "text";
+    nameBox.placeholder = `${c.name} の名前を入力してください`;
+    Object.assign(nameBox.style, {
+      position: "fixed",
+      zIndex: 2300,
+      padding: "10px 15px",
+      borderRadius: "8px",
+      fontSize: "20px",
+      outline: "none",
+      left: `${centerX}px`,
+      top: `${bottomY}px`,
+      transform: "translateX(-50%)",
     });
-    stopRotation();
+    bgDiv.appendChild(nameBox);
+  }
 
-    if (!nameBox) {
-      nameBox = document.createElement("input");
-      nameBox.type = "text";
-      nameBox.placeholder = `${c.name} の名前を入力してください`;
-      Object.assign(nameBox.style, {
-        position: "fixed",
-        zIndex: 2300,
-        padding: "10px 15px",
-        borderRadius: "8px",
-        fontSize: "20px",
-        outline: "none",
-      });
-      bgDiv.appendChild(nameBox);
-    }
+  if (!btnContainer) {
+    btnContainer = document.createElement("div");
+    Object.assign(btnContainer.style, {
+      position: "fixed",
+      zIndex: 2300,
+      display: "flex",
+      gap: "40px",
+      justifyContent: "center",
+      left: `${centerX}px`,
+      top: `${bottomY + 50}px`, // 名前入力欄の下に50px
+      transform: "translateX(-50%)",
+    });
+    bgDiv.appendChild(btnContainer);
+  }
 
-    if (!btnContainer) {
-      btnContainer = document.createElement("div");
-      Object.assign(btnContainer.style, {
-        position: "fixed",
-        zIndex: 2300,
-        display: "flex",
-        gap: "40px",
-        justifyContent: "center",
-        alignItems: "center",
-      });
-      bgDiv.appendChild(btnContainer);
-    }
+  if (!cancelBtn) {
+    cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "キャンセル";
+    Object.assign(cancelBtn.style, {
+      padding: "10px 20px",
+      fontSize: "20px",
+      borderRadius: "8px",
+      cursor: "pointer",
+    });
+    btnContainer.appendChild(cancelBtn);
+  }
 
-    if (!cancelBtn) {
-      cancelBtn = document.createElement("button");
-      cancelBtn.textContent = "キャンセル";
-      Object.assign(cancelBtn.style, {
-        padding: "10px 20px",
-        fontSize: "20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-      });
-      btnContainer.appendChild(cancelBtn);
-    }
+  if (!confirmBtn) {
+    confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "決定";
+    Object.assign(confirmBtn.style, {
+      padding: "10px 20px",
+      fontSize: "20px",
+      borderRadius: "8px",
+      cursor: "pointer",
+    });
+    btnContainer.appendChild(confirmBtn);
+  }
 
-    if (!confirmBtn) {
-      confirmBtn = document.createElement("button");
-      confirmBtn.textContent = "決定";
-      Object.assign(confirmBtn.style, {
-        padding: "10px 20px",
-        fontSize: "20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-      });
-      btnContainer.appendChild(confirmBtn);
-    }
+  telop.textContent = "鶏の餌食の名前を入力してください";
+  if (selectedIndex !== null) flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
 
-    telop.textContent = "鶏の餌食の名前を入力してください";
-    if (selectedIndex !== null) flyOut(selectedIndex === 0 ? 1 : 0, selectedIndex);
-
-    confirmBtn.onclick = () => {
-      const heroName = nameBox.value.trim() || c.name;
-      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-        [nameBox, btnContainer].forEach((el) => el && el.remove());
-        nameBox = btnContainer = confirmBtn = cancelBtn = null;
-        if (telop) telop.remove();
-        if (characterUI) characterUI.remove();
-        selectedIndex = null;
-      }
-    };
-
-    cancelBtn.onclick = () => {
-      // 選択解除時に全員を戻す
-      wrappers.forEach((w, idx) => flyIn(idx));
-      auras.forEach(a => a.style.opacity = 0);
-      stopRotation();
-
-      selectedIndex = null;
+  confirmBtn.onclick = () => {
+    const heroName = nameBox.value.trim() || c.name;
+    if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
       [nameBox, btnContainer].forEach((el) => el && el.remove());
       nameBox = btnContainer = confirmBtn = cancelBtn = null;
-      telop.textContent = "鶏の餌食を選択してください";
-    };
+      if (telop) telop.remove();
+      if (characterUI) characterUI.remove();
+      selectedIndex = null;
+    }
+  };
 
-    adjustNewGameLayout();
-    nameBox.focus();
-  }
+  cancelBtn.onclick = () => {
+    wrappers.forEach((w, idx) => flyIn(idx));
+    auras.forEach(a => a.style.opacity = 0);
+    stopRotation();
+    selectedIndex = null;
+    [nameBox, btnContainer].forEach((el) => el && el.remove());
+    nameBox = btnContainer = confirmBtn = cancelBtn = null;
+    telop.textContent = "鶏の餌食を選択してください";
+  };
+
+  nameBox.focus();
+}
 
   characters.forEach((c, i) => {
     const charWrapper = document.createElement("div");
