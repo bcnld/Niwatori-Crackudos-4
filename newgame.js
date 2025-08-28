@@ -534,3 +534,4 @@ window.addEventListener("orientationchange", adjustNewGameLayout);
 
 // --- startNewGame 内で呼ぶ ---
 adjustNewGameLayout();
+}
