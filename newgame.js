@@ -173,7 +173,7 @@ window.startNewGame = async function () {
   // --- キャラクター ---
   const characters = [
     { name: "犬", img: "images/hero1.png", selectSound: "Sounds/select_hero1.mp3" },
-    { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" } // ← hero2→hero1に統一
+    { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" } // hero1で統一
   ];
   const wrappers = [];
   let selectedIndex = null, rotationRAF = null, rotatingImg = null;
@@ -275,7 +275,7 @@ window.startNewGame = async function () {
       btnContainer.appendChild(confirmBtn);
     }
 
-    // --- 名前決定後フェードアウト→黒→1.5秒後フェードイン ノンフィクション ---
+    // --- 決定後のフェード処理（画面黒・BGMフェードアウト・文字フェードイン） ---
     confirmBtn.onclick = () => {
       const heroName = nameBox.value.trim() || c.name;
       if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
@@ -284,22 +284,46 @@ window.startNewGame = async function () {
       btnContainer.style.display = "none";
       stopRotation();
 
-      // 画面を真っ黒にする
+      // --- 画面フェードアウト ---
       fadeOverlay.style.display = "block";
       fadeOverlay.style.zIndex = 9999;
-      fadeOverlay.style.backgroundColor = "#000"; // ← 真っ黒
+      fadeOverlay.style.backgroundColor = "#000";
       fadeOverlay.style.opacity = 0;
-      fadeOverlay.style.transition = "opacity 0.5s ease";
+      fadeOverlay.style.transition = "opacity 2s ease";
       requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-      // 1.5秒後にフェードインしてノンフィクション表示
+      // --- BGMフェードアウト ---
+      if (bgm && !bgm.paused) {
+        if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
+        let step = 0, steps = 60, interval = 2000 / 60;
+        bgm._fadeOutInterval = setInterval(() => {
+          step++;
+          bgm.volume = Math.max(0, 1 - step / steps);
+          if (step >= steps) {
+            clearInterval(bgm._fadeOutInterval);
+            bgm.pause();
+            bgm.currentTime = 0;
+          }
+        }, interval);
+      }
+
+      // --- 1.5秒後に文字フェードイン ---
       setTimeout(() => {
-        fadeOverlay.style.transition = "opacity 1.5s ease";
-        fadeOverlay.style.opacity = 0; // フェードイン
-        setTimeout(() => {
-          fadeOverlay.style.display = "none";
-          showNonFictionText();
-        }, 1500);
+        const nfText = document.createElement("div");
+        nfText.textContent = "この物語はノンフィクションです。";
+        Object.assign(nfText.style, {
+          position: "fixed",
+          top: "50%", left: "50%",
+          transform: "translate(-50%,-50%)",
+          fontSize: "36px",
+          color: "#fff",
+          zIndex: 10000,
+          opacity: 0,
+          transition: "opacity 3s ease"
+        });
+        document.body.appendChild(nfText);
+
+        requestAnimationFrame(() => nfText.style.opacity = 1);
       }, 1500);
     };
 
@@ -337,7 +361,7 @@ window.startNewGame = async function () {
     });
   });
 
-  // --- ポップアップ処理（即表示） ---
+  // --- ポップアップ処理（フェードなし） ---
   const popupMedia = [
     { type: "img", src: "images/popup1.gif" },
     { type: "video", src: "videos/popup1.mp4" },
@@ -352,14 +376,12 @@ window.startNewGame = async function () {
 
   function createPopup() {
     if (activePopups.length >= 50) return;
-
     const sel = popupMedia[Math.floor(Math.random() * popupMedia.length)];
     const popup = document.createElement("div");
     popup.className = "popup";
 
     const popupWidth = 300;
     const popupHeight = 250;
-
     const maxLeft = Math.max(0, window.innerWidth - popupWidth);
     const maxTop = Math.max(0, window.innerHeight - popupHeight);
     const left = Math.floor(Math.random() * maxLeft);
@@ -417,30 +439,7 @@ window.startNewGame = async function () {
     popupSound.currentTime = 0;
     popupSound.play().catch(() => {});
   }
-
   setInterval(createPopup, 2000);
-
-  // --- ノンフィクション ---
-  function showNonFictionText() {
-    const nfText = document.createElement("div");
-    nfText.textContent = "この物語はノンフィクションです。";
-    Object.assign(nfText.style, {
-      position: "fixed", top: "50%", left: "50%",
-      transform: "translate(-50%,-50%)",
-      fontSize: "36px", color: "#fff",
-      zIndex: 6001, opacity: 0,
-      transition: "opacity 2s ease"
-    });
-    document.body.appendChild(nfText);
-
-    requestAnimationFrame(() => nfText.style.opacity = 1);
-
-    nfText.addEventListener("click", () => {
-      new Audio("Sounds/select.mp3").play().catch(()=>{});
-      nfText.style.opacity = 0;
-      setTimeout(() => nfText.remove(), 2000);
-    });
-  }
 
   // --- リサイズ対応 ---
   window.addEventListener("resize", () => {
