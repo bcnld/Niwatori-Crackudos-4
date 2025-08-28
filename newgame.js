@@ -1,4 +1,4 @@
-// newgame.js（整理・完全版・文字フェードイン対応）
+// newgame.js（整理・完全版・文字フェードイン対応・ポップアップ停止対応）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -228,7 +228,6 @@ window.startNewGame = async function () {
     const centerX = rect.left + rect.width / 2;
     const bottomY = rect.bottom + 20;
 
-    // --- 名前ボックス ---
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
@@ -248,7 +247,6 @@ window.startNewGame = async function () {
     nameBox.value = "";
     nameBox.placeholder = `${c.name} の名前を入力してください`;
 
-    // --- ボタンコンテナ ---
     if (!btnContainer) {
       btnContainer = document.createElement("div");
       Object.assign(btnContainer.style, {
@@ -264,7 +262,6 @@ window.startNewGame = async function () {
     btnContainer.style.left = `${centerX}px`;
     btnContainer.style.top = `${bottomY + 50}px`;
 
-    // --- ボタン ---
     if (!cancelBtn) { cancelBtn = document.createElement("button"); btnContainer.appendChild(cancelBtn); }
     cancelBtn.textContent = "キャンセル";
     if (!confirmBtn) { confirmBtn = document.createElement("button"); btnContainer.appendChild(confirmBtn); }
@@ -330,8 +327,15 @@ window.startNewGame = async function () {
         function proceed() {
           nfText.style.transition = "opacity 1.5s ease";
           nfText.style.opacity = 0;
+
           setTimeout(() => {
             nfText.remove();
+
+            // --- ポップアップ生成停止 & 既存ポップアップ削除 ---
+            if (window._popupInterval) clearInterval(window._popupInterval);
+            activePopups.forEach(p => p.remove());
+            activePopups.length = 0;
+
             // --- 古いUIまとめて削除 ---
             nameBox?.remove();
             btnContainer?.remove();
@@ -339,6 +343,7 @@ window.startNewGame = async function () {
             modalDim?.remove();
 
             document.removeEventListener("click", proceed);
+
             // 次の処理へ
             startCharacterSelection(); // 仮関数
           }, 1500);
@@ -461,5 +466,5 @@ window.startNewGame = async function () {
     popupSound.play().catch(() => {});
   }
 
-  setInterval(createPopup, 4500);
+  window._popupInterval = setInterval(createPopup, 4500);
 };
