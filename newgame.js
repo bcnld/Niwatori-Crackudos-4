@@ -173,7 +173,7 @@ window.startNewGame = async function () {
   // --- キャラクター ---
   const characters = [
     { name: "犬", img: "images/hero1.png", selectSound: "Sounds/select_hero1.mp3" },
-    { name: "うんこ", img: "images/hero1.png", selectSound: "Sounds/select_hero2.mp3" } // ← hero2→hero1に統一
+    { name: "うんこ", img: "images/hero2.png", selectSound: "Sounds/select_hero2.mp3" } // ← hero2→hero1に統一
   ];
   const wrappers = [];
   let selectedIndex = null, rotationRAF = null, rotatingImg = null;
