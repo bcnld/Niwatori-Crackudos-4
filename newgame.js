@@ -1,4 +1,4 @@
-// newgame.js（完全統合版・オーラなし・選択音＋ポップアップ＋フェードアウト）
+// newgame.js（完全統合版）
 window.startNewGame = async function () {
   // --- 古いゲームUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -13,7 +13,7 @@ window.startNewGame = async function () {
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
   if (menuWrapper) menuWrapper.style.display = "none";
 
-  // --- フェードオーバーレイ ---
+  // --- フェードイン ---
   fadeOverlay.style.display = "block";
   fadeOverlay.style.opacity = 0;
   fadeOverlay.style.zIndex = 5000;
@@ -40,14 +40,12 @@ window.startNewGame = async function () {
     });
   }
 
-  // --- 背景 ---
+  // --- 背景作成 ---
   const bgDiv = document.createElement("div");
   bgDiv.id = "newgame-bg-div";
   Object.assign(bgDiv.style, {
-    position: "fixed",
-    top: 0, left: 0,
-    width: "100%",
-    height: "100%",
+    position: "fixed", top: 0, left: 0,
+    width: "100%", height: "100%",
     backgroundColor: "#001022",
     backgroundImage: "url('images/character_select_bg.png')",
     backgroundSize: "cover",
@@ -57,7 +55,7 @@ window.startNewGame = async function () {
   });
   document.body.appendChild(bgDiv);
 
-  // --- 雪 ---
+  // --- 雪アニメ ---
   const snowCount = 20;
   const snowflakes = [];
   for (let i = 0; i < snowCount; i++) {
@@ -112,7 +110,7 @@ window.startNewGame = async function () {
     bgm.src = "Sounds/newgame_bgm.mp3";
     bgm.loop = true;
     bgm.volume = 0;
-    bgm.play().catch(() => { });
+    bgm.play().catch(() => {});
     if (bgm._fadeInInterval) clearInterval(bgm._fadeInInterval);
     let step = 0, steps = 60, interval = 50;
     bgm._fadeInInterval = setInterval(() => {
@@ -247,7 +245,6 @@ window.startNewGame = async function () {
     if (!nameBox) {
       nameBox = document.createElement("input");
       nameBox.type = "text";
-      nameBox.placeholder = `${c.name} の名前を入力してください`;
       Object.assign(nameBox.style, {
         position: "fixed",
         zIndex: 2300,
@@ -260,13 +257,12 @@ window.startNewGame = async function () {
         transform: "translateX(-50%)"
       });
       document.body.appendChild(nameBox);
-    } else {
-      nameBox.style.display = "block";
-      nameBox.value = "";
-      nameBox.placeholder = `${c.name} の名前を入力してください`;
-      nameBox.style.left = `${centerX}px`;
-      nameBox.style.top = `${bottomY}px`;
     }
+    nameBox.style.display = "block";
+    nameBox.value = "";
+    nameBox.placeholder = `${c.name} の名前を入力してください`;
+    nameBox.style.left = `${centerX}px`;
+    nameBox.style.top = `${bottomY}px`;
 
     if (!btnContainer) {
       btnContainer = document.createElement("div");
@@ -281,75 +277,55 @@ window.startNewGame = async function () {
         transform: "translateX(-50%)"
       });
       document.body.appendChild(btnContainer);
-    } else {
-      btnContainer.style.display = "flex";
-      btnContainer.style.left = `${centerX}px`;
-      btnContainer.style.top = `${bottomY + 50}px`;
     }
+    btnContainer.style.display = "flex";
+    btnContainer.style.left = `${centerX}px`;
+    btnContainer.style.top = `${bottomY + 50}px`;
 
     if (!cancelBtn) {
       cancelBtn = document.createElement("button");
       cancelBtn.textContent = "キャンセル";
-      Object.assign(cancelBtn.style, {
-        padding: "10px 20px",
-        fontSize: "20px",
-        borderRadius: "8px",
-        cursor: "pointer"
-      });
+      Object.assign(cancelBtn.style, { padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer" });
       btnContainer.appendChild(cancelBtn);
     } else cancelBtn.style.display = "inline-block";
 
     if (!confirmBtn) {
       confirmBtn = document.createElement("button");
       confirmBtn.textContent = "決定";
-      Object.assign(confirmBtn.style, {
-        padding: "10px 20px",
-        fontSize: "20px",
-        borderRadius: "8px",
-        cursor: "pointer"
-      });
+      Object.assign(confirmBtn.style, { padding:"10px 20px", fontSize:"20px", borderRadius:"8px", cursor:"pointer" });
       btnContainer.appendChild(confirmBtn);
     } else confirmBtn.style.display = "inline-block";
 
     nameBox.focus();
 
     confirmBtn.onclick = () => {
-  const heroName = nameBox.value.trim() || c.name;
-  if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
-    // 名前入力UIを消す
-    nameBox.style.display = "none";
-    btnContainer.style.display = "none";
-    stopRotation();
+      const heroName = nameBox.value.trim() || c.name;
+      if (confirm(`主人公「${heroName}」でよろしいですか？`)) {
+        nameBox.style.display = "none";
+        btnContainer.style.display = "none";
+        stopRotation();
 
-    // --- フェードアウト開始 ---
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.zIndex = 9999;
-    fadeOverlay.style.transition = "opacity 2s ease";
-    fadeOverlay.style.opacity = 0;
-    requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
+        fadeOverlay.style.display = "block";
+        fadeOverlay.style.zIndex = 9999;
+        fadeOverlay.style.transition = "opacity 2s ease";
+        fadeOverlay.style.opacity = 0;
+        requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-    // BGMもフェードアウト
-    if (bgm && !bgm.paused) {
-      if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
-      let step = 0, steps = 60, interval = 2000 / steps;
-      bgm._fadeOutInterval = setInterval(() => {
-        step++;
-        bgm.volume = Math.max(0, 1 - step / steps);
-        if (step >= steps) {
-          clearInterval(bgm._fadeOutInterval);
-          bgm.pause();
-          bgm.currentTime = 0;
-
-          // --- 名前決定後にノンフィクション表示 ---
-          showNonFictionText(); // ←ここで呼ぶ
+        if (bgm && !bgm.paused) {
+          if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
+          let step = 0, steps = 60, interval = 2000 / steps;
+          bgm._fadeOutInterval = setInterval(() => {
+            step++;
+            bgm.volume = Math.max(0, 1 - step / steps);
+            if (step >= steps) {
+              clearInterval(bgm._fadeOutInterval);
+              bgm.pause();
+              bgm.currentTime = 0;
+            }
+          }, interval);
         }
-      }, interval);
-    } else {
-      // BGMがなければ即表示
-      showNonFictionText();
-    }
-  }
-};
+      }
+    };
 
     cancelBtn.onclick = () => {
       nameBox.style.display = "none";
@@ -360,67 +336,32 @@ window.startNewGame = async function () {
   }
 
   // --- キャラクター生成 ---
-  characters.forEach((c, i) => {
+  characters.forEach((c,i)=>{
     const wrapper = document.createElement("div");
-    Object.assign(wrapper.style, {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      cursor: "pointer",
-      perspective: "600px",
-      position: "relative",
-      transition: "transform 0.6s ease, opacity 0.6s ease"
-    });
+    Object.assign(wrapper.style,{ display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer", perspective:"600px", position:"relative", transition:"transform 0.6s ease, opacity 0.6s ease" });
 
     const img = document.createElement("img");
     img.src = c.img;
-    Object.assign(img.style, {
-      width: "200px",
-      height: "300px",
-      objectFit: "contain",
-      border: "4px solid transparent",
-      borderRadius: "12px",
-      transition: "opacity 0.3s ease, border-color 0.3s ease",
-      zIndex: 1,
-      backfaceVisibility: "visible",
-      transformStyle: "preserve-3d",
-      willChange: "transform"
-    });
+    Object.assign(img.style,{ width:"200px", height:"300px", objectFit:"contain", border:"4px solid transparent", borderRadius:"12px", transition:"opacity 0.3s ease, border-color 0.3s ease", zIndex:1, backfaceVisibility:"visible", transformStyle:"preserve-3d", willChange:"transform" });
     wrapper.appendChild(img);
 
     const nameLabel = document.createElement("div");
     nameLabel.textContent = c.name;
-    Object.assign(nameLabel.style, {
-      marginTop: "10px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      textShadow: "2px 2px 4px black"
-    });
+    Object.assign(nameLabel.style,{ marginTop:"10px", fontSize:"24px", fontWeight:"bold", color:"#fff", textShadow:"2px 2px 4px black" });
     wrapper.appendChild(nameLabel);
 
     characterUI.appendChild(wrapper);
-    wrappers[i] = wrapper;
-    imgs[i] = img;
+    wrappers[i]=wrapper;
+    imgs[i]=img;
 
-    wrapper.addEventListener("click", () => {
-      if (selectedIndex === i) {
-        showNameInput(c);
-        return;
-      }
-      if (selectedIndex !== null && selectedIndex !== i) {
-        stopRotation();
-        imgs[selectedIndex].style.transform = "rotateY(0deg) scale(1)";
-      }
-      selectedIndex = i;
+    wrapper.addEventListener("click",()=>{
+      if(selectedIndex===i){ showNameInput(c); return; }
+      if(selectedIndex!==null && selectedIndex!==i){ stopRotation(); imgs[selectedIndex].style.transform="rotateY(0deg) scale(1)"; }
+      selectedIndex=i;
       startRotation(imgs[i]);
-
-      // 選択音再生
-      const selectSound = new Audio(c.selectSound);
-      selectSound.currentTime = 0;
-      selectSound.play().catch(() => {});
-
-      telop.textContent = "もう一度クリックで決定。";
+      const selectSound=new Audio(c.selectSound);
+      selectSound.currentTime=0; selectSound.play().catch(()=>{});
+      telop.textContent="もう一度クリックで決定。";
     });
   });
 
@@ -437,74 +378,38 @@ window.startNewGame = async function () {
   const activePopups = [];
 
   function createPopup() {
-    if (activePopups.length >= 50) return;
-
-    const selected = popupMedia[Math.floor(Math.random() * popupMedia.length)];
-    const popup = document.createElement("div");
-    popup.className = "popup";
-    const w = window.innerWidth < 768 ? 300 : 400;
-    const h = window.innerWidth < 768 ? 250 : 300;
-
-    Object.assign(popup.style, {
-      position: "fixed",
-      width: w + "px",
-      height: h + "px",
-      zIndex: 1800,
-      overflow: "hidden",
-      pointerEvents: "auto"
-    });
+    if(activePopups.length>=50) return;
+    const selected=popupMedia[Math.floor(Math.random()*popupMedia.length)];
+    const popup=document.createElement("div");
+    popup.className="popup";
+    const w=window.innerWidth<768?300:400;
+    const h=window.innerWidth<768?250:300;
+    Object.assign(popup.style,{ position:"fixed", width:w+"px", height:h+"px", zIndex:1800, overflow:"hidden", pointerEvents:"auto" });
 
     let mediaEl;
-    if (selected.type === "img") {
-      mediaEl = document.createElement("img");
-      mediaEl.src = selected.src;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-    } else {
-      mediaEl = document.createElement("video");
-      mediaEl.src = selected.src;
-      mediaEl.autoplay = true;
-      mediaEl.loop = true;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-      mediaEl.play().catch(()=>{});
-    }
+    if(selected.type==="img"){ mediaEl=document.createElement("img"); mediaEl.src=selected.src; Object.assign(mediaEl.style,{ width:"100%", height:"100%", objectFit:"contain" }); }
+    else{ mediaEl=document.createElement("video"); mediaEl.src=selected.src; mediaEl.autoplay=true; mediaEl.loop=true; Object.assign(mediaEl.style,{ width:"100%", height:"100%", objectFit:"contain" }); mediaEl.play().catch(()=>{}); }
     popup.appendChild(mediaEl);
 
-    const closeBtn = document.createElement("div");
-    closeBtn.textContent = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px",
-      right: "10px",
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#fff",
-      cursor: "pointer",
-      zIndex: 2000,
-      userSelect: "none"
-    });
-
-    closeBtn.addEventListener("click", () => {
+    const closeBtn=document.createElement("div");
+    closeBtn.textContent="×";
+    Object.assign(closeBtn.style,{ position:"absolute", top:"5px", right:"10px", fontSize:"24px", fontWeight:"bold", color:"#fff", cursor:"pointer", zIndex:2000, userSelect:"none" });
+    closeBtn.addEventListener("click",()=>{
       popup.remove();
-      const idx = activePopups.indexOf(popup);
-      if (idx >= 0) activePopups.splice(idx, 1);
-      popupCloseSound.play().catch(() => {});
+      const idx=activePopups.indexOf(popup); if(idx>=0) activePopups.splice(idx,1);
+      popupCloseSound.play().catch(()=>{});
     });
-
     popup.appendChild(closeBtn);
 
-    // ランダム位置
-    const margin = 20;
-    popup.style.left =
-      Math.random() * (window.innerWidth - w - margin * 2) + margin + "px";
-    popup.style.top =
-      Math.random() * (window.innerHeight - h - margin * 2) + margin + "px";
+    const margin=20;
+    popup.style.left=Math.random()*(window.innerWidth-w-margin*2)+margin+"px";
+    popup.style.top=Math.random()*(window.innerHeight-h-margin*2)+margin+"px";
 
     document.body.appendChild(popup);
     activePopups.push(popup);
-    popupSound.play().catch(() => {});
+    popupSound.play().catch(()=>{});
   }
-
-  setInterval(createPopup, 5000);
+  setInterval(createPopup,5000);
 
   // --- ノンフィクション表示（画面真っ黒） ---
 function showNonFictionText() {
@@ -556,30 +461,39 @@ function showNonFictionText() {
 // --- フェード解除後に表示 ---
 setTimeout(showNonFictionText, 2000); // 既存のフェード解除後に表示
 
-  // --- Fake Button ---
-  const fakeBtn = document.createElement("button");
-  fakeBtn.textContent = "メニューに戻る";
-  Object.assign(fakeBtn.style, {
-    position: "fixed",
-    bottom: "30px",
-    right: "30px",
-    zIndex: 2500,
-    padding: "15px 25px",
-    fontSize: "18px",
-    cursor: "pointer"
-  });
-  fakeBtn.addEventListener("click", () => {
-    alert("…戻れないよー🤣");
-  });
-  bgDiv.appendChild(fakeBtn);
+// --- Fake Button ---
+const fakeBtn = document.createElement("button");
+fakeBtn.textContent = "メニューに戻る";
+Object.assign(fakeBtn.style, {
+  position: "fixed",
+  bottom: "30px",
+  right: "30px",
+  zIndex: 2500,
+  padding: "15px 25px",
+  fontSize: "18px",
+  cursor: "pointer"
+});
+fakeBtn.addEventListener("click", () => {
+  alert("…戻れないよー🤣");
+});
+bgDiv.appendChild(fakeBtn);
 
-  // --- リサイズ対応 ---
-  window.addEventListener("resize", () => {
-    snowflakes.forEach(f => {
-      f.el.style.top =
-        Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
-      f.el.style.left =
-        Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
-    });
+// --- リサイズ対応 ---
+window.addEventListener("resize", () => {
+  snowflakes.forEach(f => {
+    f.el.style.top =
+      Math.min(parseFloat(f.el.style.top), window.innerHeight) + "px";
+    f.el.style.left =
+      Math.min(parseFloat(f.el.style.left), window.innerWidth) + "px";
   });
-};
+
+  // ポップアップ位置も再調整（必要なら）
+  document.querySelectorAll(".popup").forEach(popup => {
+    const w = popup.offsetWidth, h = popup.offsetHeight;
+    const margin = 20;
+    popup.style.left =
+      Math.min(parseFloat(popup.style.left), window.innerWidth - w - margin) + "px";
+    popup.style.top =
+      Math.min(parseFloat(popup.style.top), window.innerHeight - h - margin) + "px";
+  });
+});
