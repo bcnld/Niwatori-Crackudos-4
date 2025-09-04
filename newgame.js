@@ -1,4 +1,4 @@
-// newgame.js（整理・完全版・文字フェードイン対応・ポップアップ停止対応）
+// newgame.js（完全版：文字フェードイン対応 + 追加文章対応 + ポップアップ停止対応）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -119,6 +119,7 @@ window.startNewGame = async function () {
   // --- 効果音 ---
   const flyOutSound = new Audio("Sounds/fly_out.mp3");
   const flyInSound = new Audio("Sounds/fly_in.mp3");
+  const selectSound = new Audio("Sounds/select.mp3");
 
   // --- キャラクターUI ---
   const telop = document.createElement("div");
@@ -306,52 +307,68 @@ window.startNewGame = async function () {
         }, interval);
       }
 
-      // --- 1.5秒後に文字フェードイン ---
+      // --- 1.5秒後にノンフィクション文字フェードイン ---
       setTimeout(() => {
-        const nfText = document.createElement("div");
-        nfText.textContent = "この物語はノンフィクションです。";
-        Object.assign(nfText.style, {
-          position: "fixed",
-          top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-          fontSize: "36px",
-          color: "#fff",
-          zIndex: 10000,
-          opacity: 0,
-          transition: "opacity 3s ease",
-          cursor: "pointer"
-        });
-        document.body.appendChild(nfText);
-        requestAnimationFrame(() => nfText.style.opacity = 1);
-
-        function proceed() {
-          nfText.style.transition = "opacity 1.5s ease";
-          nfText.style.opacity = 0;
-
-          setTimeout(() => {
-            nfText.remove();
-
-            // --- ポップアップ生成停止 & 既存ポップアップ削除 ---
-            if (window._popupInterval) clearInterval(window._popupInterval);
-            activePopups.forEach(p => p.remove());
-            activePopups.length = 0;
-
-            // --- 古いUIまとめて削除 ---
-            nameBox?.remove();
-            btnContainer?.remove();
-            telop?.remove();
-            modalDim?.remove();
-
-            document.removeEventListener("click", proceed);
-
-            // 次の処理へ
-            startCharacterSelection(); // 仮関数
-          }, 1500);
-        }
-
-        document.addEventListener("click", proceed);
+        showTextSequence([
+          "この物語はノンフィクションです。",
+          "登場する人物、団体は存在しません。"
+        ]);
       }, 1500);
     };
+  }
+
+  // --- テキストシーケンス表示関数 ---
+  function showTextSequence(messages) {
+    let index = 0;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    function showNext() {
+      if (index >= messages.length) {
+        container.remove();
+        // --- ポップアップ停止 ---
+        if (window._popupInterval) clearInterval(window._popupInterval);
+        activePopups.forEach(p => p.remove());
+        activePopups.length = 0;
+        // 次の処理へ
+        startCharacterSelection(); // 仮関数
+        return;
+      }
+
+      const textEl = document.createElement("div");
+      textEl.textContent = messages[index];
+      Object.assign(textEl.style, {
+        position: "fixed",
+        top: "50%", left: "50%",
+        transform: "translate(-50%,-50%)",
+        fontSize: "36px",
+        color: "#fff",
+        zIndex: 10000,
+        opacity: 0,
+        transition: "opacity 3s ease",
+        cursor: "pointer"
+      });
+      container.appendChild(textEl);
+
+      requestAnimationFrame(() => textEl.style.opacity = 1);
+
+      function proceed() {
+        textEl.style.transition = "opacity 1.5s ease";
+        textEl.style.opacity = 0;
+        setTimeout(() => {
+          textEl.remove();
+          index++;
+          selectSound.currentTime = 0;
+          selectSound.play().catch(()=>{});
+          showNext();
+        }, 1500);
+        document.removeEventListener("click", proceed);
+      }
+
+      document.addEventListener("click", proceed);
+    }
+
+    showNext();
   }
 
   // --- キャラクター生成 ---
@@ -442,29 +459,51 @@ window.startNewGame = async function () {
     }
     popup.appendChild(mediaEl);
 
-    const closeBtn = document.createElement("div");
-    closeBtn.textContent = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px", right: "10px",
-      cursor: "pointer",
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: "20px"
+    // --- 閉じるボタン ---
+        const closeBtn = document.createElement("button");
+        closeBtn.innerText = "閉じる";
+        Object.assign(closeBtn.style, {
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            padding: "6px 12px",
+            fontSize: "14px",
+            border: "none",
+            borderRadius: "6px",
+            background: "rgba(0,0,0,0.7)",
+            color: "white",
+            cursor: "pointer"
+        });
+
+        // 閉じる処理
+        closeBtn.addEventListener("click", () => {
+            popup.remove();
+        });
+
+        popup.appendChild(closeBtn);
+        document.body.appendChild(popup);
+    }
+
+    // --- 画面リサイズ対応 ---
+    window.addEventListener("resize", () => {
+        const popups = document.querySelectorAll(".popup");
+        popups.forEach(popup => {
+            const rect = popup.getBoundingClientRect();
+            let left = rect.left;
+            let top = rect.top;
+
+            // はみ出さないように調整
+            if (left + rect.width > window.innerWidth) {
+                left = window.innerWidth - rect.width - 10;
+            }
+            if (top + rect.height > window.innerHeight) {
+                top = window.innerHeight - rect.height - 10;
+            }
+            if (left < 0) left = 10;
+            if (top < 0) top = 10;
+
+            popup.style.left = left + "px";
+            popup.style.top = top + "px";
+        });
     });
-    closeBtn.onclick = () => {
-      popup.remove();
-      activePopups.splice(activePopups.indexOf(popup), 1);
-      popupCloseSound.play().catch(() => {});
-    };
-    popup.appendChild(closeBtn);
-
-    document.body.appendChild(popup);
-    activePopups.push(popup);
-
-    popupSound.currentTime = 0;
-    popupSound.play().catch(() => {});
-  }
-
-  window._popupInterval = setInterval(createPopup, 1000);
-};
+});
