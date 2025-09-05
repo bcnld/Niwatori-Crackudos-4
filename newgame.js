@@ -1,4 +1,4 @@
-// newgame.js（完全版：文字フェードイン対応 + 追加文章対応 + ポップアップ停止対応）
+// newgame.js（完全版：フェード + ノンフィクション + 追加文章 + ポップアップ完全対応）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -330,8 +330,7 @@ window.startNewGame = async function () {
         if (window._popupInterval) clearInterval(window._popupInterval);
         activePopups.forEach(p => p.remove());
         activePopups.length = 0;
-        // 次の処理へ
-        startCharacterSelection(); // 仮関数
+        // 次の処理へ（例: マップ生成）
         return;
       }
 
@@ -406,6 +405,22 @@ window.startNewGame = async function () {
       btnContainer.style.left = `${rect.left + rect.width / 2}px`;
       btnContainer.style.top = `${rect.bottom + 70}px`;
     }
+    const popups = document.querySelectorAll(".popup");
+    popups.forEach(popup => {
+      const rect = popup.getBoundingClientRect();
+      let left = rect.left;
+      let top = rect.top;
+      if (left + rect.width > window.innerWidth) {
+        left = window.innerWidth - rect.width - 10;
+      }
+      if (top + rect.height > window.innerHeight) {
+        top = window.innerHeight - rect.height - 10;
+      }
+      if (left < 0) left = 10;
+      if (top < 0) top = 10;
+      popup.style.left = left + "px";
+      popup.style.top = top + "px";
+    });
   });
 
   // --- ポップアップ処理 ---
@@ -431,79 +446,83 @@ window.startNewGame = async function () {
     const top = Math.floor(Math.random() * Math.max(0, window.innerHeight - popupHeight));
 
     Object.assign(popup.style, {
-      position: "fixed",
-      width: `${popupWidth}px`,
-      height: `${popupHeight}px`,
-      left: `${left}px`,
-      top: `${top}px`,
-      zIndex: 1800,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      borderRadius: "10px",
-      overflow: "hidden",
-      boxShadow: "0 0 10px rgba(0,0,0,0.5)"
+        position: "fixed",
+        width: `${popupWidth}px`,
+        height: `${popupHeight}px`,
+        left: `${left}px`,
+        top: `${top}px`,
+        zIndex: 1800,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        borderRadius: "10px",
+        overflow: "hidden",
+        boxShadow: "0 0 10px rgba(0,0,0,0.5)"
     });
 
     let mediaEl;
     if (sel.type === "img") {
-      mediaEl = document.createElement("img");
-      mediaEl.src = sel.src;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
+        mediaEl = document.createElement("img");
+        mediaEl.src = sel.src;
+        Object.assign(mediaEl.style, {
+            width: "100%",
+            height: "100%",
+            objectFit: "contain"
+        });
     } else {
-      mediaEl = document.createElement("video");
-      mediaEl.src = sel.src;
-      mediaEl.autoplay = true;
-      mediaEl.loop = true;
-      mediaEl.muted = false;
-      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
-      mediaEl.play().catch(() => {});
+        mediaEl = document.createElement("video");
+        mediaEl.src = sel.src;
+        mediaEl.autoplay = true;
+        mediaEl.loop = true;
+        mediaEl.muted = false;
+        mediaEl.controls = false;
+        Object.assign(mediaEl.style, {
+            width: "100%",
+            height: "100%",
+            objectFit: "contain"
+        });
+        mediaEl.play().catch(() => {});
     }
+
     popup.appendChild(mediaEl);
 
     // --- 閉じるボタン ---
-        const closeBtn = document.createElement("button");
-        closeBtn.innerText = "閉じる";
-        Object.assign(closeBtn.style, {
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            padding: "6px 12px",
-            fontSize: "14px",
-            border: "none",
-            borderRadius: "6px",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            cursor: "pointer"
-        });
+    const closeBtn = document.createElement("button");
+    closeBtn.innerText = "閉じる";
+    Object.assign(closeBtn.style, {
+        position: "absolute",
+        bottom: "10px",
+        right: "10px",
+        padding: "6px 12px",
+        fontSize: "14px",
+        border: "none",
+        borderRadius: "6px",
+        background: "rgba(0,0,0,0.7)",
+        color: "white",
+        cursor: "pointer",
+        zIndex: 10
+    });
 
-        // 閉じる処理
-        closeBtn.addEventListener("click", () => {
-            popup.remove();
-        });
+    closeBtn.addEventListener("click", () => {
+        popup.remove();
+        const index = activePopups.indexOf(popup);
+        if (index !== -1) activePopups.splice(index, 1);
+    });
 
-        popup.appendChild(closeBtn);
-        document.body.appendChild(popup);
-    }
+    popup.appendChild(closeBtn);
+    document.body.appendChild(popup);
+    activePopups.push(popup);
 
     // --- 画面リサイズ対応 ---
     window.addEventListener("resize", () => {
-        const popups = document.querySelectorAll(".popup");
-        popups.forEach(popup => {
-            const rect = popup.getBoundingClientRect();
-            let left = rect.left;
-            let top = rect.top;
+        const rect = popup.getBoundingClientRect();
+        let newLeft = rect.left;
+        let newTop = rect.top;
 
-            // はみ出さないように調整
-            if (left + rect.width > window.innerWidth) {
-                left = window.innerWidth - rect.width - 10;
-            }
-            if (top + rect.height > window.innerHeight) {
-                top = window.innerHeight - rect.height - 10;
-            }
-            if (left < 0) left = 10;
-            if (top < 0) top = 10;
+        if (newLeft + rect.width > window.innerWidth) newLeft = window.innerWidth - rect.width - 10;
+        if (newTop + rect.height > window.innerHeight) newTop = window.innerHeight - rect.height - 10;
+        if (newLeft < 0) newLeft = 10;
+        if (newTop < 0) newTop = 10;
 
-            popup.style.left = left + "px";
-            popup.style.top = top + "px";
-        });
+        popup.style.left = newLeft + "px";
+        popup.style.top = newTop + "px";
     });
-});
+}
