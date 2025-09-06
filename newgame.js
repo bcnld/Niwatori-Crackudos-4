@@ -546,7 +546,7 @@ function startGame() {
   }
 
   // --- ポップアップ定期生成 ---
-  window._popupInterval = setInterval(createPopup, 4000);
+  window._popupInterval = setInterval(createPopup, 2500);
 
   // --- 終了処理 ---
   window.addEventListener("beforeunload", () => {
