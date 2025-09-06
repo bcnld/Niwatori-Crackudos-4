@@ -380,8 +380,15 @@ function showTextSequence(messages) {
 }
 
 function playIntroVideo() {
+  let videoSrc;
+  if (selectedIndex === 0) { // 犬
+    videoSrc = "videos/intro_dog.mp4";
+  } else if (selectedIndex === 1) { // うんこ
+    videoSrc = "videos/intro_poop.mp4";
+  }
+
   const video = document.createElement("video");
-  video.src = "videos/intro.mp4";
+  video.src = videoSrc;
   video.autoplay = true;
   video.controls = false;
   video.style.position = "fixed";
@@ -395,11 +402,10 @@ function playIntroVideo() {
 
   video.addEventListener("ended", () => {
     video.remove();
-    // --- ここでゲーム本編に自動移行 ---
-    startGame(); // ゲーム本編開始用関数
+    startGame(); // 動画終わったら本編へ
   });
 }
-
+  
 // --- ゲーム本編開始関数（ダミー） ---
 function startGame() {
   console.log("ゲーム本編に移行しました！");
