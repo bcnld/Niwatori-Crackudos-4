@@ -409,7 +409,11 @@ function playIntroVideo() {
 // --- ゲーム本編開始関数（ダミー） ---
 function startGame() {
   console.log("ゲーム本編に移行しました！");
-  // ここに本編開始処理を入れる
+
+  import('./map.js').then(mapModule => {
+    mapModule.initScene();
+    mapModule.loadMapFromPNG('maps/map1.png'); // map1.png をロード
+  });
 }
 
   // --- キャラクター生成 ---
