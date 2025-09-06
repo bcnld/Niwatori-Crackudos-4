@@ -423,14 +423,16 @@ function startGame() {
     wrappers[i] = wrapper;
 
     wrapper.addEventListener("click", () => {
-      if (selectedIndex === i) { showNameInput(c); return; }
-      if (selectedIndex !== null) stopRotation();
-      selectedIndex = i;
-      startRotation(img);
-      new Audio(c.selectSound).play().catch(()=>{});
-      telop.textContent = "もう一度クリックで決定。";
-    });
-  });
+  // 名前入力中ならクリック無視
+  if (nameBox && nameBox.style.display === "block" && selectedIndex !== null) return;
+
+  if (selectedIndex === i) { showNameInput(c); return; }
+  if (selectedIndex !== null) stopRotation();
+  selectedIndex = i;
+  startRotation(img);
+  new Audio(c.selectSound).play().catch(()=>{});
+  telop.textContent = "もう一度クリックで決定。";
+});
 
   // --- ウィンドウリサイズ ---
   window.addEventListener("resize", () => {
