@@ -320,7 +320,7 @@ window.startNewGame = async function () {
   // --- テキストシーケンス表示 ---
 function showTextSequence(messages) {
   let index = 0;
-  let clickable = false; // フェード完了後に押せるか
+  let clickable = false;
   const container = document.createElement("div");
   document.body.appendChild(container);
 
@@ -330,6 +330,9 @@ function showTextSequence(messages) {
       if (window._popupInterval) clearInterval(window._popupInterval);
       if (window.activePopups) window.activePopups.forEach(p => p.remove());
       window.activePopups = [];
+
+      // --- ここで動画再生 ---
+      playIntroVideo();
       return;
     }
 
@@ -348,22 +351,18 @@ function showTextSequence(messages) {
     });
     container.appendChild(textEl);
 
-    // フェードイン開始
     requestAnimationFrame(() => {
       textEl.style.opacity = 1;
-      // フェード完了後にクリック可能
       setTimeout(() => { clickable = true; }, 3000);
     });
 
     function proceed() {
-      if (!clickable) return; // フェード中は無視
-      clickable = false;      // 連打防止
+      if (!clickable) return;
+      clickable = false;
 
-      // ここで画面クリック時に効果音
       selectSound.currentTime = 0;
       selectSound.play().catch(() => {});
 
-      // フェードアウト
       textEl.style.transition = "opacity 1.5s ease";
       textEl.style.opacity = 0;
       setTimeout(() => {
