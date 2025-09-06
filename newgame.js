@@ -316,57 +316,86 @@ window.startNewGame = async function () {
       }, 1500);
     };
   }
-
+  
   // --- テキストシーケンス表示 ---
-  function showTextSequence(messages) {
-    let index = 0;
-    const container = document.createElement("div");
-    document.body.appendChild(container);
+function showTextSequence(messages) {
+  let index = 0;
+  const container = document.createElement("div");
+  document.body.appendChild(container);
 
-    function showNext() {
-      if (index >= messages.length) {
-        container.remove();
-        if (window._popupInterval) clearInterval(window._popupInterval);
-        if (window.activePopups) window.activePopups.forEach(p => p.remove());
-        window.activePopups = [];
-        return;
-      }
+  function showNext() {
+    if (index >= messages.length) {
+      container.remove();
+      if (window._popupInterval) clearInterval(window._popupInterval);
+      if (window.activePopups) window.activePopups.forEach(p => p.remove());
+      window.activePopups = [];
 
-      const textEl = document.createElement("div");
-      textEl.textContent = messages[index];
-      Object.assign(textEl.style, {
-        position: "fixed",
-        top: "50%", left: "50%",
-        transform: "translate(-50%,-50%)",
-        fontSize: "36px",
-        color: "#fff",
-        zIndex: 10000,
-        opacity: 0,
-        transition: "opacity 3s ease",
-        cursor: "pointer"
-      });
-      container.appendChild(textEl);
-
-      requestAnimationFrame(() => textEl.style.opacity = 1);
-
-      function proceed() {
-        textEl.style.transition = "opacity 1.5s ease";
-        textEl.style.opacity = 0;
-        setTimeout(() => {
-          textEl.remove();
-          index++;
-          selectSound.currentTime = 0;
-          selectSound.play().catch(()=>{});
-          showNext();
-        }, 1500);
-        document.removeEventListener("click", proceed);
-      }
-
-      document.addEventListener("click", proceed);
+      // --- 文字終了後に自動でイントロ動画再生 ---
+      playIntroVideo();
+      return;
     }
 
-    showNext();
+    const textEl = document.createElement("div");
+    textEl.textContent = messages[index];
+    Object.assign(textEl.style, {
+      position: "fixed",
+      top: "50%", left: "50%",
+      transform: "translate(-50%,-50%)",
+      fontSize: "36px",
+      color: "#fff",
+      zIndex: 10000,
+      opacity: 0,
+      transition: "opacity 3s ease"
+    });
+    container.appendChild(textEl);
+
+    requestAnimationFrame(() => textEl.style.opacity = 1);
+
+    function proceed() {
+      textEl.style.transition = "opacity 1.5s ease";
+      textEl.style.opacity = 0;
+      setTimeout(() => {
+        textEl.remove();
+        index++;
+        document.removeEventListener("click", proceed);
+        showNext();
+      }, 1500);
+    }
+
+    // --- 画面クリックで進行 ---
+    document.addEventListener("click", proceed);
   }
+
+  showNext();
+}
+
+// --- イントロ動画再生 ---
+function playIntroVideo() {
+  const video = document.createElement("video");
+  video.src = "videos/intro.mp4";
+  video.autoplay = true;
+  video.controls = false;
+  video.style.position = "fixed";
+  video.style.top = "50%";
+  video.style.left = "50%";
+  video.style.transform = "translate(-50%,-50%)";
+  video.style.width = "100%";
+  video.style.height = "100%";
+  video.style.zIndex = 9999;
+  document.body.appendChild(video);
+
+  video.addEventListener("ended", () => {
+    video.remove();
+    // --- ここでゲーム本編に自動移行 ---
+    startGame(); // ゲーム本編開始用関数
+  });
+}
+
+// --- ゲーム本編開始関数（ダミー） ---
+function startGame() {
+  console.log("ゲーム本編に移行しました！");
+  // ここに本編開始処理を入れる
+}
 
   // --- キャラクター生成 ---
   characters.forEach((c, i) => {
