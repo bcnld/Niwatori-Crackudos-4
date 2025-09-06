@@ -345,22 +345,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function executeMenuItem(index) {
-    const item = menuItems[index];
-    if (!item) return;
-    switch(item) {
-      case "New Game":
-        if (typeof window.startNewGame === "function") {
-          window.startNewGame(); // newgame.js の関数を呼ぶ
-        }
-        break;
-      case "Load":
-        loadGame();
-        break;
-      case "Settings":
-        openSettings();
-        break;
-    }
+  const item = menuItems[index];
+  if (!item) return;
+  
+  // 会社名を消す
+  if (companyDiv) companyDiv.style.display = "none";
+
+  switch(item) {
+    case "New Game":
+      if (typeof window.startNewGame === "function") {
+        window.startNewGame();
+      }
+      break;
+    case "Load":
+      loadGame();
+      break;
+    case "Settings":
+      openSettings();
+      break;
   }
+}
 
   function updateMenuSelection() {
     if (!menuWrapper) return;
