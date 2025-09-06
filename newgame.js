@@ -320,6 +320,7 @@ window.startNewGame = async function () {
   // --- テキストシーケンス表示 ---
 function showTextSequence(messages) {
   let index = 0;
+  let clickable = false; // フェード完了後に押せるか
   const container = document.createElement("div");
   document.body.appendChild(container);
 
@@ -329,9 +330,6 @@ function showTextSequence(messages) {
       if (window._popupInterval) clearInterval(window._popupInterval);
       if (window.activePopups) window.activePopups.forEach(p => p.remove());
       window.activePopups = [];
-
-      // --- 文字終了後に自動でイントロ動画再生 ---
-      playIntroVideo();
       return;
     }
 
@@ -345,31 +343,44 @@ function showTextSequence(messages) {
       color: "#fff",
       zIndex: 10000,
       opacity: 0,
-      transition: "opacity 3s ease"
+      transition: "opacity 3s ease",
+      cursor: "pointer"
     });
     container.appendChild(textEl);
 
-    requestAnimationFrame(() => textEl.style.opacity = 1);
+    // フェードイン開始
+    requestAnimationFrame(() => {
+      textEl.style.opacity = 1;
+      // フェード完了後にクリック可能
+      setTimeout(() => { clickable = true; }, 3000);
+    });
 
     function proceed() {
+      if (!clickable) return; // フェード中は無視
+      clickable = false;      // 連打防止
+
+      // ここで画面クリック時に効果音
+      selectSound.currentTime = 0;
+      selectSound.play().catch(() => {});
+
+      // フェードアウト
       textEl.style.transition = "opacity 1.5s ease";
       textEl.style.opacity = 0;
       setTimeout(() => {
         textEl.remove();
         index++;
-        document.removeEventListener("click", proceed);
         showNext();
       }, 1500);
+
+      document.removeEventListener("click", proceed);
     }
 
-    // --- 画面クリックで進行 ---
     document.addEventListener("click", proceed);
   }
 
   showNext();
 }
 
-// --- イントロ動画再生 ---
 function playIntroVideo() {
   const video = document.createElement("video");
   video.src = "videos/intro.mp4";
