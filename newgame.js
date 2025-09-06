@@ -407,31 +407,32 @@ function startGame() {
 }
 
   // --- キャラクター生成 ---
-  characters.forEach((c, i) => {
-    const wrapper = document.createElement("div");
-    Object.assign(wrapper.style, { display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer" });
-    const img = document.createElement("img");
-    img.src = c.img;
-    img.style.width = "200px";
-    wrapper.appendChild(img);
-    const label = document.createElement("div");
-    label.textContent = c.name;
-    label.style.color = "#fff";
-    wrapper.appendChild(label);
+    characters.forEach((c, i) => {
+      const wrapper = document.createElement("div");
+      Object.assign(wrapper.style, { display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer" });
+      const img = document.createElement("img");
+      img.src = c.img;
+      img.style.width = "200px";
+      wrapper.appendChild(img);
+      const label = document.createElement("div");
+      label.textContent = c.name;
+      label.style.color = "#fff";
+      wrapper.appendChild(label);
 
-    characterUI.appendChild(wrapper);
-    wrappers[i] = wrapper;
+      characterUI.appendChild(wrapper);
+      wrappers[i] = wrapper;
 
-    wrapper.addEventListener("click", () => {
-  // 名前入力中ならクリック無視
-  if (nameBox && nameBox.style.display === "block" && selectedIndex !== null) return;
+      wrapper.addEventListener("click", () => {
+    // 名前入力中ならクリック無視
+    if (nameBox && nameBox.style.display === "block" && selectedIndex !== null) return;
 
-  if (selectedIndex === i) { showNameInput(c); return; }
-  if (selectedIndex !== null) stopRotation();
-  selectedIndex = i;
-  startRotation(img);
-  new Audio(c.selectSound).play().catch(()=>{});
-  telop.textContent = "もう一度クリックで決定。";
+    if (selectedIndex === i) { showNameInput(c); return; }
+    if (selectedIndex !== null) stopRotation();
+    selectedIndex = i;
+    startRotation(img);
+    new Audio(c.selectSound).play().catch(()=>{});
+    telop.textContent = "もう一度クリックで決定。";
+  });
 });
 
   // --- ウィンドウリサイズ ---
