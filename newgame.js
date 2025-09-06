@@ -494,7 +494,7 @@ function startGame() {
       mediaEl.src = sel.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
-      mediaEl.muted = true;
+      mediaEl.muted = false;
       Object.assign(mediaEl.style, {
         width: "100%",
         height: "100%",
