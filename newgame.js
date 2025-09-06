@@ -317,7 +317,6 @@ window.startNewGame = async function () {
     };
   }
   
-  // --- テキストシーケンス表示 ---
 function showTextSequence(messages) {
   let index = 0;
   let clickable = false;
