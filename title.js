@@ -347,9 +347,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function executeMenuItem(index) {
   const item = menuItems[index];
   if (!item) return;
-  
-  // 会社名を消す
+
+  // 会社名とバージョンを非表示
   if (companyDiv) companyDiv.style.display = "none";
+  if (versionDiv) versionDiv.style.display = "none";
 
   switch(item) {
     case "New Game":
