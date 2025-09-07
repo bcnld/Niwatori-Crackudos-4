@@ -380,15 +380,8 @@ function showTextSequence(messages) {
 }
 
 function playIntroVideo() {
-  let videoSrc;
-  if (selectedIndex === 0) { // 犬
-    videoSrc = "videos/intro_dog.mp4";
-  } else if (selectedIndex === 1) { // うんこ
-    videoSrc = "videos/intro_poop.mp4";
-  }
-
   const video = document.createElement("video");
-  video.src = videoSrc;
+  video.src = "videos/intro_dog.mp4"; // 例
   video.autoplay = true;
   video.controls = false;
   video.style.position = "fixed";
@@ -402,25 +395,19 @@ function playIntroVideo() {
 
   video.addEventListener("ended", () => {
     video.remove();
-    startGame(); // 動画終わったら本編へ
+
+    // skybox表示
+    import('./sky.js').then(skyModule => {
+      skyModule.enterBuilding();
+    });
+
+    // ゲーム本編開始
+    import('./map.js').then(mapModule => {
+      mapModule.initScene();
+      mapModule.showMapAfterFadeIn("map1");
+    });
   });
 }
-
-// --- ゲーム本編開始関数 ---
-video.addEventListener("ended", () => {
-  video.remove();
-
-  // skybox表示
-  import('./sky.js').then(skyModule => {
-    skyModule.enterBuilding(); // trueで表示開始
-  });
-
-  // ゲーム本編開始
-  import('./map.js').then(mapModule => {
-    mapModule.initScene();
-    mapModule.showMapAfterFadeIn("map1");
-  });
-});
 
   // --- キャラクター生成 ---
     characters.forEach((c, i) => {
