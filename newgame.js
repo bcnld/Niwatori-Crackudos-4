@@ -405,14 +405,15 @@ function playIntroVideo() {
     startGame(); // 動画終わったら本編へ
   });
 }
-  
-// --- ゲーム本編開始関数（ダミー） ---
+
+// --- ゲーム本編開始関数 ---
 function startGame() {
   console.log("ゲーム本編に移行しました！");
 
   import('./map.js').then(mapModule => {
     mapModule.initScene();
-    mapModule.loadMapFromPNG('maps/map1.png'); // map1.png をロード
+    // フェードインを経て map1 を表示
+    mapModule.showMapAfterFadeIn("map1");
   });
 }
 
