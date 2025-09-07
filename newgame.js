@@ -407,15 +407,20 @@ function playIntroVideo() {
 }
 
 // --- ゲーム本編開始関数 ---
-function startGame() {
-  console.log("ゲーム本編に移行しました！");
+video.addEventListener("ended", () => {
+  video.remove();
 
+  // skybox表示
+  import('./sky.js').then(skyModule => {
+    skyModule.enterBuilding(); // trueで表示開始
+  });
+
+  // ゲーム本編開始
   import('./map.js').then(mapModule => {
     mapModule.initScene();
-    // フェードインを経て map1 を表示
     mapModule.showMapAfterFadeIn("map1");
   });
-}
+});
 
   // --- キャラクター生成 ---
     characters.forEach((c, i) => {
