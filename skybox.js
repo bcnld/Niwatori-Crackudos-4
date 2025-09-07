@@ -1,10 +1,11 @@
 import * as THREE from "three";
 
 let skyMesh;
-let time = 0; // 分単位で進行（1日=72分）
-let active = false; // 建物内フラグ（true=建物内で表示）
+let time = 0;
+let active = false;
+let container;
 
-export function initSky(scene) {
+export function initSky(scene, parentDiv) {
   const geo = new THREE.SphereGeometry(500, 32, 32);
   const mat = new THREE.ShaderMaterial({
     uniforms: {
@@ -33,31 +34,63 @@ export function initSky(scene) {
   });
 
   skyMesh = new THREE.Mesh(geo, mat);
-  skyMesh.visible = false; // 初期は非表示
+  skyMesh.visible = false;
+
+  if (!parentDiv) {
+    container = document.createElement("div");
+    Object.assign(container.style, {
+      position: "fixed",
+      top:0, left:0,
+      width:"100%", height:"100%",
+      opacity:0,
+      transition:"opacity 2s ease",
+      zIndex:1
+    });
+    document.body.appendChild(container);
+  } else {
+    container = parentDiv;
+  }
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  container.renderer = renderer;
+  container.scene = scene;
+  container.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  container.camera.position.set(0, 2, 5);
+
   scene.add(skyMesh);
+
+  function animate() {
+    const delta = 0.016; // おおよそ60FPS
+    updateSky(delta);
+    renderer.render(scene, container.camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
 
 export function updateSky(delta) {
-  // 時間は常に進める
-  time += delta * (72 / 4320); // 72分=1日
+  time += delta * (72 / 4320);
   if (time > 72) time = 0;
-
-  if (!active) return; // 建物外なら表示しない
+  if (!active) return;
 
   const progress = time / 72;
   const mat = skyMesh.material;
 
   if (progress < 0.25) {
-    mat.uniforms.topColor.value.set(0x87ceeb); // 朝
+    mat.uniforms.topColor.value.set(0x87ceeb);
     mat.uniforms.bottomColor.value.set(0xffe0b2);
   } else if (progress < 0.5) {
-    mat.uniforms.topColor.value.set(0x1e90ff); // 昼
+    mat.uniforms.topColor.value.set(0x1e90ff);
     mat.uniforms.bottomColor.value.set(0x87ceeb);
   } else if (progress < 0.75) {
-    mat.uniforms.topColor.value.set(0xff4500); // 夕方
+    mat.uniforms.topColor.value.set(0xff4500);
     mat.uniforms.bottomColor.value.set(0xffd700);
   } else {
-    mat.uniforms.topColor.value.set(0x000033); // 夜
+    mat.uniforms.topColor.value.set(0x000033);
     mat.uniforms.bottomColor.value.set(0x191970);
   }
 }
@@ -65,6 +98,10 @@ export function updateSky(delta) {
 export function enterBuilding() {
   active = true;
   if (skyMesh) skyMesh.visible = true;
+  if (container) container.style.opacity = 0;
+  requestAnimationFrame(() => {
+    container.style.opacity = 1; // フェードイン
+  });
 }
 
 export function exitBuilding() {
