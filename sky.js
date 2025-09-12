@@ -9,8 +9,8 @@ export function initSky(scene, parentDiv) {
   const geo = new THREE.SphereGeometry(500, 32, 32);
   const mat = new THREE.ShaderMaterial({
     uniforms: {
-      topColor: { value: new THREE.Color(0x87ceeb) },
-      bottomColor: { value: new THREE.Color(0xffffff) }
+      topColor: { value: new THREE.Color(0x87ceeb) },   // 朝の色
+      bottomColor: { value: new THREE.Color(0xffe0b2) } // 朝の色
     },
     vertexShader: `
       varying vec3 vWorldPosition;
@@ -81,23 +81,31 @@ export function updateSky(delta) {
   const mat = skyMesh.material;
 
   if (progress < 0.25) {
-    mat.uniforms.topColor.value.set(0x87ceeb);
+    mat.uniforms.topColor.value.set(0x87ceeb); // 朝
     mat.uniforms.bottomColor.value.set(0xffe0b2);
   } else if (progress < 0.5) {
-    mat.uniforms.topColor.value.set(0x1e90ff);
+    mat.uniforms.topColor.value.set(0x1e90ff); // 昼
     mat.uniforms.bottomColor.value.set(0x87ceeb);
   } else if (progress < 0.75) {
-    mat.uniforms.topColor.value.set(0xff4500);
+    mat.uniforms.topColor.value.set(0xff4500); // 夕方
     mat.uniforms.bottomColor.value.set(0xffd700);
   } else {
-    mat.uniforms.topColor.value.set(0x000033);
+    mat.uniforms.topColor.value.set(0x000033); // 夜
     mat.uniforms.bottomColor.value.set(0x191970);
   }
 }
 
 export function enterBuilding() {
   active = true;
-  if (skyMesh) skyMesh.visible = true;
+
+  // ゲーム開始時は必ず朝にリセット
+  time = 0; 
+  if (skyMesh) {
+    skyMesh.visible = true;
+    skyMesh.material.uniforms.topColor.value.set(0x87ceeb);
+    skyMesh.material.uniforms.bottomColor.value.set(0xffe0b2);
+  }
+
   if (container) container.style.opacity = 0;
   requestAnimationFrame(() => {
     container.style.opacity = 1; // フェードイン
