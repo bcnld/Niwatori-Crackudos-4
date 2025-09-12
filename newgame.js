@@ -396,19 +396,39 @@ function playIntroVideo() {
   video.addEventListener("ended", () => {
     video.remove();
 
-    // skybox表示
-    import('./sky.js').then(skyModule => {
-      skyModule.enterBuilding();
-    });
+    // --- フェード用オーバーレイ取得 ---
+    const fadeOverlay = document.getElementById("fade-overlay");
+    if (!fadeOverlay) return;
 
-    // ゲーム本編開始
-    import('./map.js').then(mapModule => {
+    // ① 黒で全画面を覆う
+    fadeOverlay.style.display = "block";
+    fadeOverlay.style.backgroundColor = "#000";
+    fadeOverlay.style.opacity = 1;
+    fadeOverlay.style.zIndex = 9999;
+
+    // ② ここでskyとmapを読み込む
+    Promise.all([
+      import('./sky.js'),
+      import('./map.js')
+    ]).then(([skyModule, mapModule]) => {
+      skyModule.enterBuilding(); // 背景グラデーション（朝から開始）
       mapModule.initScene();
       mapModule.showMapAfterFadeIn("map1");
+
+      // ③ 徐々に透明にしてゲーム世界を表示
+      fadeOverlay.style.transition = "opacity 2s ease";
+      requestAnimationFrame(() => {
+        fadeOverlay.style.opacity = 0;
+      });
+
+      // 完全に透過したら非表示
+      setTimeout(() => {
+        fadeOverlay.style.display = "none";
+      }, 2000);
     });
   });
 }
-
+  
   // --- キャラクター生成 ---
     characters.forEach((c, i) => {
       const wrapper = document.createElement("div");
