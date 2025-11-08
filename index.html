@@ -9,21 +9,20 @@
     /* --- タイトル画面用スタイル --- */
     #center-text {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 32px;
-      color: white;
-      text-align: center;
-      cursor: pointer;
-      z-index: 10000;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:32px;
+      color:white;
+      text-align:center;
+      cursor:pointer;
+      z-index:10000;
     }
-
     #fullscreen-toggle {
       position: fixed;
       top: 10px;
       right: 10px;
-      background: rgba(50, 50, 50, 0.8);
+      background: rgba(50,50,50,0.8);
       color: white;
       border: none;
       padding: 8px 14px;
@@ -34,7 +33,7 @@
       user-select: none;
       transition: background 0.3s ease;
     }
-    #fullscreen-toggle:hover { background: rgba(80, 80, 80, 1); }
+    #fullscreen-toggle:hover { background: rgba(80,80,80,1); }
 
     #title-images {
       position: fixed;
@@ -59,48 +58,20 @@
 
     #press-any-key {
       position: fixed;
-      bottom: 50px;
-      width: 100%;
-      text-align: center;
-      color: white;
-      font-size: 24px;
-      user-select: none;
-      cursor: default;
-      z-index: 50;
-      display: none;
+      bottom:50px; width:100%; text-align:center;
+      color:white; font-size:24px; user-select:none; cursor:default;
+      z-index:50; display:none;
     }
 
-    /* --- フェードオーバーレイ（newgame.js 必須）--- */
     #fade-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #000;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 9999;                 /* newgame.js で 9999 を使う */
-      transition: opacity 2s ease;   /* 2秒フェード対応 */
-      display: none;                 /* 初期は非表示 */
-    }
-
-    /* --- Three.js canvas 用（sky.js が生成）--- */
-    #sky-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 0;                    /* fade-overlay の下 */
-      background: #000;
-      pointer-events: none;
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background:black; opacity:0;
+      pointer-events:none; z-index:5000;
+      transition: opacity 1s ease;
     }
   </style>
 </head>
 <body>
-
-  <!-- フェードオーバーレイ（newgame.js 必須） -->
-  <div id="fade-overlay"></div>
-
-  <!-- sky.js 用コンテナ（Three.js canvas がここに入る） -->
-  <div id="sky-container"></div>
 
   <!-- 最初の質問 -->
   <div id="center-text">あなたは日本人ですか？</div>
@@ -134,17 +105,8 @@
   <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
 
   <!-- JS読み込み -->
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
-    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/controls/OrbitControls.js';
-    window.THREE = THREE;
-    window.OrbitControls = OrbitControls;
-
-    import './title.js';
-    import './newgame.js';
-    import './sky.js';
-    import './map.js';
-    import './script.js';
-  </script>
+  <script src="title.js"></script>
+  <script src="newgame.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
