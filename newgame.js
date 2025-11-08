@@ -1,4 +1,4 @@
-// newgame.js（完全版）
+// newgame.js（修正・完全版）
 window.startNewGame = async function () {
   // --- 古いUI削除 ---
   document.getElementById("newgame-bg-div")?.remove();
@@ -7,7 +7,10 @@ window.startNewGame = async function () {
 
   const fadeOverlay = document.getElementById("fade-overlay");
   const bgm = document.getElementById("bgm");
-  if (!fadeOverlay) return;
+  if (!fadeOverlay) {
+    console.error("fade-overlay が見つかりません。HTMLに <div id='fade-overlay'> を追加してください。");
+    return;
+  }
 
   // --- メニュー非表示 ---
   const menuWrapper = document.querySelector("div[data-menu-wrapper]");
@@ -279,12 +282,10 @@ window.startNewGame = async function () {
       const heroName = nameBox.value.trim() || c.name;
       if (!confirm(`主人公「${heroName}」でよろしいですか？`)) return;
 
-      // --- 古いUI非表示 ---
       nameBox.style.display = "none";
       btnContainer.style.display = "none";
       stopRotation();
 
-      // --- フェードアウト ---
       fadeOverlay.style.display = "block";
       fadeOverlay.style.zIndex = 9999;
       fadeOverlay.style.backgroundColor = "#000";
@@ -292,7 +293,6 @@ window.startNewGame = async function () {
       fadeOverlay.style.transition = "opacity 2s ease";
       requestAnimationFrame(() => fadeOverlay.style.opacity = 1);
 
-      // --- BGMフェードアウト ---
       if (bgm && !bgm.paused) {
         if (bgm._fadeOutInterval) clearInterval(bgm._fadeOutInterval);
         let step = 0, steps = 60, interval = 2000 / steps;
@@ -307,7 +307,6 @@ window.startNewGame = async function () {
         }, interval);
       }
 
-      // --- ノンフィクション文字表示 ---
       setTimeout(() => {
         showTextSequence([
           "この物語はノンフィクションです。",
@@ -316,147 +315,178 @@ window.startNewGame = async function () {
       }, 1500);
     };
   }
-  
-function showTextSequence(messages) {
-  let index = 0;
-  let clickable = false;
-  const container = document.createElement("div");
-  document.body.appendChild(container);
 
-  function showNext() {
-    if (index >= messages.length) {
-      container.remove();
-      if (window._popupInterval) clearInterval(window._popupInterval);
-      if (window.activePopups) window.activePopups.forEach(p => p.remove());
-      window.activePopups = [];
+  function showTextSequence(messages) {
+    let index = 0;
+    let clickable = false;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
 
-      // --- ここで動画再生 ---
-      playIntroVideo();
-      return;
-    }
+    function showNext() {
+      if (index >= messages.length) {
+        container.remove();
+        if (window._popupInterval) clearInterval(window._popupInterval);
+        if (window.activePopups) window.activePopups.forEach(p => p.remove());
+        window.activePopups = [];
+        playIntroVideo();
+        return;
+      }
 
-    const textEl = document.createElement("div");
-    textEl.textContent = messages[index];
-    Object.assign(textEl.style, {
-      position: "fixed",
-      top: "50%", left: "50%",
-      transform: "translate(-50%,-50%)",
-      fontSize: "36px",
-      color: "#fff",
-      zIndex: 10000,
-      opacity: 0,
-      transition: "opacity 3s ease",
-      cursor: "pointer"
-    });
-    container.appendChild(textEl);
+      const textEl = document.createElement("div");
+      textEl.textContent = messages[index];
+      Object.assign(textEl.style, {
+        position: "fixed",
+        top: "50%", left: "50%",
+        transform: "translate(-50%,-50%)",
+        fontSize: "36px",
+        color: "#fff",
+        zIndex: 10000,
+        opacity: 0,
+        transition: "opacity 3s ease",
+        cursor: "pointer"
+      });
+      container.appendChild(textEl);
 
-    requestAnimationFrame(() => {
-      textEl.style.opacity = 1;
-      setTimeout(() => { clickable = true; }, 3000);
-    });
-
-    function proceed() {
-      if (!clickable) return;
-      clickable = false;
-
-      selectSound.currentTime = 0;
-      selectSound.play().catch(() => {});
-
-      textEl.style.transition = "opacity 1.5s ease";
-      textEl.style.opacity = 0;
-      setTimeout(() => {
-        textEl.remove();
-        index++;
-        showNext();
-      }, 1500);
-
-      document.removeEventListener("click", proceed);
-    }
-
-    document.addEventListener("click", proceed);
-  }
-
-  showNext();
-}
-
-function playIntroVideo() {
-  const video = document.createElement("video");
-  video.src = "videos/intro_dog.mp4"; // 例
-  video.autoplay = true;
-  video.controls = false;
-  video.style.position = "fixed";
-  video.style.top = "50%";
-  video.style.left = "50%";
-  video.style.transform = "translate(-50%,-50%)";
-  video.style.width = "100%";
-  video.style.height = "100%";
-  video.style.zIndex = 9999;
-  document.body.appendChild(video);
-
-  video.addEventListener("ended", () => {
-    video.remove();
-
-    // --- フェード用オーバーレイ取得 ---
-    const fadeOverlay = document.getElementById("fade-overlay");
-    if (!fadeOverlay) return;
-
-    // ① 黒で全画面を覆う
-    fadeOverlay.style.display = "block";
-    fadeOverlay.style.backgroundColor = "#000";
-    fadeOverlay.style.opacity = 1;
-    fadeOverlay.style.zIndex = 9999;
-
-    // ② ここでskyとmapを読み込む
-    Promise.all([
-      import('./sky.js'),
-      import('./map.js')
-    ]).then(([skyModule, mapModule]) => {
-      skyModule.enterBuilding(); // 背景グラデーション（朝から開始）
-      mapModule.initScene();
-      mapModule.showMapAfterFadeIn("map1");
-
-      // ③ 徐々に透明にしてゲーム世界を表示
-      fadeOverlay.style.transition = "opacity 2s ease";
       requestAnimationFrame(() => {
-        fadeOverlay.style.opacity = 0;
+        textEl.style.opacity = 1;
+        setTimeout(() => { clickable = true; }, 3000);
       });
 
-      // 完全に透過したら非表示
-      setTimeout(() => {
-        fadeOverlay.style.display = "none";
-      }, 2000);
+      function proceed() {
+        if (!clickable) return;
+        clickable = false;
+        selectSound.currentTime = 0;
+        selectSound.play().catch(() => {});
+
+        textEl.style.transition = "opacity 1.5s ease";
+        textEl.style.opacity = 0;
+        setTimeout(() => {
+          textEl.remove();
+          index++;
+          showNext();
+        }, 1500);
+        document.removeEventListener("click", proceed);
+      }
+
+      document.addEventListener("click", proceed);
+    }
+
+    showNext();
+  }
+
+  // --- 修正された playIntroVideo ---
+  function playIntroVideo() {
+    const video = document.createElement("video");
+    video.src = "videos/intro_dog.mp4";
+    video.autoplay = true;
+    video.muted = false;        // autoplay 必須
+    video.playsInline = true;  // モバイル対応
+    video.loop = false;
+    video.controls = false;
+    Object.assign(video.style, {
+      position: "fixed",
+      top: "50%", left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "100%", height: "100%",
+      objectFit: "contain",
+      zIndex: 9999,
+      backgroundColor: "#000"
+    });
+    document.body.appendChild(video);
+
+    console.log("動画再生開始:", video.src);
+
+    video.addEventListener("ended", () => {
+      console.log("動画終了 → ゲーム遷移開始");
+      video.remove();
+
+      const overlay = document.getElementById("fade-overlay");
+      if (!overlay) {
+        console.error("fade-overlay なし → 強制ゲーム開始");
+        forceLoadGame();
+        return;
+      }
+
+      overlay.style.display = "block";
+      overlay.style.backgroundColor = "#000";
+      overlay.style.opacity = "1";
+      overlay.style.zIndex = "9999";
+
+      Promise.all([
+        import('./sky.js').catch(err => { console.error("sky.js 失敗:", err); throw err; }),
+        import('./map.js').catch(err => { console.error("map.js 失敗:", err); throw err; })
+      ])
+      .then(([skyModule, mapModule]) => {
+        console.log("モジュール読み込み成功");
+        skyModule.enterBuilding();
+        mapModule.initScene();
+        mapModule.showMapAfterFadeIn("map1");
+
+        overlay.style.transition = "opacity 2s ease";
+        overlay.style.opacity = "0";
+
+        setTimeout(() => {
+          overlay.style.display = "none";
+          console.log("フェード完了 → ゲーム表示");
+        }, 2000);
+      })
+      .catch(err => {
+        console.error("ゲーム起動失敗:", err);
+        alert("ゲーム読み込みエラー。リロードしてください。");
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.style.display = "none", 500);
+      });
+    });
+
+    // タイムアウトフォールバック
+    setTimeout(() => {
+      if (document.body.contains(video)) {
+        console.warn("動画タイムアウト → スキップ");
+        video.remove();
+        forceLoadGame();
+      }
+    }, 10000);
+  }
+
+  // フェードなしで強制ゲーム開始（緊急用）
+  function forceLoadGame() {
+    Promise.allSettled([
+      import('./sky.js'),
+      import('./map.js')
+    ]).then(results => {
+      const sky = results[0].status === "fulfilled" ? results[0].value : null;
+      const map = results[1].status === "fulfilled" ? results[1].value : null;
+      if (sky) sky.enterBuilding();
+      if (map) { map.initScene(); map.showMapAfterFadeIn("map1"); }
+    });
+  }
+
+  // --- キャラクター生成 ---
+  characters.forEach((c, i) => {
+    const wrapper = document.createElement("div");
+    Object.assign(wrapper.style, { display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer" });
+    const img = document.createElement("img");
+    img.src = c.img;
+    img.style.width = "200px";
+    wrapper.appendChild(img);
+    const label = document.createElement("div");
+    label.textContent = c.name;
+    label.style.color = "#fff";
+    wrapper.appendChild(label);
+
+    characterUI.appendChild(wrapper);
+    wrappers[i] = wrapper;
+
+    wrapper.addEventListener("click", () => {
+      if (nameBox && nameBox.style.display === "block" && selectedIndex !== null) return;
+      if (selectedIndex === i) { showNameInput(c); return; }
+      if (selectedIndex !== null) stopRotation();
+      selectedIndex = i;
+      startRotation(img);
+      new Audio(c.selectSound).play().catch(()=>{});
+      telop.textContent = "もう一度クリックで決定。";
     });
   });
-}
-  
-  // --- キャラクター生成 ---
-    characters.forEach((c, i) => {
-      const wrapper = document.createElement("div");
-      Object.assign(wrapper.style, { display:"flex", flexDirection:"column", alignItems:"center", cursor:"pointer" });
-      const img = document.createElement("img");
-      img.src = c.img;
-      img.style.width = "200px";
-      wrapper.appendChild(img);
-      const label = document.createElement("div");
-      label.textContent = c.name;
-      label.style.color = "#fff";
-      wrapper.appendChild(label);
-
-      characterUI.appendChild(wrapper);
-      wrappers[i] = wrapper;
-
-      wrapper.addEventListener("click", () => {
-    // 名前入力中ならクリック無視
-    if (nameBox && nameBox.style.display === "block" && selectedIndex !== null) return;
-
-    if (selectedIndex === i) { showNameInput(c); return; }
-    if (selectedIndex !== null) stopRotation();
-    selectedIndex = i;
-    startRotation(img);
-    new Audio(c.selectSound).play().catch(()=>{});
-    telop.textContent = "もう一度クリックで決定。";
-  });
-});
 
   // --- ウィンドウリサイズ ---
   window.addEventListener("resize", () => {
@@ -469,8 +499,7 @@ function playIntroVideo() {
     }
     document.querySelectorAll(".popup").forEach(popup => {
       const rect = popup.getBoundingClientRect();
-      let left = rect.left;
-      let top = rect.top;
+      let left = rect.left, top = rect.top;
       if (left + rect.width > window.innerWidth) left = window.innerWidth - rect.width - 10;
       if (top + rect.height > window.innerHeight) top = window.innerHeight - rect.height - 10;
       if (left < 0) left = 10;
@@ -519,40 +548,23 @@ function playIntroVideo() {
     if (sel.type === "img") {
       mediaEl = document.createElement("img");
       mediaEl.src = sel.src;
-      Object.assign(mediaEl.style, {
-        width: "100%",
-        height: "100%",
-        objectFit: "contain"
-      });
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
     } else {
       mediaEl = document.createElement("video");
       mediaEl.src = sel.src;
       mediaEl.autoplay = true;
       mediaEl.loop = true;
       mediaEl.muted = false;
-      Object.assign(mediaEl.style, {
-        width: "100%",
-        height: "100%",
-        objectFit: "contain"
-      });
+      Object.assign(mediaEl.style, { width: "100%", height: "100%", objectFit: "contain" });
     }
     popup.appendChild(mediaEl);
 
-    // 閉じるボタン
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "5px",
-      right: "5px",
-      zIndex: 10,
-      background: "rgba(255,255,255,0.7)",
-      border: "none",
-      borderRadius: "50%",
-      width: "25px",
-      height: "25px",
-      cursor: "pointer",
-      fontWeight: "bold"
+      position: "absolute", top: "5px", right: "5px", zIndex: 10,
+      background: "rgba(255,255,255,0.7)", border: "none", borderRadius: "50%",
+      width: "25px", height: "25px", cursor: "pointer", fontWeight: "bold"
     });
     closeBtn.addEventListener("click", () => {
       popup.remove();
@@ -569,10 +581,8 @@ function playIntroVideo() {
     popupSound.play().catch(()=>{});
   }
 
-  // --- ポップアップ定期生成 ---
   window._popupInterval = setInterval(createPopup, 2500);
 
-  // --- 終了処理 ---
   window.addEventListener("beforeunload", () => {
     clearInterval(window._popupInterval);
     if (bgm && !bgm.paused) bgm.pause();
