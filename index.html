@@ -133,27 +133,18 @@
   <audio id="effect-sfx" src="Sounds/effect.mp3"></audio>
   <audio id="select-sfx" src="Sounds/select.mp3" preload="auto"></audio>
 
-  <!-- =================================== -->
-  <!-- JS読み込み（モジュール型必須） -->
-  <!-- =================================== -->
+  <!-- JS読み込み -->
   <script type="module">
-    // Three.js をグローバルにインポート（sky.js / map.js 用）
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/controls/OrbitControls.js';
     window.THREE = THREE;
     window.OrbitControls = OrbitControls;
 
-    // 各JSをインポート
     import './title.js';
     import './newgame.js';
     import './sky.js';
     import './map.js';
     import './script.js';
-
-    // newgame.js の関数をグローバルに公開（title.js から呼ぶ用）
-    // title.js で window.startNewGame() を呼ぶ想定
-    console.log("すべてのモジュール読み込み完了");
   </script>
-
 </body>
 </html>
